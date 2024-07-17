@@ -1,0 +1,76 @@
+
+/* components/Navbar.module.css */
+
+ 
+  
+
+
+
+    
+  
+  
+  .a1 {
+    text-decoration: none;
+  }
+  .header2 {
+    border-bottom: 1px solid rgba(131, 131, 131, 0.10);
+  
+    
+  }
+  .navbar{
+    padding: 15px;
+  }
+  .logo1 {
+    width: 8%;
+  }
+  .logohead1 {
+    height: 50%;
+    width: 100%;
+    margin-right: 5px;
+  }
+  .ul1 {
+    width: 100%;
+    display: flex ;
+    justify-content: end;
+  
+  }
+  .ul1 li  {
+    color: #4d4d4d;
+    
+
+  }
+  
+  .banner{
+    color: #d0684d !important;
+
+  }
+
+.new{
+  margin-top: 15px;
+
+}
+
+.data{
+  display: flex;
+  justify-content: end;
+   
+}
+.error{
+  font-size: 13px;
+  color: #f72611;
+}
+
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.panel-heading{
+  border-bottom: 1px solid;
+}
+
+.mod{
+  display: block !important;
+ 
+}
