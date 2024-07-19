@@ -24,7 +24,7 @@ export default {
         throw new Error('Response status is not 1');
       }
     } catch (error) {
-      console.error('Error in getAllStateListApi:', error);
+      console.error('Error in getAllparcelListApi:', error);
       throw error;
     }
   },

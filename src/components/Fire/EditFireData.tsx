@@ -1,10 +1,13 @@
 "use client";
 import GetNewBrand from '@/app/Api/FireApis/BrandApi/GetNewBrand';
+import GetClientList from '@/app/Api/FireApis/FireExtinghsherList/GetClientList';
 import getFireBookingId from '@/app/Api/FireApis/FireExtinghsherList/getFireBookingId';
 import GetIngredientList from '@/app/Api/FireApis/IngredientApi/GetIngredientList';
 import GetServiceList from '@/app/Api/FireApis/ServiceApi/GetServiceList';
 import { faMinusCircle, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import axios from 'axios';
+import { debounce } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 
@@ -29,7 +32,6 @@ export interface FormData {
     invNo: string;
     certificateNo: string;
     poNo: string;
-
     product_data: ProductData[];
 }
 
@@ -90,50 +92,47 @@ interface CapacityData {
 }
 
 const EditFormData = () => {
+
+    //-------------------------------------------------------------------------------------------------------------------------------------
+    const storedData = localStorage.getItem('userData');
+
+
+    const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>({
+        defaultValues: {
+            febking_created_by: storedData,
+            febking_entry_type: 1,
+            product_data: [],
+            febking_total_amount: '0.00',
+            febking_total_sgst: '0.00',
+            febking_total_cgst: '0.00',
+            febking_final_amount: '0.00',
+            firstName: '',
+            address: '',
+            email: '',
+            gstNo: '',
+            vendorCode: '',
+            poNo: '',
+            mobileNo: '',
+        }
+    });
     //---------------------------------------get id data --------------------------------------------------------------------------
     const [fireData, setFireData] = useState<any>("");
     const [error, setError] = useState<string>('');
-    const [productdata, setproductdata] = useState<ProductData[]>([]);
 
 
     useEffect(() => {
         fetchservice();
-        // fetchBrandData();
-        // fetchIngredientData();
+       
 
         const fetchData = async () => {
             try {
                 const febking_id = new URLSearchParams(window.location.search).get("id");
                 if (febking_id) {
                     const response = await getFireBookingId.GetFireBookingId(febking_id);
-                    // const fetchedParcelDetail = response.data[0]?.product_data;
-                    // if (fetchedParcelDetail) {
-                    //     const transformedParcelDetail: ProductData[] = fetchedParcelDetail.map((item: any, index: number) => ({
-                    //         id: index + 1,
-                    //         feit_id: item.feit_id || '',
-                    //         capacity: Number(item.capacity) || 0,
-                    //         feb_id: Number(item.feb_id) || 0,
-                    //         hsnCode: Number(item.hsnCode) || 0,
-                    //         qty: Number(item.qty) || 0,
-                    //         rate: Number(item.rate) || 0,
-                    //         totalAmount: Number(item.totalAmount) || 0,
-                    //         febd_sgst: Number(item.febd_sgst) || 0,
-                    //         febd_cgst: Number(item.febd_cgst) || 0,
-                    //         febd_sgst_amount: Number(item.febd_sgst) || 0,
-                    //         febd_cgst_amount: Number(item.febd_cgst) || 0,
-
-                    //     }));
-                    //     setproductdata(transformedParcelDetail);
-                    //     console.log("productdata",transformedParcelDetail);
-                        
-                    // } else {
-                    //     setError('No parcel details found.');
-                    // }
-                }
-                else {
-
-
-                    // setproductdata([]); // Clear parcel data if no token is present
+                    setFireData(response.data[0]);
+                    
+                    setError('');
+                } else {
                     setError('Id not found.');
                 }
             }
@@ -159,7 +158,7 @@ const EditFormData = () => {
         };
     }, []);
 
-    
+
     const getTicketDetail = async (febking_id: string) => {
         try {
             const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);
@@ -173,31 +172,38 @@ const EditFormData = () => {
             console.error("Error fetching fire data:", error);
         }
     };
-    //-------------------------------------------------------------------------------------------------------------------------------------
-    const storedData = localStorage.getItem('userData');
 
 
-    const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>({
-        defaultValues: {
-            febking_created_by: storedData,
-            // client_id: "",
-            febking_entry_type: 1,
-            product_data: [{
-                id:"",
-                qty: 0,
-                rate: 0,
-                totalAmount: 0,
-                hsnCode: '',
-                capacity: '',
-                feit_id: '',
-                feb_id: '',
-                febd_sgst_amount: '',
-                febd_cgst_amount: ''
-          
 
-            }]
+    
+    //-----------------------------------------get data ----------------------------------------------------------------------------
+    useEffect(() => {
+        // Populate form fields when fireData changes
+        if (fireData && fireData.product_data && fireData.product_data.length > 0) {
+            const initialProductData = fireData.product_data.map((product: any) => ({
+                id: product.id,
+                qty: product.qty,
+                rate: product.rate,
+                totalAmount: product.totalAmount,
+                hsnCode: product.feit_hsn_code,
+                capacity: product.capacity,
+                feit_id: product.feit_id,
+                febd_sgst: product.febd_sgst,
+                febd_cgst: product.febd_cgst,
+                febd_sgst_amount: product.febd_sgst_amount,
+                febd_cgst_amount: product.febd_cgst_amount,
+                feb_id: product.feb_id,
+            }));
+
+
+
+            setValue('product_data', initialProductData);
+            calculateActualTotal();
         }
-    });
+    }, [fireData, setValue]);
+
+
+
     //---------------------------------------------fetch servicees-----------------------------------------------------------
     const [services, setServices] = useState<Service[]>([]);
 
@@ -325,8 +331,6 @@ const EditFormData = () => {
 
     //------------------------------------------------------calculation data -----------------------------------------------------------------------------------    
 
-
-
     const calculateActualTotal = () => {
         const productdata = watch('product_data');
 
@@ -350,7 +354,6 @@ const EditFormData = () => {
             setValue('febking_final_amount', '0.00');
         }
     };
-
 
     const handleQtyChange = (index: number, qty: number) => {
         const rate = parseFloat(watch(`product_data.${index}.rate`) || '0');
@@ -402,7 +405,7 @@ const EditFormData = () => {
         name: 'product_data',
     });
 
-    // const addRow = () => {
+
     //     const newId = productdata.length > 0 ? productdata[productdata.length - 1].id + 1 : 1;
     //     setproductdata([
     //         ...productdata,{
@@ -424,7 +427,7 @@ const EditFormData = () => {
 
     const addRow = () => {
         append({
-           id:"", qty: 0, rate: 0, totalAmount: 0, hsnCode: '', capacity: '', feit_id: '', feb_id: '',  febd_sgst_amount: '',
+            id: "", qty: 0, rate: 0, totalAmount: 0, hsnCode: '', capacity: '', feit_id: '', feb_id: '', febd_sgst_amount: '',
             febd_cgst_amount: '', febd_sgst: "", febd_cgst: ""
         });
     };
@@ -434,15 +437,6 @@ const EditFormData = () => {
         calculateActualTotal();
     }
 
-    // const handleRemove = (index: number) => {
-    //     const updatedFields = [...productdata];
-    //     updatedFields.splice(index, 1);
-    //     setproductdata(updatedFields);
-    //     // Update form values for react-hook-form
-    //     setValue('product_data', updatedFields);
-    // };
-
-    // Recalculate febking_total_amount after removing a field
     //-------------------------------------------------------------------------------------------------------------------------
 
     const handleServiceSelection = (index: any) => {
@@ -463,12 +457,145 @@ const EditFormData = () => {
         throw new Error('Function not implemented.');
     }
 
+    //-----------------------------------------------get Client list -----------------------------------------------------------------
+    const [mobileNoValue, setMobileNoValue] = useState<string>('');
+    const [clientData, setClientData] = useState<ClientData[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+    const [inputValue, setInputValue] = useState<string>('');
+    const [filteredClients, setFilteredClients] = useState<ClientData[]>([]);
+    const [isAddingNewClient, setIsAddingNewClient] = useState<boolean>(false);
+
+
+
+    const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setMobileNoValue(value);
+            setValue("mobileNo", value); // Update form value
+        }
+    };
+
+
+    const debounceApiCall = debounce((value: string) => {
+        if (value.trim() === '') {
+            setFilteredClients([]);
+            return;
+        }
+        fetchclientData(value);
+    }, 100);
+
+    const fetchclientData = async (value: string) => {
+        try {
+            const res = await GetClientList.getclientListData(value); // Assuming this is an async function
+            console.log('GetClientList.getclientListData', res);
+            setClientData(res);
+            setFilteredClients(res);
+        } catch (error) {
+            console.error('Error fetching client data:', error);
+            // Handle error state if needed
+        }
+    };
+
+    const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.toLowerCase();
+        setInputValue(value);
+
+        if (value.trim() === '') {
+            setFilteredClients([]);
+            return;
+        }
+
+        // Fetch data if clientData is empty
+        if (clientData.length === 0) {
+            await fetchclientData(value);
+        }
+
+        // Filter the clientData based on client_firstName containing the inputValue
+        const filtered = clientData.filter(client =>
+            client.client_firstName.toLowerCase().includes(value)
+        );
+
+        setFilteredClients(filtered);
+        debounceApiCall(value);
+    };
+
+ 
+    const handleSelectClient = (clientId: number) => {
+        setSelectedClientId(clientId);
+        setInputValue(clientData.find(client => client.client_id === clientId)?.client_firstName || '');
+        setFilteredClients([]);
+
+        const selectedClient = clientData.find(client => client.client_id === clientId);
+        if (selectedClient) {
+            setValue("firstName", selectedClient.client_firstName);
+            setValue("address", selectedClient.client_address);
+            setValue("email", selectedClient.client_email);
+            setValue("gstNo", selectedClient.client_gstNo);
+            setValue("vendorCode", selectedClient.vendorCode);
+            setValue("poNo", selectedClient.poNo);
+            setValue("mobileNo", selectedClient.client_mobileNo);
+            setMobileNoValue(selectedClient.client_mobileNo); // Update mobileNoValue state
+        }
+    };
+
+    const handleAddNewClient = () => {
+        setSelectedClientId(null);
+        setIsAddingNewClient(true);
+        setInputValue('');
+        setFilteredClients([]);
+        // Clear existing form values
+        setValue("firstName", '');
+        setValue("address", '');
+        setValue("email", '');
+        setValue("gstNo", '');
+        setValue("vendorCode", '');
+        setValue("poNo", '');
+        setValue("mobileNo", '');
+        setMobileNoValue('');
+    };
+
+
+
+
+
+
+    const onSubmit = async (FormData: any) => {
+
+        console.log("form submit",FormData);
+        
+
+        // try {
+ 
+        //     const response = await axios.post('http://192.168.0.111:3001/booking/edit_fire_extingusher_booking_detail', {
+        //         ...FormData,
+        //         // feit_id: editingredients.feit_id
+        //     });
+        //     console.log('Ingredient updated successfully:', response.data);
+       
+          
+        // } catch (error) {
+        //     console.error('Error updating ingredient:', error);
+        // }
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
     return (
         <div className="container-fluid">
-            <form >
+            <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="card">
                     <div className="card-header">
-                        <h3>Fire Extinguisher </h3>
+                        <h3>Update Fire Extinguisher </h3>
                     </div>
                     {fireData && (
                         <div className="card-body">
@@ -489,6 +616,10 @@ const EditFormData = () => {
                                     </div>
                                 ))}
                             </div>
+
+
+
+
                             {fields.map((field, index) => (
                                 <div>
                                     <div key={field.id} className="row mb-3">
@@ -504,7 +635,7 @@ const EditFormData = () => {
                                                 {...register(`product_data.${index}.feit_id`, { required: true })}
                                                 id={`feit_id-${index}`}
                                                 onChange={handleIngredientChange(index)}
-                                                value={watch(`product_data.${index}.feit_id`)}
+                                            // value={watch(`product_data.${index}.feit_id`)}
                                             >
                                                 <option value="">--Select--</option>
                                                 {ingredients.map((ingredient) => (
@@ -548,7 +679,7 @@ const EditFormData = () => {
                                                 {...register(`product_data.${index}.feb_id`, { required: true })}
                                                 id={`fire_brand-${index}`}
                                                 name={`product_data.${index}.feb_id`}
-                                                value={watch(`product_data.${index}.feb_id`)}
+                                                // value={watch(`product_data.${index}.feb_id`)}
                                                 onChange={handleChangeBrand(index)}
                                             >
                                                 <option value="">--Select--</option>
@@ -567,7 +698,7 @@ const EditFormData = () => {
                                                 type="text"
                                                 id={`hsnCode-${index}`}
                                                 placeholder="HSN Code"
-                                                value={watch(`product_data.${index}.hsnCode`)}
+                                                // value={watch(`product_data.${index}.hsnCode`)}
                                                 onChange={(e) => {
                                                     setValue(`product_data.${index}.hsnCode`, e.target.value);
                                                 }}
@@ -589,7 +720,7 @@ const EditFormData = () => {
                                                     onChange={(e) => handleQtyChange(index, parseInt(e.target.value))}
                                                     id='qty'
                                                     placeholder="Qty"
-                                                    value={watch(`product_data.${index}.qty`)}
+                                                // value={watch(`product_data.${index}.qty`)}
                                                 // onChange={(e) => {
                                                 //     setValue(`product_data.${index}.qty`, e.target.value);
                                                 // }}
@@ -622,10 +753,6 @@ const EditFormData = () => {
                                                     placeholder='0.00'
                                                 />
                                             </div>
-
-
-                                            {/* Additional fields added */}
-
                                             <div >
                                                 <label className="form-label" style={{ marginLeft: "30px" }}>SGST:</label>
                                                 <div style={{ display: "flex", alignItems: "center" }}>
@@ -667,20 +794,13 @@ const EditFormData = () => {
                                                     />
                                                 </div>
                                             </div>
-
-
-
-                                            <div className="col-lg-1 new" style={{ marginTop: "30px" }}>
+                                            <div className="col-lg-1 col-sm-1 new" style={{ marginTop: "30px" }}>
                                                 <button type="button" className="btn btn-danger btn-sm" onClick={() => handleRemove(index)}>
                                                     <FontAwesomeIcon icon={faMinusCircle} />
                                                 </button>
                                             </div>
                                         </div>
-
-
                                     </div>
-
-
                                 </div>
 
                             ))}
@@ -708,7 +828,6 @@ const EditFormData = () => {
                                             readOnly
                                             disabled
                                         />
-
                                     </div>
                                     <div className="col-lg-2 col-sm-4 ">
                                         <label className="form-label">Total SGST</label>
@@ -759,105 +878,138 @@ const EditFormData = () => {
                                 </div>
                                 <hr />
                             </div>
+
+
+
+
                             <div className="row mb-3">
                                 <div className="col-lg-4 col-sm-4">
-                                    <label className="form-label" htmlFor="clientId">
-                                        Select Client:
-                                    </label>
-                                    <div>
-                                        <input
-                                            className="form-control form-control-sm"
-                                            id="clientId"
-                                            placeholder="Enter Client Name"
-                                            type="text"
+                                    <label className="form-label" htmlFor="clientId">Select Client:</label>
+                                    <div className="">
+                                        {isAddingNewClient ? (
+                                            <input
+                                                {...register("firstName", { required: true })}
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder="Enter Client Name"
+                                            />
+                                        ) : (
+                                            <>
+                                                <input
+                                                    {...register("firstName", { required: true })}
+                                                    type="text"
+                                                    className="form-control form-control-sm"
+                                                    id="clientId"
+                                                    value={inputValue}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Enter Client Name"
+                                                />
+                                                {(inputValue.length > 0 || selectedClientId !== null) && (
+                                                    <div className="list-group autocomplete-items">
+                                                        {inputValue.length > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                className="list-group-item list-group-item-action text-primary"
+                                                                onClick={handleAddNewClient}
+                                                            >
+                                                                Add New Client
+                                                            </button>
+                                                        )}
 
-                                            name="firstName"
-
-                                        />
+                                                        {filteredClients.map(client => (
+                                                            <button
+                                                                key={client.client_id}
+                                                                type="button"
+                                                                className="list-group-item list-group-item-action"
+                                                                onClick={() => handleSelectClient(client.client_id)}
+                                                            >
+                                                                {client.client_firstName} 
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="col-lg-4 col-sm-4">
-                                    <label className="form-label" htmlFor="address">
-                                        Address
-                                    </label>
+
+                                <div className="col-lg-4">
+                                    <label className="form-label" htmlFor="address">Address</label>
                                     <textarea
-                                        name="address"
+                                        {...register("address", { required: true })}
                                         className="form-control form-control-sm"
                                         id="address"
                                         placeholder="Enter Address"
-
-
-                                    ></textarea>
+                                    />
                                 </div>
-                                <div className="col-lg-4 col-sm-4" >
-                                    <label className="form-label" htmlFor="email">
-                                        Email-id
-                                    </label>
+
+                                <div className="col-lg-4">
+                                    <label className="form-label" htmlFor="email">Email-id</label>
                                     <input
+                                        {...register("email", { required: true })}
+                                        type="email"
                                         className="form-control form-control-sm"
                                         placeholder="Enter your email"
-                                        type="email"
-                                        name="email"
-
-
                                     />
                                 </div>
-                                <div className="col-lg-4 col-sm-4">
-                                    <label className="form-label" htmlFor="gstNo">
-                                        Gst-no
-                                    </label>
+
+                                <div className="col-lg-4">
+                                    <label className="form-label" htmlFor="gstNo">Gst-no</label>
                                     <input
+                                        {...register("gstNo", { required: true })}
                                         className="form-control form-control-sm"
-                                        placeholder="Enter Gst no."
                                         type="text"
-                                        name="gstNo"
-
-
+                                        placeholder="Enter Gst no."
                                     />
                                 </div>
-                                <div className="col-lg-4 col-sm-4">
-                                    <label className="form-label" htmlFor="vendorCode">
-                                        Vendor code
-                                    </label>
+
+                                <div className="col-lg-4">
+                                    <label className="form-label" htmlFor="vendorCode">Vendor code</label>
                                     <input
+                                        {...register("vendorCode")}
                                         className="form-control form-control-sm"
+                                        type="text"
                                         id="vendorCode"
                                         placeholder="Enter Vendor code"
-                                        type="text"
-                                        name="vendorCode"
-
-
                                     />
                                 </div>
-                                <div className="col-lg-4 col-sm-4">
-                                    <label className="form-label" htmlFor="poNo">
-                                        P.o.No.
-                                    </label>
+
+                                <div className="col-lg-4">
+                                    <label className="form-label" htmlFor="poNo">P.o.No.</label>
                                     <input
+                                        {...register("poNo")}
                                         className="form-control form-control-sm"
+                                        type="text"
                                         id="poNo"
                                         placeholder="P.o.No."
-                                        type="text"
-                                        name="poNo"
-
-
                                     />
                                 </div>
-                                <div className="col-lg-4 col-sm-4">
-                                    <label className="form-label" htmlFor="client_mobileNo">
-                                        Mobile No
-                                    </label>
+
+                                <div className="col-lg-4">
+                                    <label className="form-label" htmlFor="mobileNo">Mobile No</label>
                                     <input
-                                        className="form-control form-control-sm"
+                                        type="text"
+                                        {...register("mobileNo", {
+                                            required: true,
+                                            minLength: 10,
+                                            maxLength: 10,
+                                            pattern: /^[0-9]+$/
+                                        })}
+                                        value={mobileNoValue}
+                                        onChange={handleMobileNoChange}
+                                        className={`form-control form-control-sm ${errors.mobileNo ? 'is-invalid' : ''}`}
                                         id="mobileNo"
                                         placeholder="Enter Mobile No"
-                                        type="text"
-
-                                        name="mobileNo"
-
                                     />
+                                    {errors?.mobileNo?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.mobileNo?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.mobileNo?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
                                 </div>
                             </div>
+
+
+
+
                             <div className="row mb-3">
                                 <div className="col-12">
                                     <button type="submit" className="btn btn-primary">

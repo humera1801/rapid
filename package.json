@@ -36,6 +36,8 @@
     "dt": "^0.0.1",
     "font-awesome": "^4.7.0",
     "html2canvas": "^1.4.1",
+    "html2pdf-ts": "^1.2.1",
+    "html2pdf.js": "^0.10.2",
     "jquery": "^3.6.0",
     "jspdf": "^2.5.1",
     "lodash": "^4.17.21",

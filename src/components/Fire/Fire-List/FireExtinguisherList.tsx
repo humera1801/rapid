@@ -15,7 +15,7 @@ import Header from '@/components/Dashboard/Header';
 import getListFireData from '@/app/Api/FireApis/FireExtinghsherList/getListFireData';
 
 export interface User {
-
+    febking_id:number;
     febking_created_by: any;
     fest_id: any;
     febking_final_amount: string;
@@ -230,7 +230,7 @@ const FireExtinguisherList: React.FC = () => {
 
                         <FontAwesomeIcon icon={faEye} />
                      </Link>&nbsp; 
-                  <Link href="" className="btn btn-sm btn-primary"> 
+                  <Link href={`Fire-List/Edit?id=${row.febking_id}`} className="btn btn-sm btn-primary"> 
 
                         <FontAwesomeIcon icon={faPencilSquare} />
                     </Link> 
@@ -309,16 +309,7 @@ const FireExtinguisherList: React.FC = () => {
                     <div className="table-options">
                        
                         
-                        {/* <div className='search'>
-                            <label>Search&nbsp;</label>
-                            <input
-                                type="text"
-                                placeholder="Search..."
-
-                                onChange={handleFilter}
-                                className="search-input"
-                            />
-                        </div> */}
+                       
                     </div>
 
                     <div id="pdf-content" className='table table-striped new-table'>

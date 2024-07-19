@@ -15,6 +15,7 @@ import CapacityData from '@/app/Api/FireApis/IngredientApi/CapacityData';
 import { debounce } from 'lodash';
 import { createInvoice } from './InvoiceFire';
 import axios from 'axios';
+import { generateInvoicePDF } from './Invoice/Pdf';
 
 interface extinguishingAgent {
     value: string;
@@ -433,13 +434,13 @@ const FireData = () => {
             if (isAddingNewClient) {
                 await submitNewClientFormData(formData);
                 console.log('Form data submitted successfully for new client.');
-                createInvoice(formData);
-                setIsAddingNewClient(false);
+              
+                setIsAddingNewClient(false); // Reset to normal client selection mode
             } else if (selectedClientId) {
                
                 formData.client_id = selectedClientId;
                 await submitFormData(formData, selectedClientId);
-                createInvoice(formData);
+            
                 console.log('Form data submitted successfully with selected client id:', selectedClientId);
             } else {
                 console.log('Please select a client or add a new client before submitting.');
@@ -452,10 +453,15 @@ const FireData = () => {
 
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.111:3001/booking/add_fire_extingusher_booking_data', formData);
+            const response = await axios.post('http://192.168.0.111:3001/booking/add_fire_extingusher_booking_data', formData).then((res:any)=>{
+                generateInvoicePDF (res.data.data[0]);
+                
+                console.log("res",res.data.data[0]);
+                
+            });
             console.log('Form data submitted successfully with client id:', clientId);
-            console.log('Server response:', response.data);
-       
+            // console.log('Server response:', response.data);
+            
         } catch (error) {
             console.error('Error submitting form data:', error);
         }
@@ -493,36 +499,7 @@ const FireData = () => {
 
 
 
-   
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //------------------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------------------
 
     // const onSubmit = async (FormData: any) => {
     //     console.log("form data", FormData);
@@ -542,14 +519,6 @@ const FireData = () => {
             setValue("mobileNo", value); // Update form value
         }
     };
-
-
-
-
-
-
-
-
 
     const handleServiceSelection = (index: number) => {
         const updatedServices = services.map((service, i) => ({

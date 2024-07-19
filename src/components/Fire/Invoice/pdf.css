@@ -1,0 +1,85 @@
+body {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #333;
+    background-color: #f9f9f9;
+}
+
+.container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.invoice-header {
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.invoice-header h2 {
+    margin-top: 0;
+}
+
+.invoice-header p {
+    margin-bottom: 10px;
+}
+
+.actions {
+    text-align: right;
+}
+
+.actions .btn {
+    background-color: #337ab7;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.actions .btn:hover {
+    background-color: #23527c;
+}
+
+.invoice-body {
+    padding: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f0f0f0;
+}
+
+.extra-note {
+    padding: 20px;
+    border-top: 1px solid #ddd;
+}
+
+.extra-note input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.invoice-footer {
+    padding: 20px;
+    border-top: 1px solid #ddd;
+}
+
+.invoice-footer p {
+    margin-bottom: 10px;
+}

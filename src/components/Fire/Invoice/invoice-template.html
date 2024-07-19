@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Template</title>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 18px;
+            line-height: 1.5;
+            color: #070606;
+            background-color: #f9f9f9;
+        }
+
+
+
+        .invoice-header {
+
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .invoice-header h2 {
+            margin-top: 0;
+            text-align: center;
+            margin-bottom: 0;
+        }
+
+        .invoice-header p {
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            float: left;
+            margin-right: 20px;
+        }
+
+        .logo img {
+
+            height: 50px;
+        }
+
+        /* .actions {
+            text-align: right;
+        } */
+
+        .actions .btn {
+            background-color: #337ab7;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .actions .btn:hover {
+            background-color: #23527c;
+        }
+
+        .invoice-body {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        .extra-note {
+            padding: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .extra-note input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .invoice-footer {
+            padding: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .invoice-footer p {
+            margin-bottom: 10px;
+        }
+
+        
+
+        .invoice-data {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="invoice-header">
+            <div class="logo">
+                <img src="/img/logo_page-0001-removebg-preview.png" alt="Logo">
+            </div>
+            <div>
+                <h2>Invoice</h2>
+            </div>
+            <!-- <div class="actions">
+                <button class="btn">Print</button>
+                <button class="btn">Export</button>
+            </div> -->
+        </div>
+        <div class="invoice-data">
+            <div class="invoice-detail">
+                <div>Bill TO:</div>
+                <div>Address:</div>
+                <div>Email:</div>
+                <div>Mobile No:</div>
+              
+            </div>
+            <div class="client">
+                <div>Invoice No:</div>
+                <div>Date:</div>
+                <div>Vendor Code:</div>
+                <div>P.O.No:</div>
+              
+            </div>
+        </div>
+
+        <div class="invoice-body">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Brand</th>
+                        <th>Item</th>
+                        <th>Capacitye</th>
+                        <th>Qty</th>
+                        <th>Rate</th>
+                        <th>SGST</th>
+                        <th>CGST</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Domain registration</td>
+                        <td>2</td>
+                        <td>$10</td>
+                        <td>$20</td>
+                        <td>$20</td>
+                        <td>$20</td>
+                        <td>$20</td>
+
+                    </tr>
+                   
+                </tbody>
+            </table>
+
+        </div>
+
+        <div class="invoice-footer">
+            <p>SubTotal: $2,250</p>
+            <p>Tax (10%): $225</p>
+            <p>Total Amount: $2,475</p>
+            <p>29°C 丶g唱 ENG 11:30 18-07-2024</p>
+        </div>
+    </div>
+</body>
+
+</html>

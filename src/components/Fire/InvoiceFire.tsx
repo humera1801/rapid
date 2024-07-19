@@ -1,7 +1,7 @@
 import { PDFDocument, rgb } from 'pdf-lib';
-import { FormData } from './FireDataForm'; // Adjust import path as per your project structure
+// import { FormData } from './FireDataForm'; // Adjust import path as per your project structure
 
-export const createInvoice = async (formData: FormData) => {
+export const createInvoice = async (formData: any) => {
     try {
         // Create PDF document using pdf-lib
         const pdfDoc = await PDFDocument.create();
@@ -24,7 +24,7 @@ export const createInvoice = async (formData: FormData) => {
 
         // Invoice Information
         const invoiceHeaderY = height - 80;
-        page.drawText(`Invoice No: ${formData.invNo}`, {
+        page.drawText(`Invoice No: ${formData.febking_invoice_no}`, {
             x: 400,
             y: invoiceHeaderY,
             size: fontSize,
@@ -73,6 +73,8 @@ export const createInvoice = async (formData: FormData) => {
             size: fontSize,
             color: rgb(0, 0, 0),
         });
+        
+        
 
         // Vendor Code, Certificate No, PO No
         page.drawText(`Vendor Code: ${formData.vendorCode}`, {
@@ -106,45 +108,51 @@ export const createInvoice = async (formData: FormData) => {
             font: headerFont,
             color: rgb(0, 0, 0),
         });
-
+        page.drawText('Item', {
+            x: 120,
+            y: tableHeaderY,
+            size: fontSize,
+            font: headerFont,
+            color: rgb(0, 0, 0),
+        });
 
         page.drawText('Qty', {
-            x: 100,
-            y: tableHeaderY,
-            size: fontSize,
-            font: headerFont,
-            color: rgb(0, 0, 0),
-        });
-        page.drawText('Capacity', {
-            x: 150,
-            y: tableHeaderY,
-            size: fontSize,
-            font: headerFont,
-            color: rgb(0, 0, 0),
-        });
-        page.drawText('Rate', {
             x: 220,
             y: tableHeaderY,
             size: fontSize,
             font: headerFont,
             color: rgb(0, 0, 0),
         });
-        page.drawText('CGST', {
-            x: 270,
+        page.drawText('Capacity', {
+            x: 260,
             y: tableHeaderY,
             size: fontSize,
             font: headerFont,
             color: rgb(0, 0, 0),
         });
-        page.drawText('SGST', {
+        page.drawText('Rate', {
             x: 320,
             y: tableHeaderY,
             size: fontSize,
             font: headerFont,
             color: rgb(0, 0, 0),
         });
+        page.drawText('CGST', {
+            x: 380,
+            y: tableHeaderY,
+            size: fontSize,
+            font: headerFont,
+            color: rgb(0, 0, 0),
+        });
+        page.drawText('SGST', {
+            x: 430,
+            y: tableHeaderY,
+            size: fontSize,
+            font: headerFont,
+            color: rgb(0, 0, 0),
+        });
         page.drawText('Total', {
-            x: 370,
+            x: 490,
             y: tableHeaderY,
             size: fontSize,
             font: headerFont,
@@ -153,54 +161,59 @@ export const createInvoice = async (formData: FormData) => {
 
         // Table Rows (Product Data)
         let tableY = height - 330;
-        formData.product_data.forEach((product, index) => {
+        formData.product_data.forEach((product:any, index:any) => {
             const rowY = tableY - (index * 20);
-            page.drawText(product.feb_id.toString(), {
+            page.drawText(product.feb_name.toString(), {
                 x: 50,
                 y: rowY,
                 size: fontSize,
                 font: headerFont,
                 color: rgb(0, 0, 0),
             });
+            page.drawText(product.feit_name.toString(), {
+                x: 120,
+                y: rowY,
+                size: fontSize,
+                font: headerFont,
+                color: rgb(0, 0, 0),
+            });
             page.drawText(product.qty.toString(), {
-                x: 100,
-                y: rowY,
-                size: fontSize,
-                font: headerFont,
-                color: rgb(0, 0, 0),
-            });
-            page.drawText(product.capacity, {
-                x: 150,
-                y: rowY,
-                size: fontSize,
-                font: headerFont,
-                color: rgb(0, 0, 0),
-            });
-            page.drawText(product.rate.toString(), {
                 x: 220,
                 y: rowY,
                 size: fontSize,
                 font: headerFont,
                 color: rgb(0, 0, 0),
             });
-            page.drawText(product.febd_cgst.toString()+
-            "%", {
-                x: 270,
+            page.drawText(product.capacity, {
+                x: 260,
                 y: rowY,
                 size: fontSize,
                 font: headerFont,
                 color: rgb(0, 0, 0),
             });
-            page.drawText(product.febd_sgst.toString()+
-            "%", {
+            page.drawText(product.rate.toString(), {
                 x: 320,
                 y: rowY,
                 size: fontSize,
                 font: headerFont,
                 color: rgb(0, 0, 0),
             });
+            page.drawText(product.febd_sgst.toString()+"%", {
+                x: 380,
+                y: rowY,
+                size: fontSize,
+                font: headerFont,
+                color: rgb(0, 0, 0),
+            });
+            page.drawText(product.febd_cgst.toString()+"%", {
+                x: 430,
+                y: rowY,
+                size: fontSize,
+                font: headerFont,
+                color: rgb(0, 0, 0),
+            });
             page.drawText(product.totalAmount.toString(), {
-                x: 370,
+                x: 490,
                 y: rowY,
                 size: fontSize,
                 font: headerFont,
@@ -209,9 +222,24 @@ export const createInvoice = async (formData: FormData) => {
         });
 
         // Total Amount
+        
         const totalAmountY = height - 400;
-        page.drawText(`Total Amount: ${formData.febking_total_amount}`, {
-            x: 400,
+        page.drawText(`${formData.febking_total_cgst}`, {
+            x: 380,
+            y: totalAmountY,
+            size: fontSize,
+            font: titleFont,
+            color: rgb(0, 0, 0),
+        });
+        page.drawText(`${formData.febking_total_sgst}`, {
+            x: 430,
+            y: totalAmountY,
+            size: fontSize,
+            font: titleFont,
+            color: rgb(0, 0, 0),
+        });
+        page.drawText(`${formData.febking_total_amount}`, {
+            x: 490,
             y: totalAmountY,
             size: fontSize,
             font: titleFont,
