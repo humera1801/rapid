@@ -13,10 +13,16 @@ const page = () => {
     
     
     <Header/>
-   
+   <br/>
 
+   
+{/* 
+   <div className="container-fluid">
+<FireData/>
+</div> */}
 
 <FireData/>
+
 
 {/* <div className="comtainer">
 <YourFormComponent/>

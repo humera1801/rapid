@@ -13,11 +13,13 @@ import Link from 'next/link';
 import GetParcelList from '../Api/GetParcelList';
 import Header from '@/components/Dashboard/Header';
 import handleParcelPrint from './parcel_data/printpparcelUtils';
+import EditParcelDataList from '../Api/EditParcelDataList';
+import {handleparcelPDF} from "../parcel_list/parcel_data/handleparcelPDF.js"
 
 
-interface User {
+export interface User {
     id: string;
-    token: number;
+    token: any;
     receipt_no: string;
     from_state_name: string;
     to_state_name: string;
@@ -165,9 +167,37 @@ const page = () => {
         }
     };
 
-    const handlePrintClick = (row: User) => {
-        handleParcelPrint(row); // Call the imported handlePrint function
+    // const handlePrintClick = (row: User) => {
+       
+    // };
+
+
+    const handlePrintClick = async (ticketToken: string) => {
+        try {         
+            const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);    
+             console.log("Fetched details:", getTDetail.data[0]);            
+            handleParcelPrint(getTDetail.data[0]);                  
+            } catch (error) {
+            console.error("Error fetching ticket data:", error);
+            // Optionally show a user-friendly error message
+        }
     };
+    
+
+
+    const handleShareClick = async (ticketToken: string) => {
+        try {         
+            const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);    
+             console.log("Fetched details:", getTDetail.data[0]);          
+            handleparcelPDF(getTDetail.data[0])               
+        } catch (error) {
+            console.error("Error fetching ticket data:", error);
+            // Optionally show a user-friendly error message
+        }
+    };
+    
+
+
 
 
     const columns = [
@@ -230,8 +260,8 @@ const page = () => {
             },
             cell: (row: User) => (
                 <div className='designbtn'>
-                    <button className="btn btn-sm btn-success" style={{ color: '#ffffff' }}>Share</button>&nbsp;&nbsp;
-                    <button className="btn btn-sm btn-info" style={{ color: '#ffffff' }} onClick={() => handlePrintClick(row)}>Print</button>&nbsp;&nbsp;
+                    <button className="btn btn-sm btn-success" style={{ color: '#ffffff' }} onClick={() => handleShareClick(row.token)}>Share</button>&nbsp;&nbsp;
+                    <button className="btn btn-sm btn-info" style={{ color: '#ffffff' }} onClick={() => handlePrintClick(row.token)}>Print</button>&nbsp;&nbsp;
                     <Link href={`parcel_list/parcel_data?token=${row.token}`} className="btn btn-sm btn-warning" style={{ color: '#ffffff' }}>
 
                         <FontAwesomeIcon icon={faEye} />
@@ -304,8 +334,8 @@ const page = () => {
                             data={records}
                             customStyles={customStyle}
                             pagination
-                            paginationPerPage={5}
-                            paginationRowsPerPageOptions={[5, 10, 20, 50]}
+                            paginationPerPage={10}
+                            paginationRowsPerPageOptions={[10, 20, 50]}
                         // paginationTotalRows={records.length}
                         />
 

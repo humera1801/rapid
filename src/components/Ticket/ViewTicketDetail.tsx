@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import EditTicketData from '@/app/Api/EditTicketData';
 import Link from 'next/link';
 import "../../../public/css/ticketview.css"
+import handlePrint from '@/app/ticket_list/Ticket_data/printUtils';
 
 type FormData = {
     ticket_id: string,
@@ -45,16 +46,23 @@ type FormData = {
     bus_no: string;
     boarding: string;
     payment_method: string;
-    final_total_amount: number;
+    final_total_amount: string;
     ticket_actual_total: number;
-    print_final_total_amount: number;
+    print_final_total_amount: string;
     paid_amount: number;
     remaining_amount: number;
     print_paid_amount: number;
     print_remaining_amount: number;
     remarks: string;
     user_id: 14;
-    received: 'Get'
+    received: 'Get';
+    tkt_no: string;
+    from_state_name: string;
+    to_state_name: string;
+    from_city_name: string;
+    to_city_name: string;
+    added_by_name: string;
+    mobile: string;
 
 };
 
@@ -79,20 +87,34 @@ const ViewTicketDetail = () => {
         };
     }, []);
 
+
+
+
     const getTicketDetail = async (ticketToken: string) => {
         try {
             const getTDetail = await EditTicketData.getEditTicktetData(ticketToken);
             setError('');
 
             setTicketData(getTDetail.data[0]);
+            // handlePrint(getTDetail.data[0])
 
-            console.log("get data", getTDetail);
+            console.log("get data", getTDetail.data[0]);
         } catch (error) {
             setError('Error fetching ticket data. Please try again later.');
             console.error('Error fetching ticket data:', error);
         }
     };
-    console.log("gffgdfhjf" ,ticketData)
+
+
+
+
+
+
+
+
+
+
+    console.log("gffgdfhjf", ticketData)
 
     const { register, handleSubmit, formState: { errors }, watch, setValue, reset } = useForm<FormData>({
         defaultValues: {
@@ -130,12 +152,12 @@ const ViewTicketDetail = () => {
             bus_no: '',
             boarding: '',
             payment_method: '',
-            final_total_amount: 0,
+            final_total_amount: '',
             ticket_actual_total: 0,
             paid_amount: 0,
             remaining_amount: 0,
             bus_name: '',
-            print_final_total_amount: 0,
+            print_final_total_amount: '',
             print_paid_amount: 0,
             remarks: '',
             ticket_no: ticketData.tkt_no || '',
@@ -166,7 +188,8 @@ const ViewTicketDetail = () => {
                         <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
                             <h4>View Booking Detail</h4>
                             <div>
-                                <Link href="/ticket_list" target="_blank" className="btn btn-sm btn-primary" style={{ float: "right" }}>Print</Link>
+                                <button className="btn btn-sm btn-primary" onClick={() => handlePrint(ticketData)}
+                                    style={{ float: "right" }}  >Print</button>
 
                                 <Link href="/ticket_list" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</Link>
 
@@ -332,30 +355,30 @@ const ViewTicketDetail = () => {
                                                     </div>
                                                 </div>
                                             )}
-                                              {ticketData.is_extra === "1" && (
-                                            <div className="row mb-3">
-                                                <div className="col-lg-2">
-                                                    <label className="set_label">Ex:</label>
-                                                    <span>{ticketData.ex}</span>
-                                                </div>
-                                                <div className="col-lg-2">
-                                                    <label className="set_label">Ex Rate:</label>
-                                                    <span>{ticketData.ex_rate}</span>
-                                                </div>
-                                                <div className="col-lg-2">
-                                                    <label className="set_label">Ex Total:</label>
-                                                    <span>{ticketData.ex_total_amount}</span>
-                                                </div>
-                                                <div className="col-lg-2">
-                                                    <label className="set_label">Ex Print Rate:</label>
-                                                    <span>{ticketData.ex_print_rate}</span>
-                                                </div>
-                                                <div className="col-lg-2">
-                                                    <label className="set_label">Ex Print Total:</label>
-                                                    <span>{ticketData.ex_total_print_rate}</span>
-                                                </div>
-                                               
-                                            </div>)}
+                                            {ticketData.is_extra === "1" && (
+                                                <div className="row mb-3">
+                                                    <div className="col-lg-2">
+                                                        <label className="set_label">Ex:</label>
+                                                        <span>{ticketData.ex}</span>
+                                                    </div>
+                                                    <div className="col-lg-2">
+                                                        <label className="set_label">Ex Rate:</label>
+                                                        <span>{ticketData.ex_rate}</span>
+                                                    </div>
+                                                    <div className="col-lg-2">
+                                                        <label className="set_label">Ex Total:</label>
+                                                        <span>{ticketData.ex_total_amount}</span>
+                                                    </div>
+                                                    <div className="col-lg-2">
+                                                        <label className="set_label">Ex Print Rate:</label>
+                                                        <span>{ticketData.ex_print_rate}</span>
+                                                    </div>
+                                                    <div className="col-lg-2">
+                                                        <label className="set_label">Ex Print Total:</label>
+                                                        <span>{ticketData.ex_total_print_rate}</span>
+                                                    </div>
+
+                                                </div>)}
 
                                             <br />
                                             <br />
@@ -382,7 +405,7 @@ const ViewTicketDetail = () => {
                                                 </div>
 
                                             </div>
-                                            <br/>
+                                            <br />
 
                                             <div className="row mb-3">
                                                 <div className="col-lg-2">

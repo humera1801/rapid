@@ -74,3 +74,55 @@ input::-webkit-inner-spin-button {
   display: block !important;
  
 }
+
+@media (max-width: 510px) {
+  .line {
+      flex-wrap: wrap; /* Ensure items wrap on smaller screens */
+  }
+
+  .additional-fields {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center; /* Adjust as per your design */
+      justify-content: space-between; /* Adjust spacing between elements */
+  }
+
+  .button-container {
+      margin-top: 10px; /* Adjust spacing between elements */
+  }
+}
+/* @media (min-width: 992px) and (max-width: 1176px) {
+  .row {
+      flex-wrap: wrap;
+  }
+
+  .col-lg-12.col-sm-12 {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+  }
+
+  .col-lg-12.col-sm-12 > div {
+      width: calc(100% / 6 - 15px);
+  }
+
+  .new {
+      margin-top: 10px; 
+  }
+} */
+
+
+@media (max-width: 1372px) {
+  .line .new {
+      width: 100%; /* Make the button take full width */
+      margin-top: 10px; /* Adjust spacing */
+  }
+}
+
+@media (max-width: 992px) {
+  .line .new {
+      width: 100%; /* Make the button take full width */
+      margin-top: 10px; /* Adjust spacing */
+  }
+}

@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import "../../../public/css/ticketview.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMinusCircle } from '@fortawesome/free-solid-svg-icons';
+import handleParcelPrint from '@/app/parcel_list/parcel_data/printpparcelUtils';
 
 type FormData = {
     parcel_id: string;
@@ -257,9 +258,9 @@ const ViewParcelData = () => {
 
 
 
-console.log("gffgdfhjf" ,parcelData)
+    console.log("gffgdfhjf", parcelData)
 
-  
+
 
 
 
@@ -282,9 +283,10 @@ console.log("gffgdfhjf" ,parcelData)
                         <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
                             <h4>View Parcel Detail</h4>
                             <div>
-                                <a href="" target="_blank" className="btn btn-sm btn-primary" style={{ float: "right" }}>Print</a>
+                                <button onClick={() => handleParcelPrint(parcelData)}
+                                    className="btn btn-sm btn-primary" style={{ float: "right" }} >Print</button>
 
-                                <a href="" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</a>
+                                <a href="/parcel_list" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</a>
 
                             </div>
                         </div>
@@ -303,11 +305,11 @@ console.log("gffgdfhjf" ,parcelData)
                                             <div className="row mb-3">
                                                 <div className="col-lg-6 ">
                                                     <label className="set_labelData">From:</label>
-                                                    <span>{parcelData.from_state_name} - {parcelData.book_from_name}</span>
+                                                    <span>{parcelData.from_state_name} - {parcelData.from_city_name}</span>
                                                 </div>
                                                 <div className="col-lg-6">
                                                     <label className="set_labelData">To: </label>
-                                                    <span>{parcelData.to_state_name} - {parcelData.book_to_name}</span>
+                                                    <span>{parcelData.to_state_name} - {parcelData.to_city_name}</span>
                                                 </div>
 
 
@@ -370,7 +372,7 @@ console.log("gffgdfhjf" ,parcelData)
                                                 </div>
                                                 <div className="col-lg-6">
                                                     <label className="set_labelData">Updated By</label>
-                                                    <span>{parcelData.updated_number}</span>
+                                                    <span>{parcelData.updated_by_name}</span>
                                                 </div>
                                             </div>
                                             <div className="row mb-3">

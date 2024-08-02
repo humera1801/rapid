@@ -3,15 +3,21 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DataTable, { TableColumn } from 'react-data-table-component';
-import "../ticket_list/custom.css"
+import "../ticket_list/custom.css";
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import GetTicket from '../Api/GetTicket';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faPencilSquare, faPlaneCircleCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPencilSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import Header from '@/components/Dashboard/Header';
+import { exportToExcel } from './Ticket_data/exportToexcel';
+import { exportToPDF } from './Ticket_data/PdfTicketList';
+// import handlePrint from './Ticket_data/PrintPdfTicket';
 import handlePrint from './Ticket_data/printUtils';
+import { handleticketPDF } from './handleticketPdF';
+// import { handlePrintData } from './Ticket_data/Print.js'
+
 
 export interface User {
     id: string;
@@ -23,13 +29,13 @@ export interface User {
     to_city_name: string;
     bdate: string;
     jdate: string;
-    print_final_total_amount: string;
-    final_total_amount: string;
+    print_final_total_amount: any;
+    final_total_amount: any;
     added_by_name: string;
     name: string;
     mobile_no: string;
     cmp_mobile: string;
-    bus_type: string,
+    bus_type: string;
     bus_name: string;
     payment_method: string;
     bus_no: string;
@@ -39,274 +45,222 @@ export interface User {
     boarding: string;
     rep_time: string;
     remarks: string;
+    slr: number;
+    st: number;
+    ex: number;
     cmp_name: string;
-
+    ex_rate: number;
+    slr_rate: number;
+    st_rate: number;
+    paid_amount: number;
+    remaining_amount: number;
+    mobile: string;
 }
 
 const customStyle = {
     headRow: {
         style: {
             cursor: 'pointer',
-            fontFamily: 'Arial, sans-serif', // Example font family
-            color: '#333', // Example color
+            fontFamily: 'Arial, sans-serif',
+            color: '#333',
             fontWeight: 'bold',
             fontSize: '14px',
-
-
-
-
-
-
         }
     },
-
     headCells: {
         style: {
             fontSize: '18px',
             fontWeight: '600',
-            textTranForm: 'uppercase'
-
-
+       
         }
     },
-
     cells: {
         style: {
             fontSize: '16px',
-            wordbreak: "break-all",
-
         }
     }
 }
 
 const Page: React.FC = () => {
-
-
     const [records, setRecords] = useState<User[]>([]);
+    const [visibleColumns, setVisibleColumns] = useState<string[]>([
+        "Receipt No", "Customer Name", "From", "To", "Booking Date", "Journey Date",
+        "Amount", "Print Amount", "Mobile-no", "Added By", "Action"
+    ]);
+    const [columnsOptions, setColumnsOptions] = useState<string[]>([
+        "Receipt No", "Customer Name", "From", "To", "Booking Date", "Journey Date",
+        "Amount", "Print Amount", "Mobile-no", "Added By", "Action"
+    ]);
 
     useEffect(() => {
         const fetchData = async () => {
-
             try {
-                GetTicket.getTicketBookData().then((res: any) => {
-                    console.log('GetTicket.getTicketBookData', res);
-                    setRecords(res.data);
-
-                }).catch((e: any) => {
-                    console.log('Err', e);
-
-                })
+                const res = await GetTicket.getTicketBookData();
+                console.log('GetTicket.getTicketBookData', res);
+                setRecords(res.data);
             } catch (error) {
-
+                console.log('Err', error);
             }
-
         };
         fetchData();
     }, []);
 
     const handleDeleteTicket = async (ticketId: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
-
         console.log("id", ticketId);
         const formData = {
             ticket_id: ticketId
         }
-
         try {
-            // Make a POST request to the API endpoint with the ticket ID in the request body
             const response = await axios.post(`http://localhost:3000/ticket/remove_ticket_data`, formData);
             console.log('Ticket deleted successfully:', response.data);
-
-            // Reload the page after successful deletion
             window.location.reload();
-
         } catch (error) {
             console.error('Error deleting ticket:', error);
-            // Handle errors
         }
     };
 
-    // const handleDeleteTicket = async (ticketId: string) => {
-    //     console.log("id",ticketId);
-    //     const formData ={
-    //         ticket_id: ticketId
-    //     }
-
-    //     try {
-    //         // Make a POST request to the API endpoint with the ticket ID in the request body
-    //         const response = await axios.post(`http://localhost:3000/ticket/remove_ticket_data`,formData);
-    //         console.log('Ticket deleted successfully:', response.data);
-    //         // Optionally, you can perform additional actions upon successful deletion, such as updating the UI.
-    //         // For example, you can fetch the updated list of tickets.
-
-    //     } catch (error) {
-    //         console.error('Error deleting ticket:', error);
-    //         // Handle errors
-    //     }
-    // };
-
-
-    // const handleTicketView = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    //     event.preventDefault();
-    //     try {
-    //         GetTicket.getTicketBookData().then((res: any) => {
-    //             console.log('GetTicket.getTicketBookData', res);
-    //             setRecords(res.data);
-
-    //         }).catch((e: any) => {
-    //             console.log('Err', e);
-
-    //         })
-    //     } catch (error) {
-
-    //     }
-    // }
-
-
-
     const handlePrintClick = (row: User) => {
-        handlePrint(row); // Call the imported handlePrint function
+        handlePrint(row);
     };
 
-    const columns = [
+    const handleShare = (row: User) => {
+        handleticketPDF(row);
+    };
+
+    const handleGeneratePDF = () => {
+        exportToPDF(records)
+    };
+
+    const handleExcelExport = () => {
+        exportToExcel(records);
+    };
+
+    const handleCopy = (): void => {
+        if (columns.length === 0) return; 
+
+        const header = columns.map(col => col.name).join(',') + '\n';
+        const rows = records.map(record =>
+            columns.map(col => {
+                const cell = col.selector ? col.selector(record) : '';
+                return typeof cell === 'string' ? cell : '';
+            }).join(',')
+        ).join('\n');
+
+        const csvContent = header + rows;
+
+        navigator.clipboard.writeText(csvContent)
+            .then(() => {
+                console.log('Data copied to clipboard');
+                alert('Data copied to clipboard');
+            })
+            .catch(err => {
+                console.error('Error copying data:', err);
+            });
+    };
+
+    
+
+    const handleColumnVisibilityChange = (column: string, isChecked: boolean) => {
+        setVisibleColumns(prevState => 
+            isChecked ? [...prevState, column] : prevState.filter(col => col !== column)
+        );
+    };
+
+    const columns: TableColumn<User>[] = [
         {
             name: "Receipt No",
             selector: (row: User) => row.tkt_no,
             sortable: true,
             style: {
                 minWidth: '50px',
-                whiteSpace: 'nowrap  !important'
-
-            }
-
+                whiteSpace: 'nowrap'
+            },
+            omit: !visibleColumns.includes("Receipt No")
         },
         {
             name: "Customer Name",
             selector: (row: User) => row.name,
             sortable: true,
-
+            omit: !visibleColumns.includes("Customer Name")
         },
         {
-            name: " From",
+            name: "From",
             selector: (row: User) => `${row.from_state_name}, ${row.from_city_name}`,
-
             sortable: true,
-
+            omit: !visibleColumns.includes("From")
         },
         {
-            name: " To",
+            name: "To",
             selector: (row: User) => `${row.to_state_name}, ${row.to_city_name}`,
-            sortable: true
+            sortable: true,
+            omit: !visibleColumns.includes("To")
         },
         {
             name: "Booking Date",
             selector: (row: User) => row.bdate,
-            sortable: true
+            sortable: true,
+            omit: !visibleColumns.includes("Booking Date")
         },
         {
             name: "Journey Date",
             selector: (row: User) => row.jdate,
-            sortable: true
+            sortable: true,
+            omit: !visibleColumns.includes("Journey Date")
         },
         {
             name: "Amount",
             selector: (row: User) => row.final_total_amount,
             sortable: true,
-
+            omit: !visibleColumns.includes("Amount")
         },
         {
             name: "Print Amount",
             selector: (row: User) => row.print_final_total_amount,
             sortable: true,
-
+            omit: !visibleColumns.includes("Print Amount")
+        },
+        {
+            name: "Mobile-no",
+            selector: (row: User) => row.mobile,
+            sortable: true,
+            style: {
+                display: "none"
+            },
+            omit: !visibleColumns.includes("Mobile-no")
         },
         {
             name: "Added By",
             selector: (row: User) => row.added_by_name,
             sortable: true,
-
+            omit: !visibleColumns.includes("Added By")
         },
         {
             name: "Action",
             style: {
-                minWidth: '100px', // Set width for "Action" column
+                minWidth: '150px', // Adjust as needed
+                display: 'flex',
+                alignItems: 'center' // Center content vertically if needed
             },
             cell: (row: User) => (
                 <div className='designbtn'>
-                    <button className="btn btn-sm btn-success" style={{ color: '#ffffff' }}>Share</button>&nbsp;&nbsp;
+                    <button className="btn btn-sm btn-success" style={{ color: '#ffffff' }} onClick={() => handleShare(row)} >Share</button>&nbsp;&nbsp;
                     <button className="btn btn-sm btn-info" style={{ color: '#ffffff' }} onClick={() => handlePrintClick(row)} >Print</button>&nbsp;&nbsp;
                     <Link href={`ticket_list/Ticket_data?token=${row.token}`} className="btn btn-sm btn-warning" style={{ color: '#ffffff' }}>
-
                         <FontAwesomeIcon icon={faEye} />
                     </Link>&nbsp;
                     <Link href={`ticket_list/Edit?token=${row.token}`} className="btn btn-sm btn-primary">
-
                         <FontAwesomeIcon icon={faPencilSquare} />
                     </Link>
-
                     <button onClick={(e) => handleDeleteTicket(row.id, e)} className="btn btn-sm btn-danger" style={{ cursor: 'pointer', color: '#ffffff' }}>
                         <FontAwesomeIcon icon={faTrash} />
-
                     </button>
                 </div>
-
-            )
-
+            ),
+            omit: !visibleColumns.includes("Action")
         }
-
     ];
 
-
-
-    const generatePDF = () => {
-        const input = document.getElementById('pdf-content') as HTMLElement;
-        html2canvas(input).then((canvas) => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF();
-            const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save('ticket_list.pdf');
-        });
-    };
-
-
-    // const handleFilter = (event: React.ChangeEvent<HTMLInputElement>): void => {
-    //     const searchTerm = event.target.value.toLowerCase();
-    //     const newData = records.filter((row: User) => {
-    //         return (
-    //             row.tkt_no.toLowerCase().includes(searchTerm) ||
-    //             row.name.toLowerCase().includes(searchTerm) ||
-    //             row.final_total_amount.toLowerCase().includes(searchTerm) ||
-    //             row.from_state_name.toLowerCase().includes(searchTerm) ||
-    //             row.to_state_name.toLowerCase().includes(searchTerm) ||
-    //             row.from_city_name.toLowerCase().includes(searchTerm) ||
-    //             row.to_city_name.toLowerCase().includes(searchTerm) ||
-    //             row.bdate.toLowerCase().includes(searchTerm) ||
-    //             row.jdate.toLowerCase().includes(searchTerm) ||
-    //             row.added_by_name.toLowerCase().includes(searchTerm)
-    //         );
-    //     });
-    //     setRecords(newData);
-    // };
-
-
-    const handleFilter = (event: React.ChangeEvent<HTMLInputElement>): void => {
-        const searchTerm = event.target.value.toLowerCase();
-        const newData = records.filter((row: User) =>
-            Object.values(row).some(value =>
-                typeof value === 'string' && value.toLowerCase().includes(searchTerm)
-            )
-        );
-        setRecords(newData);
-    };
-
-
-    // const handleAction = (row: User) => {
-    //     // Implement your action logic here
-    //     console.log("Performing action for row:", row);
-    // };
     return (
         <>
             <Header />
@@ -327,21 +281,32 @@ const Page: React.FC = () => {
                             <span>entries</span>
                         </div>
                         <div className="action-buttons">
-                        <button className="pdf-button" onClick={generatePDF}>PDF</button>
-                        <button className="excel-button">Excel</button>
-                            <button className="copy-button">Copy</button>
-                            <button className="copy-button">
+                            <button className="pdf-button" onClick={handleGeneratePDF}>PDF</button>
+                            <button className="excel-button" onClick={handleExcelExport}>Excel</button>
+                            <button className="copy-button" onClick={handleCopy}>Copy</button>
+                            <button className="copy-button" onClick={() => document.getElementById('column-visibility-menu')?.classList.toggle('show')}>
                                 Column visibility
                             </button>
-
+                        </div>
+                        <div id="column-visibility-menu" className="column-visibility-menu">
+                            {columnsOptions.map(option => (
+                                <div key={option}>
+                                    <input 
+                                        type="checkbox" 
+                                        id={option} 
+                                        checked={visibleColumns.includes(option)} 
+                                        onChange={(e) => handleColumnVisibilityChange(option, e.target.checked)} 
+                                    />
+                                    <label htmlFor={option}>{option}</label>
+                                </div>
+                            ))}
                         </div>
                         <div className='search'>
                             <label>Search&nbsp;</label>
                             <input
                                 type="text"
                                 placeholder="Search..."
-
-                                onChange={handleFilter}
+                                onChange={(e) => {/* Handle filter */}}
                                 className="search-input"
                             />
                         </div>
@@ -353,15 +318,15 @@ const Page: React.FC = () => {
                             data={records}
                             customStyles={customStyle}
                             pagination
-                            paginationPerPage={5}
-                            paginationRowsPerPageOptions={[5, 10, 20, 50]}
+                            paginationPerPage={10}
+                            paginationRowsPerPageOptions={[10, 20, 50]}
                         />
                     </div>
-
                 </div>
             </div>
         </>
     );
-}
+};
 
 export default Page;
+

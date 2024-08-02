@@ -14,6 +14,8 @@ import { useEffect, useState } from 'react';
 import EditParcelDataList from '@/app/Api/EditParcelDataList';
 
 import { useRouter } from 'next/navigation';
+import handleParcelPrint from '@/app/parcel_list/parcel_data/printpparcelUtils';
+import UpdateParcelPrint from '@/app/parcel_list/parcel_data/EditParcelprint';
 
 
 type FormData = {
@@ -49,7 +51,7 @@ type FormData = {
     from_state: string,
     to_state: string,
     book_to: string,
-    added_by: string;
+    last_updated_by: any;
     user_id: any;
 
     pic_address: {
@@ -339,8 +341,9 @@ const EditParcelData = () => {
                 bilty_charge: 20,
                 lr_no: 0,
                 actual_payable_amount: 0,
-                added_by: parcelData.user_id || '',
-                user_id: storedData
+                user_id: storedData,
+                last_updated_by: storedData,
+        
 
 
 
@@ -897,6 +900,47 @@ const EditParcelData = () => {
         console.log("datadddd", formData)
 
         try {
+
+
+
+            let fromStateName = '';
+            let toStateName = '';
+            let fromCityName = '';
+            let toCityName = '';
+
+            const selectedFromStateIdStr = String(selectedFromStateId);
+            const selectedToStateIdStr = String(selectedToStateId);
+        
+            // Fetch state names directly from the `fromStates` and `toStates` arrays
+            const fromState = fromStates.find(state => String(state.id) === selectedFromStateIdStr);
+            const toState = toStates.find(state => String(state.id) === selectedToStateIdStr);
+        
+            if (fromState) {
+              fromStateName = fromState.name;
+            }
+            if (toState) {
+              toStateName = toState.name;
+            }
+        
+            // Fetch city names directly from the `fromCities` and `toCities` arrays
+            const fromCity = fromCities.find(city => String(city.id) === formData.travel_from);
+            const toCity = toCities.find(city => String(city.id) === formData.travel_to);
+        
+            if (fromCity) {
+                fromCityName = fromCity.city_name;
+              }
+              if (toCity) {
+                toCityName = toCity.city_name;
+              }
+  
+            formData.from_state = selectedFromStateIdStr;
+            formData.to_state = selectedToStateIdStr;
+            formData.from_state_name = fromStateName;
+            formData.to_state_name = toStateName;
+            formData.from_city_name = fromCityName;
+            formData.to_city_name = toCityName;
+
+
             if (showCustomCityInput && customCity) {
                 const response = await axios.post('http://localhost:3000/ticket/add_new_city_from_state', {
                     city_name: customCity,
@@ -918,6 +962,9 @@ const EditParcelData = () => {
             const response = await axios.post(`http://localhost:3000/parcel/update_parcel_detail_data`, formData);
 
             console.log('Form submitted successfully:', response.data);
+            UpdateParcelPrint(formData);
+
+
             router.push('/parcel_list');
 
         } catch (error) {

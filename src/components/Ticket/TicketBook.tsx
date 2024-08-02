@@ -13,6 +13,8 @@ import ticketNo from '@/app/Api/ticketNo';
 import { useRouter } from 'next/navigation';
 import { log } from 'console';
 import UserProfile from '@/app/Api/UserProfile';
+import EditTicketData from '@/app/Api/EditTicketData';
+import handlePrint from '@/app/ticket_list/Ticket_data/printUtils';
 
 
 
@@ -346,12 +348,41 @@ function TicketBook() {
 
         // Submit the form
         const ticketDataResponse = await submitFormData(formData);
-        if (!ticketDataResponse.ok) {
+        if (ticketDataResponse.ok) {
+            const ticketData = await ticketDataResponse.json();
+            console.log('Created ticket data:', ticketData);
+            router.push("/ticket_list")
+
+            
+            if (ticketData.ticket_token != "") {
+                const ticketToken = ticketData.ticket_token;
+                try {
+                    const getTDetail = await EditTicketData.getEditTicktetData(ticketToken);
+
+
+                    console.log("get data", getTDetail.data[0]);
+                    handlePrint(getTDetail.data[0])
+                } catch (error) {
+
+                    console.error('Error fetching ticket data:', error);
+                }
+
+            }
+        } else {
             throw new Error('Failed to create ticket data');
         }
 
-        const ticketData = await ticketDataResponse.json();
-        console.log('Created ticket data:', ticketData);
+
+
+
+        // await getTicketDetail(ticketData.ticket_token);
+
+
+
+
+        // console.log("tttttttttttttt", ticketData.ticket_token);
+
+
     };
 
 
@@ -373,19 +404,18 @@ function TicketBook() {
         return await response.json();
     }
 
+
+
     async function submitFormData(formData: FormData) {
-
-
         const response = await fetch('http://localhost:3000/ticket/create_ticket_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(formData),
-            
         });
-        router.push('/ticket_list');
 
+        console.log("Response from form submission:", response);
         return response;
     }
 
@@ -393,9 +423,13 @@ function TicketBook() {
 
 
 
-//     // const onSubmit: SubmitHandler<FormData> = async (formData: any) => {
-//     //     console.log(formData)
-// }
+
+
+
+
+    //     // const onSubmit: SubmitHandler<FormData> = async (formData: any) => {
+    //     //     console.log(formData)
+    // }
 
     // const onSubmit: SubmitHandler<FormData> = (data) => {
     //     console.log(data)
@@ -458,20 +492,20 @@ function TicketBook() {
                             <div className='row mb-3'>
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="from">From State</label>
-                                        <select
-                                            id="from_state_select"
-                                            {...register('from_state', { required: true })}
-                                            value={selectedFromStateId}
-                                            onChange={(e) => handleStateChange(e, true)}
-                                            className="form-control form-control-sm set_option_clr"
-                                        >
-                                            <option value="">--Select--</option>
-                                            {fromStates.map((state) => (
-                                                <option key={state.id} value={state.id}>
-                                                    {state.name}
-                                                </option>
-                                            ))}
-                                        </select>
+                                    <select
+                                        id="from_state_select"
+                                        {...register('from_state', { required: true })}
+                                        value={selectedFromStateId}
+                                        onChange={(e) => handleStateChange(e, true)}
+                                        className="form-control form-control-sm set_option_clr"
+                                    >
+                                        <option value="">--Select--</option>
+                                        {fromStates.map((state) => (
+                                            <option key={state.id} value={state.id}>
+                                                {state.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="from">From</label>
@@ -569,12 +603,12 @@ function TicketBook() {
 
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="bdate">Booking date</label>
-                                    <input  {...register('bdate')} className="form-control form-control-sm" type="date" id="bdate" placeholder="Enter Booking date" defaultValue={currentDate}                 min={currentDate} />
+                                    <input  {...register('bdate')} className="form-control form-control-sm" type="date" id="bdate" placeholder="Enter Booking date" defaultValue={currentDate} min={currentDate} />
                                 </div>
 
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="jdate">Journey date</label>
-                                    <input  {...register('jdate')} className="form-control form-control-sm" type="date" id="jdate" placeholder="Enter J.date" defaultValue={currentDate}  min={currentDate} />
+                                    <input  {...register('jdate')} className="form-control form-control-sm" type="date" id="jdate" placeholder="Enter J.date" defaultValue={currentDate} min={currentDate} />
 
                                 </div>
 
@@ -657,7 +691,7 @@ function TicketBook() {
                                     <div className="row mb-3">
                                         <div className="col-lg-2 col-sm-2">
                                             <label className="form-label">No Of Sleeper</label>
-                                            <input {...register('slr')} className="form-control form-control-sm" value={watch('slr') > 0 ? watch('slr') : ''} type="number"  placeholder='Enter slr'/>
+                                            <input {...register('slr')} className="form-control form-control-sm" value={watch('slr') > 0 ? watch('slr') : ''} type="number" placeholder='Enter slr' />
                                         </div>
                                         <div className="col-lg-2 col-sm-2">
                                             <label className="form-label">Sleeper Rate</label>
@@ -676,8 +710,14 @@ function TicketBook() {
                                             <input readOnly className="form-control-plaintext" type="number" value={watch('slr_total_print_rate')} />
                                         </div>
                                         <div className="col-lg-2 col-sm-2">
-                                            <label className="form-label">SI No</label> 
-                                            <input {...register('sI_no')} className="form-control form-control-sm" type="text" placeholder='Enter Sl No'/>
+                                            <label className="form-label">SI No</label>
+                                            <input {...register('sI_no',
+                                                {
+                                                    required: true
+                                                }
+                                            )} className="form-control form-control-sm" type="text" placeholder='Enter Sl No' />
+                                            {errors.sI_no?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
                                         </div>
                                     </div>
                                 </div>
@@ -688,7 +728,7 @@ function TicketBook() {
                                     <div className="row mb-3">
                                         <div className="col-lg-2 col-sm-2">
                                             <label className="form-label">No Of Seater</label>
-                                            <input {...register('st')} className="form-control form-control-sm" value={watch('st') > 0 ? watch('st') : ''} type="number" placeholder='Enter st'/>
+                                            <input {...register('st')} className="form-control form-control-sm" value={watch('st') > 0 ? watch('st') : ''} type="number" placeholder='Enter st' />
                                         </div>
                                         <div className="col-lg-2 col-sm-2">
                                             <label className="form-label">Seater Rate</label>
@@ -704,11 +744,17 @@ function TicketBook() {
                                         </div>
                                         <div className="col-lg-2 col-sm-2">
                                             <label className="form-label">Total Print Amount</label>
-                                            <input readOnly className="form-control-plaintext"  type="number" value={watch('st_total_print_rate')} />
+                                            <input readOnly className="form-control-plaintext" type="number" value={watch('st_total_print_rate')} />
                                         </div>
                                         <div className="col-lg-2 col-sm-2">
                                             <label className="form-label">St No.</label>
-                                            <input {...register('st_no')} className="form-control form-control-sm"  placeholder='Enter St No.' type="text" />
+                                            <input {...register('st_no',
+                                                {
+                                                    required:true
+                                                }
+                                            )} className="form-control form-control-sm" placeholder='Enter St No.' type="text" />
+                                            {errors.st_no?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
                                         </div>
                                     </div>
                                 </div>
@@ -736,7 +782,7 @@ function TicketBook() {
                                             <label className="form-label">Total Print Amount</label>
                                             <input readOnly className="form-control-plaintext" type="number" value={watch('ex_total_print_rate')} />
                                         </div>
-                                       
+
                                     </div>
                                 </div>
                             )}
@@ -744,29 +790,49 @@ function TicketBook() {
                             <div className="row mb-3">
                                 <div className="col-lg-6">
                                     <label className="form-label">Reporting Time</label>
-                                    <input {...register('rep_time')} className="form-control form-control-sm" type="time" />
+                                    <input {...register('rep_time', {
+                                        required: true,
+                                    })} className="form-control form-control-sm" type="time" />
+                                    {errors.rep_time?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
                                 </div>
                                 <div className="col-lg-6">
                                     <label className="form-label">Departure Time</label>
-                                    <input {...register('dep_time')} className="form-control form-control-sm" type="time" required />
+                                    <input {...register('dep_time', {
+                                        required: true,
+                                    })} className="form-control form-control-sm" type="time" />
+                                    {errors.dep_time?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
                                 </div>
                             </div>
 
                             <div className="row mb-3">
                                 <div className="col-lg-6">
                                     <label className="form-label">Bus Name</label>
-                                    <input {...register('bus_name')} placeholder='Enter Bus name' className="form-control form-control-sm" type="text" required />
+                                    <input {...register('bus_name', {
+                                        required: true,
+                                    })} placeholder='Enter Bus name' className="form-control form-control-sm" type="text" />
+                                    {errors.bus_name?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
                                 </div>
                                 <div className="col-lg-6">
                                     <label className="form-label">Bus No.</label>
-                                    <input {...register('bus_no')} placeholder='Enter Bus no' className="form-control form-control-sm" type="text" />
+                                    <input {...register('bus_no', {
+                                        required: true,
+                                    })} placeholder='Enter Bus no' className="form-control form-control-sm" type="text" />
+                                    {errors.bus_no?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
                                 </div>
                             </div>
 
                             <div className="row mb-3">
                                 <div className="col-lg-6">
                                     <label className="form-label">Boarding</label>
-                                    <input {...register('boarding')} placeholder='Enter Boarding' className="form-control form-control-sm" type="text" required />
+                                    <input {...register('boarding', {
+                                        required: true
+                                    })} placeholder='Enter Boarding' className="form-control form-control-sm" type="text" />
+                                    {errors.boarding?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
                                 </div>
                             </div>
 

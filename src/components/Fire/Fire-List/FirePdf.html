@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export to PDF</title>
+    <style>
+        #app {
+            font-family: "Avenir", Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-align: center;
+            color: #2c3e50;
+            margin-top: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <button onclick="exportToPDF()">Export to PDF</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.2/html2pdf.bundle.min.js"></script>
+    <script>
+        function toDataUrl(url) {
+            return new Promise((resolve, reject) => {
+                var xhr = new XMLHttpRequest();
+                xhr.onload = function () {
+                    var reader = new FileReader();
+                    reader.onloadend = function () {
+                        resolve(reader.result);
+                    };
+                    reader.readAsDataURL(xhr.response);
+                };
+                xhr.onerror = () => {
+                    reject({
+                        status: this.status,
+                        statusText: xhr.statusText,
+                    });
+                };
+                xhr.open("GET", url);
+                xhr.responseType = "blob";
+                xhr.send();
+            });
+        }
+
+        async function exportToPDF() {
+            let imagesUrls = [
+                "https://img-19.commentcamarche.net/cI8qqj-finfDcmx6jMK6Vr-krEw=/1500x/smart/b829396acc244fd484c5ddcdcb2b08f3/ccmcms-commentcamarche/20494859.jpg",
+                "https://img-19.commentcamarche.net/cI8qqj-finfDcmx6jMK6Vr-krEw=/1500x/smart/b829396acc244fd484c5ddcdcb2b08f3/ccmcms-commentcamarche/20494859.jpg",
+                "https://img-19.commentcamarche.net/cI8qqj-finfDcmx6jMK6Vr-krEw=/1500x/smart/b829396acc244fd484c5ddcdcb2b08f3/ccmcms-commentcamarche/20494859.jpg"
+            ];
+
+            let content = "";
+            content += "<h1> Test of html2pdf </h1>";
+
+            // Converting images to base64 and adding to content
+            for (let url of imagesUrls) {
+                let urlBase64 = await toDataUrl(url);
+                content += `<img src="${urlBase64}" width="600" /><br>`;
+            }
+
+            content += "<h3> End of test </h3>";
+
+            const element = document.createElement('div');
+            element.innerHTML = content;
+
+            html2pdf()
+                .from(element)
+                .set({
+                    margin: 1,
+                    filename: 'document.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { dpi: 192, letterRendering: true },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+                })
+                .save();
+        }
+    </script>
+</body>
+</html>

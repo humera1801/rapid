@@ -1,0 +1,110 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.container {
+    width: 900px;
+    margin: 40px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    /* Added margin bottom for spacing */
+}
+
+.logo {
+    flex: 1;
+    /* Takes up 1 part of the available space */
+}
+
+.logo img {
+    height: 80px;
+    width: auto;
+}
+
+.address {
+    flex: 1;
+    /* Adjusted to take up equal space */
+    font-size: 18px;
+    font-weight:500;
+}
+
+.address>div {
+    margin-bottom: 5px;
+}
+
+.separator {
+    border-top: 1px solid #ddd;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+h1 {
+    font-size: 24px;
+    margin-top: 0;
+    text-align: center;
+    color: #221b1a;
+    margin-bottom: 20px;
+}
+
+p {
+    line-height: 1.6;
+    font-size: 16px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th,
+td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+}
+
+.footer {
+    text-align: center;
+    font-size: 14px;
+    margin-top: 30px;
+}
+
+.add {
+    text-align: center;
+    background-color: #b9bacf;
+    padding: 5px;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* Style for the PDF button */
+.pdf-button {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.pdf-button button {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+}
+.formate{
+    display: flex;
+    align-items: center;
+}

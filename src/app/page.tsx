@@ -22,28 +22,7 @@ const Page: React.FC = () => {
   const router = useRouter();
 
 
-  // const onSubmit = async (formData: FormData) => {
-  //   try {
-  //     const response = await axios.post('http://localhost:3000/auth/user_login', {
-  //       email: formData.email,
-  //       password: formData.password
-  //     });
-  //     console.log('API Response:', response.data);
-  //     const { status, message, data } = response.data;
-  //     if (status === 1) {
-
-  //       console.log(message);
-  //       console.log('User ID:', data); // 14
-  //       router.push('/Home');
-  //     } else {
-
-  //       setError('Error logging in. Please try again.');      }
-  //   } catch (error) {
-
-  //     setError('Error logging in. Please try again.');
-  //     console.error('Login Error:', error);
-  //   }
-  // };
+  
   const onSubmit = async (formData: FormData): Promise<void> => {
     try {
       const { email, password, device_id, device_type, fcm_token } = formData;
@@ -94,6 +73,7 @@ const Page: React.FC = () => {
   
 
   return (
+    
     <div className="container">
       <section className="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
         <div className="container">

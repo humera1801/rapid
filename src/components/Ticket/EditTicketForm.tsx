@@ -13,6 +13,7 @@ import ticketNo from '@/app/Api/ticketNo';
 import { useRouter } from 'next/navigation';
 
 import EditTicketData from '@/app/Api/EditTicketData';
+import handleUpdatePrint from '@/app/ticket_list/Ticket_data/EditPrint';
 
 
 
@@ -23,7 +24,7 @@ type FormData = {
   to_state: string,
   travel_to: string,
   bus_type: string,
-  ticket_no: string,
+  tkt_no: string,
   bdate: string;
   jdate: string;
   mobile_no: string;
@@ -65,12 +66,18 @@ type FormData = {
   remarks: string;
   user_id: any;
   received: 'Get'
+  from_state_name: string;
+  to_state_name: string;
+  from_city_name: string;
+  to_city_name: string;
+  ticket_no:string
 
 };
 
 
 
 interface City {
+  name: string;
   id: number;
   city_name: string;
   state_id: string;
@@ -226,7 +233,6 @@ function EditForm() {
       ticket_id: ticketData.id || '',
       from_state: '',
       travel_from: '',
-
       to_state: '',
       travel_to: '',
       is_duplicate: ticketData.is_duplicate,
@@ -411,31 +417,85 @@ function EditForm() {
 
   const onSubmit: SubmitHandler<FormData> = async (formData: any) => {
     try {
+      // Initialize state and city names
+      let fromStateName = '';
+      let toStateName = '';
+      let fromCityName = '';
+      let toCityName = '';
+  
+      // Initialize tkt_no variable
+      const tkt_no = formData.ticket_no;
+  
+      // Convert state.id to a string
+      const selectedFromStateIdStr = String(selectedFromStateId);
+      const selectedToStateIdStr = String(selectedToStateId);
+  
+      // Fetch state names directly from the `fromStates` and `toStates` arrays
+      const fromState = fromStates.find(state => String(state.id) === selectedFromStateIdStr);
+      const toState = toStates.find(state => String(state.id) === selectedToStateIdStr);
+  
+      if (fromState) {
+        fromStateName = fromState.name;
+      }
+      if (toState) {
+        toStateName = toState.name;
+      }
+  
+      // Fetch city names directly from the `fromCities` and `toCities` arrays
+      const fromCity = fromCities.find(city => String(city.id) === formData.travel_from);
+      const toCity = toCities.find(city => String(city.id) === formData.travel_to);
+  
+      if (fromCity) {
+        fromCityName = fromCity.city_name;
+      }
+      if (toCity) {
+        toCityName = toCity.city_name;
+      }
+  
+      // Custom city handling if applicable
       if (showCustomCityInput && customCity) {
         const response = await axios.post('http://localhost:3000/ticket/add_new_city_from_state', {
           city_name: customCity,
-          state_id: selectedFromStateId,
+          state_id: selectedFromStateIdStr,
         });
         formData.travel_from = response.data.city_id; // Assuming API returns city_id
+        fromCityName = customCity;
       }
-
+  
       if (showCustomToCityInput && customToCity) {
         const response = await axios.post('http://localhost:3000/ticket/add_new_city_from_state', {
           city_name: customToCity,
-          state_id: selectedToStateId,
+          state_id: selectedToStateIdStr,
         });
         formData.travel_to = response.data.city_id; // Assuming API returns city_id
+        toCityName = customToCity;
       }
-      formData.from_state = selectedFromStateId;
-      formData.to_state = selectedToStateId;
-      const response = await axios.post(`http://localhost:3000/ticket/update_ticket_detail_data`, formData);
+  
+      // Populate formData with state and city names
+      formData.from_state = selectedFromStateIdStr;
+      formData.to_state = selectedToStateIdStr;
+      formData.from_state_name = fromStateName;
+      formData.to_state_name = toStateName;
+      formData.from_city_name = fromCityName;
+      formData.to_city_name = toCityName;
+  
+      // Set tkt_no in formData (if needed to include it)
+      formData.tkt_no = tkt_no;
+  
+      // Submit the final form data
+      const response = await axios.post('http://localhost:3000/ticket/update_ticket_detail_data', formData);
       console.log('Form submitted successfully:', response.data);
+      handleUpdatePrint(formData);
       router.push('/ticket_list');
     } catch (error) {
       console.error('Error submitting form:', error);
       // Handle errors
     }
   };
+  
+  
+
+  
 
   const handleShowCustomCityInput = () => {
     setShowCustomCityInput(true);

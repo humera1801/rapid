@@ -49,7 +49,7 @@ const FireIngredient = () => {
 
     const onSubmit = async (FormData: any) => {
         try {
-            const response = await axios.post('http://192.168.0.111:3001/ingredient/add_new_ingredient_type', FormData);
+            const response = await axios.post('http://192.168.0.105:3001/ingredient/add_new_ingredient_type', FormData);
             console.log('Ingredient added successfully:', response.data);
             await fetchData();
             reset();
@@ -75,7 +75,7 @@ const FireIngredient = () => {
     const handleEditSubmit = async (FormData: any) => {
         try {
             if (!editingredients) return;
-            const response = await axios.post('http://192.168.0.111:3001/ingredient/edit_fire_ingredient_data', {
+            const response = await axios.post('http://192.168.0.105:3001/ingredient/edit_fire_ingredient_data', {
                 ...FormData,
                 feit_id: editingredients.feit_id
             });

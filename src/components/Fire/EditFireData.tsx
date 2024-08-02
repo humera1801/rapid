@@ -10,11 +10,11 @@ import axios from 'axios';
 import { debounce } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-
+import { useRouter } from 'next/navigation';
 
 
 export interface FormData {
-
+    febking_id:any;
     febking_total_sgst: any;
     febking_total_cgst: any;
     febking_entry_type: 1;
@@ -27,8 +27,14 @@ export interface FormData {
     email: string;
     gstNo: string;
     mobileNo: string;
+    client_city: string;
+    client_state: string;
+    client_pincode: string;
     vendorCode: string;
     client_id: any,
+    city:string;
+    state:string;
+    pincode:string;
     invNo: string;
     certificateNo: string;
     poNo: string;
@@ -82,9 +88,29 @@ interface ClientData {
     client_email: string;
     client_gstNo: string;
     client_mobileNo: string;
+    client_city:string;
+    client_state:string;
+    client_pincode:string;
     poNo: string;
     vendorCode: string;
 }
+
+interface Client{
+    client_id: any,
+    firstName: string;
+    address: string;
+    email: string;
+    gstNo: string;
+    mobileNo: string;
+    vendorCode: string;
+    poNo: string;
+    city:string;
+    state:string;
+    pincode:string;
+}
+
+
+
 
 interface CapacityData {
     feit_id: number;
@@ -94,28 +120,33 @@ interface CapacityData {
 const EditFormData = () => {
 
     //-------------------------------------------------------------------------------------------------------------------------------------
-    const storedData = localStorage.getItem('userData');
-
-
-    const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>({
-        defaultValues: {
-            febking_created_by: storedData,
-            febking_entry_type: 1,
-            product_data: [],
-            febking_total_amount: '0.00',
-            febking_total_sgst: '0.00',
-            febking_total_cgst: '0.00',
-            febking_final_amount: '0.00',
-            firstName: '',
-            address: '',
-            email: '',
-            gstNo: '',
-            vendorCode: '',
-            poNo: '',
-            mobileNo: '',
-        }
-    });
+   
     //---------------------------------------get id data --------------------------------------------------------------------------
+  
+  
+    const [formData, setFormData] = useState<Client>({
+        client_id:"",
+        firstName: '',
+        address: '',
+        email: '',
+        gstNo: '',
+        vendorCode: '',
+        poNo: '',
+        mobileNo: '',
+        city:"",
+        state:"",
+        pincode:"",
+    });
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
     const [fireData, setFireData] = useState<any>("");
     const [error, setError] = useState<string>('');
 
@@ -130,7 +161,49 @@ const EditFormData = () => {
                 if (febking_id) {
                     const response = await getFireBookingId.GetFireBookingId(febking_id);
                     setFireData(response.data[0]);
-                    
+
+                    if (response.data && response.data.length > 0) {
+                        const client_id = response.data[0].client_id;
+                        setSelectedClientId(client_id);
+                        // Set form data based on fetched client details
+                        setFormData({
+                            client_id: response.data[0].client_id,
+                            firstName: response.data[0].firstName,
+                            address: response.data[0].address,
+                            email: response.data[0].email,
+                            gstNo: response.data[0].gstNo,
+                            vendorCode: response.data[0].vendorCode,
+                            poNo: response.data[0].poNo,
+                            mobileNo: response.data[0].mobileNo,
+                            city: response.data[0].client_city,
+                            state: response.data[0].client_state,
+                            pincode: response.data[0].client_pincode,
+                        });
+                        setInputValue(response.data[0].firstName);
+
+                        setValue("febking_id", response.data[0].febking_id);
+                        setValue("client_id",response.data[0].client_id)
+                        setValue("firstName", response.data[0].firstName);
+                        setValue("address", response.data[0].address);
+                        setValue("email", response.data[0].email);
+                        setValue("gstNo", response.data[0].gstNo);
+                        setValue("vendorCode", response.data[0].vendorCode);
+                        setValue("poNo", response.data[0].poNo);
+                        setValue("mobileNo",response.data[0].mobileNo);
+                        setValue("client_city", response.data[0].client_city);
+                        setValue("client_state", response.data[0].client_state);
+                        setValue("client_pincode",response.data[0].client_pincode);
+                        setMobileNoValue( response.data[0].mobileNo);
+                   
+
+                    }
+
+
+
+
+
+
+
                     setError('');
                 } else {
                     setError('Id not found.');
@@ -173,9 +246,33 @@ const EditFormData = () => {
         }
     };
 
+//-------------------------------------------------------------------------------------------------------------------------------------
+    const storedData = localStorage.getItem('userData');
 
 
-    
+    const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>({
+        defaultValues: {
+            febking_id:fireData.febking_id || '',
+            febking_created_by: storedData,
+            febking_entry_type: 1,
+            fest_id:"",
+            product_data: [],
+            febking_total_amount: '0.00',
+            febking_total_sgst: '0.00',
+            febking_total_cgst: '0.00',
+            febking_final_amount: '0.00',
+            client_id:"",
+            firstName: '',
+            address: '',
+            email: '',
+            gstNo: '',
+            vendorCode: '',
+            poNo: '',
+            mobileNo: '',
+        }
+    });
+
+
     //-----------------------------------------get data ----------------------------------------------------------------------------
     useEffect(() => {
         // Populate form fields when fireData changes
@@ -471,7 +568,7 @@ const EditFormData = () => {
         const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
         if (value.length <= 10) { // Restrict to 10 digits
             setMobileNoValue(value);
-            setValue("mobileNo", value); // Update form value
+            setValue("mobileNo", value); 
         }
     };
 
@@ -482,7 +579,7 @@ const EditFormData = () => {
             return;
         }
         fetchclientData(value);
-    }, 100);
+    }, 10);
 
     const fetchclientData = async (value: string) => {
         try {
@@ -519,14 +616,29 @@ const EditFormData = () => {
         debounceApiCall(value);
     };
 
- 
+    
     const handleSelectClient = (clientId: number) => {
+        setSelectedClientId(null);
+        setIsAddingNewClient(true);
+        setInputValue('');
+        setFilteredClients([]);
+        // Clear existing form values
+        setValue("client_id","")
+        setValue("firstName", '');
+        setValue("address", '');
+        setValue("email", '');
+        setValue("gstNo", '');
+        setValue("vendorCode", '');
+        setValue("poNo", '');
+        setValue("mobileNo", '');
+        setMobileNoValue('');
         setSelectedClientId(clientId);
         setInputValue(clientData.find(client => client.client_id === clientId)?.client_firstName || '');
         setFilteredClients([]);
 
         const selectedClient = clientData.find(client => client.client_id === clientId);
         if (selectedClient) {
+            setValue("client_id", clientId);
             setValue("firstName", selectedClient.client_firstName);
             setValue("address", selectedClient.client_address);
             setValue("email", selectedClient.client_email);
@@ -534,6 +646,9 @@ const EditFormData = () => {
             setValue("vendorCode", selectedClient.vendorCode);
             setValue("poNo", selectedClient.poNo);
             setValue("mobileNo", selectedClient.client_mobileNo);
+            setValue("client_city", selectedClient.client_city);
+            setValue("client_state", selectedClient.client_state);
+            setValue("client_pincode", selectedClient.client_pincode);
             setMobileNoValue(selectedClient.client_mobileNo); // Update mobileNoValue state
         }
     };
@@ -544,6 +659,7 @@ const EditFormData = () => {
         setInputValue('');
         setFilteredClients([]);
         // Clear existing form values
+        setValue("client_id","")
         setValue("firstName", '');
         setValue("address", '');
         setValue("email", '');
@@ -551,34 +667,34 @@ const EditFormData = () => {
         setValue("vendorCode", '');
         setValue("poNo", '');
         setValue("mobileNo", '');
+        setValue("client_city", '');
+        setValue("client_state", '');
+        setValue("client_pincode", '');
         setMobileNoValue('');
     };
 
 
 
-
+    const router = useRouter();
 
 
     const onSubmit = async (FormData: any) => {
 
         console.log("form submit",FormData);
+        console.log("form submit",mobileNoValue);
         
 
-        // try {
+        try {
  
-        //     const response = await axios.post('http://192.168.0.111:3001/booking/edit_fire_extingusher_booking_detail', {
-        //         ...FormData,
-        //         // feit_id: editingredients.feit_id
-        //     });
-        //     console.log('Ingredient updated successfully:', response.data);
+            const response = await axios.post('http://192.168.0.105:3001/booking/edit_fire_extingusher_booking_detail',FormData);
+            router.push('/Fire/Fire-List');
+            console.log('Ingredient updated successfully:', response.data);
        
           
-        // } catch (error) {
-        //     console.error('Error updating ingredient:', error);
-        // }
+        } catch (error) {
+            console.error('Error updating ingredient:', error);
+        }
     };
-
-
 
 
 
@@ -605,7 +721,8 @@ const EditFormData = () => {
                                     <div key={index} className="form-check mb-2" style={{ marginRight: '20px' }}>
                                         <input
                                             type="radio"
-                                            name="fest_id"
+                                          
+                                            {...register("fest_id", { required: true })}
                                             value={service.fest_id}
                                             checked={fireData.fest_id === service.fest_id}
                                             onChange={() => handleServiceSelection(index)}
@@ -933,14 +1050,54 @@ const EditFormData = () => {
                                     </div>
                                 </div>
 
-                                <div className="col-lg-4">
+                                <div className="col-lg-2">
                                     <label className="form-label" htmlFor="address">Address</label>
                                     <textarea
                                         {...register("address", { required: true })}
+                                       
                                         className="form-control form-control-sm"
                                         id="address"
                                         placeholder="Enter Address"
                                     />
+                                </div>
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="state">State</label>
+                                    <input
+                                        {...register("client_state", { required: true })}
+                                        className="form-control form-control-sm"
+                                        id="state"
+                                        placeholder="Enter state"
+                                    />
+                                    {errors?.client_state?.type === "required" && <span className="error">This field is required</span>}
+
+                                </div>
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="city">city</label>
+                                    <input
+                                        {...register("client_city", { required: true })}
+                                        className="form-control form-control-sm"
+                                        id="city"
+                                        placeholder="Enter city"
+                                    />
+                                    {errors?.client_city?.type === "required" && <span className="error">This field is required</span>}
+
+                                </div>
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="pincode">Pin-Code:</label>
+                                    <input
+                                        {...register("client_pincode", {
+                                            required: true,
+                                            maxLength: 6,
+                                            minLength: 6
+
+                                        })}
+                                        className="form-control form-control-sm"
+                                        id="pincode"
+                                        placeholder="Enter pincode"
+                                    />
+                                    {errors?.client_pincode?.type === "required" && <span className="error">This field is required</span>}
+                                    {errors?.client_pincode?.type === "minLength" && <span className="error">Enter valid Pin-code number. </span>}
+                                    {errors?.client_pincode?.type === "maxLength" && <span className="error">Enter valid Pin-code number .</span>}
                                 </div>
 
                                 <div className="col-lg-4">
@@ -1013,7 +1170,7 @@ const EditFormData = () => {
                             <div className="row mb-3">
                                 <div className="col-12">
                                     <button type="submit" className="btn btn-primary">
-                                        Submit
+                                        Update
                                     </button>
                                 </div>
                             </div>

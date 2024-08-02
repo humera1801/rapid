@@ -13,6 +13,8 @@ import CityList from '@/app/Api/CityList';
 import receiptNo from '@/app/Api/receiptNo';
 import UserProfile from '@/app/Api/UserProfile';
 import { useRouter } from 'next/navigation';
+import EditParcelDataList from '@/app/Api/EditParcelDataList';
+import handleParcelPrint from '@/app/parcel_list/parcel_data/printpparcelUtils';
 
 
 
@@ -127,7 +129,7 @@ interface State {
 
 const ParcelBook: React.FC = () => {
 
-    
+
     const storedData = localStorage.getItem('userData');
 
 
@@ -145,8 +147,8 @@ const ParcelBook: React.FC = () => {
                 rec_mob: '',
                 send_add: '',
                 rec_add: '',
-                gst_amount:'',
-                print_gst_amount:'',
+                gst_amount: '',
+                print_gst_amount: '',
                 sender_proof_type: '',
                 reciver_proof_type: '',
                 pic_delivery_type: '',
@@ -176,7 +178,6 @@ const ParcelBook: React.FC = () => {
                 user_id: storedData,
                 received: 'Get',
                 qty_total: 0,
-                bilty_charge:20,
 
 
             }
@@ -186,7 +187,7 @@ const ParcelBook: React.FC = () => {
     const is_delivery = watch('is_delivery');
     const is_demurrage = watch('is_demurrage')
 
-    
+
     //------------------------------------------------------check box-----------------------------------------------------------------------------------------
 
 
@@ -227,63 +228,45 @@ const ParcelBook: React.FC = () => {
 
     // useEffect to handle calculations
     useEffect(() => {
-        // Calculate total charge
         const totalCharge = parseFloat(picCharge.toString()) + parseFloat(disCharge.toString());
         setValue('transport_charge', totalCharge);
 
-        
-
         const newTotalAmount = parcelDetail.reduce((sum, parcel) => sum + parcel.total_amount, 0);
         const formattedNewTotalAmount = newTotalAmount.toFixed(2);
-        setValue('actual_total', formattedNewTotalAmount); 
+        setValue('actual_total', formattedNewTotalAmount);
 
-
-
-        // Calculate GST amounts
         const gstAmount = (newTotalAmount + totalCharge) * 0.05;
         setValue('gst_amount', gstAmount.toFixed(2));
 
-        // Calculate totalPrintAmount
 
         const totalPrintAmount = parcelDetail.reduce((sum, parcel) => {
             const totalPrintRate = parseFloat(parcel.total_print_rate?.toString() || '0'); // Handle undefined or null
             return sum + totalPrintRate;
         }, 0);
 
-
-        // Calculate printGstAmount
         const printGstAmount = (totalPrintAmount + totalCharge) * 0.05;
         setValue('print_gst_amount', printGstAmount.toFixed(2));
 
-        // Calculate actualPayableAmount and printPayableAmount
-        const blityCharge = parseFloat(watch('bilty_charge').toString());
+        // const blityCharge = parseFloat(watch('bilty_charge').toString(20));
 
-        const actualPayableAmount = newTotalAmount + gstAmount + blityCharge + totalCharge;
-        setValue('actual_payable_amount', actualPayableAmount);
-
-        
-
-        const printPayableAmount = totalPrintAmount + printGstAmount + blityCharge + totalCharge;
-        setValue('print_payable_amount', printPayableAmount);
+        // const actualPayableAmount = newTotalAmount + gstAmount + blityCharge + totalCharge;
+        // setValue('actual_payable_amount', actualPayableAmount);
 
 
 
+        // const printPayableAmount = totalPrintAmount + printGstAmount + blityCharge + totalCharge;
+        // setValue('print_payable_amount', printPayableAmount);
 
-        // Calculate actual_bal_amount and print_bal_amount
-        const actualPaidAmount = watch('actual_paid_amount') || 0;
-        const printPaidAmount = watch('print_paid_amount') || 0;
+        // const actualPaidAmount = watch('actual_paid_amount') || 0;
+        // const printPaidAmount = watch('print_paid_amount') || 0;
 
-        const actualBalAmount = actualPayableAmount - actualPaidAmount;
-        setValue('actual_bal_amount', actualBalAmount);
+        // const actualBalAmount = actualPayableAmount - actualPaidAmount;
+        // setValue('actual_bal_amount', actualBalAmount);
 
-        const printBalAmount = printPayableAmount - printPaidAmount;
-        setValue('print_bal_amount', printBalAmount);
+        // const printBalAmount = printPayableAmount - printPaidAmount;
+        // setValue('print_bal_amount', printBalAmount);
 
-    }, [picCharge, disCharge, parcelDetail, watch, setValue]);
-
-
-
-
+    }, [picCharge, disCharge, parcelDetail, watch, setValue ]);
 
     const calculateAmounts = (index: number) => {
         const qty = watch(`parcel_detail.${index}.qty`);
@@ -312,23 +295,15 @@ const ParcelBook: React.FC = () => {
 
         const newTotalAmount = parcelDetail.reduce((sum, parcel) => sum + parcel.total_amount, 0);
         const formattedNewTotalAmount = newTotalAmount.toFixed(2);
-        setValue('actual_total', formattedNewTotalAmount); 
+        setValue('actual_total', formattedNewTotalAmount);
 
-
-
-
-
-
-        // const newPrintAmount = watch('parcel_detail').reduce((sum, parcel) => sum + parcel.total_print_rate, 0);
-        // setValue('print_total', newPrintAmount);
     }, [
         watch('parcel_detail'),
-        watch('bilty_charge'),
+      
         watch('is_demurrage'),
         watch('demurrage_days'),
         watch('demurrage_charges'),
-        watch('actual_paid_amount'),
-        watch('print_paid_amount'),
+     
     ]);
 
 
@@ -341,49 +316,32 @@ const ParcelBook: React.FC = () => {
 
         const parcel_detail = watch('parcel_detail');
 
-        
+
         const newTotalAmount = parcelDetail.reduce((sum, parcel) => sum + parcel.total_amount, 0);
         const formattedNewTotalAmount = newTotalAmount.toFixed(2);
-        setValue('actual_total', formattedNewTotalAmount); 
+        setValue('actual_total', formattedNewTotalAmount);
 
-
-
-
-
+        const fixedBiltyCharge = 20;
+        setValue("bilty_charge",fixedBiltyCharge)
 
 
         setValue(`parcel_detail.${index}.qty`, qty);
 
-        // Calculate qtytotal for the current and next index if exists
         const nextIndex = index + 1;
         const nextQty = nextIndex < parcelDetail.length ? parcelDetail[nextIndex].qty || 0 : 0;
         const qtytotal = qty + nextQty;
 
-        // Update QTYtotal for the current parcel_detail item
         setValue(`parcel_detail.${index}.QTYtotal`, qtytotal);
         console.log("ehgfrf", qtytotal);
 
-        // Recalculate qtyTotalAmount across all items in parcel_detail
         const qtyTotalAmount = parseFloat(parcelDetail.reduce((sum, parcel) => sum + (parcel.QTYtotal || 0), 0).toFixed(2));
 
-        // Update qty_total with the new qtyTotalAmount
         setValue('qty_total', qtyTotalAmount);
 
         console.log("final total", qtyTotalAmount)
 
-
-
-
-
-
-
-        // Example of storing newQty or using it further
         const newQty = qty === 0 ? 0 : qty;
         setValue(`parcel_detail.${index}.qty`, newQty);
-
-
-
-
 
         const totalPrintAmount = watch('parcel_detail').reduce((sum, parcel) => sum + parcel.total_print_rate, 0);
         const formattedNewPrintTotalAmount = totalPrintAmount.toFixed(2);
@@ -402,36 +360,22 @@ const ParcelBook: React.FC = () => {
         const totalAmount = qty * rate;
         setValue(`parcel_detail.${index}.total_amount`, totalAmount);
         const parcel_detail = watch('parcel_detail');
-
-
         const newTotalAmount = parcelDetail.reduce((sum, parcel) => sum + parcel.total_amount, 0);
-            const formattedNewTotalAmount = newTotalAmount.toFixed(2);
-            setValue('actual_total', formattedNewTotalAmount); 
-
-
-
-        
+        const formattedNewTotalAmount = newTotalAmount.toFixed(2);
+        setValue('actual_total', formattedNewTotalAmount);
 
         setValue(`parcel_detail.${index}.print_rate`, rate);
         setValue(`parcel_detail.${index}.total_print_rate`, totalAmount);
         const transport_charge = watch('transport_charge') || 0;
-
-
         const totalCharge = parseFloat(picCharge.toString()) + parseFloat(disCharge.toString());
         setValue('transport_charge', totalCharge);
-
-
-        const gstAmount = (newTotalAmount+ totalCharge)  * 0.05;
+        const gstAmount = (newTotalAmount + totalCharge) * 0.05;
         setValue('gst_amount', gstAmount.toFixed(2));
-
-
-
-       
         const totalPrintAmount = watch('parcel_detail').reduce((sum, parcel) => sum + parcel.total_print_rate, 0);
         const formattedNewPrintTotalAmount = totalPrintAmount.toFixed(2);
         setValue('print_total', formattedNewPrintTotalAmount);
 
-        const printGstAmount = (totalPrintAmount+ totalCharge) * 0.05;
+        const printGstAmount = (totalPrintAmount + totalCharge) * 0.05;
         setValue('print_gst_amount', printGstAmount.toFixed(2));
 
 
@@ -446,7 +390,7 @@ const ParcelBook: React.FC = () => {
         setValue('actual_payable_amount', actualPayableAmount);
         setValue('print_payable_amount', printPayableAmount);
 
-       
+
 
         const actual_paid_amount = watch('actual_paid_amount') || 0;
         const printReceive = watch('print_paid_amount') || 0;
@@ -463,20 +407,16 @@ const ParcelBook: React.FC = () => {
     const handlePrintRateChange = (index: number, printRate: number) => {
         const qty = watch(`parcel_detail.${index}.qty`);
         const totalAmount = qty * printRate;
-
-
         setValue(`parcel_detail.${index}.print_rate`, printRate);
         setValue(`parcel_detail.${index}.total_print_rate`, totalAmount);
-        
         const totalPrintAmount = watch('parcel_detail').reduce((sum, parcel) => sum + parcel.total_print_rate, 0);
         const formattedNewPrintTotalAmount = totalPrintAmount.toFixed(2);
         setValue('print_total', formattedNewPrintTotalAmount);
-
         const totalCharge = parseFloat(picCharge.toString()) + parseFloat(disCharge.toString());
         setValue('transport_charge', totalCharge);
 
 
-        const printGstAmount = (totalPrintAmount+ totalCharge) * 0.05;
+        const printGstAmount = (totalPrintAmount + totalCharge) * 0.05;
         setValue('print_gst_amount', printGstAmount.toFixed(2));
 
         const newPrintRate = printRate === 0 ? 0 : printRate;
@@ -499,9 +439,6 @@ const ParcelBook: React.FC = () => {
 
 
         const parcelDetail = watch('parcel_detail') || [];
-
-
-
         const qtyTotalAmount = parseFloat(parcelDetail.reduce((sum, parcel) => sum + (parcel.QTYtotal || 0), 0).toFixed(2));
 
         setValue('qty_total', qtyTotalAmount);
@@ -515,17 +452,9 @@ const ParcelBook: React.FC = () => {
         setValue('total_demurrage_charges', totalDemurrageCharges);
         console.log("total", totalDemurrageCharges)
 
-
-
-
-
         const newTotalAmount = parcelDetail.reduce((sum, parcel) => sum + parcel.total_amount, 0);
         const formattedNewTotalAmount = newTotalAmount.toFixed(2);
-        setValue('actual_total', formattedNewTotalAmount); 
-
-
-
-
+        setValue('actual_total', formattedNewTotalAmount);
         const totalPrintAmount = watch('parcel_detail').reduce((sum, parcel) => sum + parcel.total_print_rate, 0);
 
         const blityCharge = parseFloat(watch('bilty_charge').toString());
@@ -534,11 +463,11 @@ const ParcelBook: React.FC = () => {
         setValue('transport_charge', totalCharge);
 
 
-       const gstAmount = (newTotalAmount + totalCharge) * 0.05;
+        const gstAmount = (newTotalAmount + totalCharge) * 0.05;
         setValue('gst_amount', gstAmount.toFixed(2));
 
 
-        const printGstAmount = (totalPrintAmount+ totalCharge) * 0.05;
+        const printGstAmount = (totalPrintAmount + totalCharge) * 0.05;
         setValue('print_gst_amount', printGstAmount.toFixed(2));
 
         const actualPayableAmount = newTotalAmount + gstAmount + blityCharge + totalDemurrageCharges + totalCharge;
@@ -572,7 +501,7 @@ const ParcelBook: React.FC = () => {
             const qty = watch(`parcel_detail.${index}.qty`);
             updateTotalDemurrageCharges(qty);
         });
-    }, [watch('parcel_detail'), watch('demurrage_days'), watch('demurrage_charges')]);
+    }, [watch('parcel_detail'),watch('bilty_charge') ,watch('demurrage_days'), watch('demurrage_charges')]);
 
 
 
@@ -599,7 +528,7 @@ const ParcelBook: React.FC = () => {
 
 
 
-  
+
 
 
 
@@ -613,8 +542,15 @@ const ParcelBook: React.FC = () => {
 
 
 
+    const [formError, setFormError] = useState<string>('');
 
-
+    useEffect(() => {
+        if (EwayFields.length === 0) {
+            setFormError('At least one product data row is required.');
+        } else {
+            setFormError('');
+        }
+    }, [EwayFields]);
 
 
 
@@ -685,7 +621,7 @@ const ParcelBook: React.FC = () => {
         }
     };
 
-    
+
 
     const handleCustomCity = async (e: React.ChangeEvent<HTMLSelectElement>, isFrom: boolean) => {
         const cityId = e.target.value;
@@ -709,45 +645,64 @@ const ParcelBook: React.FC = () => {
 
 
 
-  
+
     const [customFromCityName, setCustomFromCityName] = useState<string>('');
     const [customToCityName, setCustomToCityName] = useState<string>('');
 
     const onSubmit: SubmitHandler<FormData> = async (formData: FormData) => {
         console.log('form submitted', formData);
-    
+
         let newFromCityId = formData.book_from;  // Initialize with existing values
         let newToCityId = formData.book_to;  // Initialize with existing values
-    
+
         // Add new city for "From" state
         if (formData.book_from === 'tkt_from_other' && selectedFromStateId) {
             const fromCityResponse = await addNewCity(selectedFromStateId, customFromCityName);
             newFromCityId = fromCityResponse.city_id.toString();
         }
-    
+
         // Add new city for "To" state
         if (formData.book_to === 'tkt_to_other' && selectedToStateId) {
             const toCityResponse = await addNewCity(selectedToStateId, customToCityName);
             newToCityId = toCityResponse.city_id.toString();
         }
-    
+
         // Update form data with new city ids if they were added
         formData.book_from = newFromCityId;
         formData.book_to = newToCityId;
-    
+
         // Submit the form
-        const ticketDataResponse = await submitFormData(formData);
-        if (!ticketDataResponse.ok) {
-            throw new Error('Failed to create ticket data');
+        const parcelDataResponse = await submitFormData(formData);
+        if (!parcelDataResponse.ok) {
+            throw new Error('Failed to create parcel data');
         }
-    
-        const ticketData = await ticketDataResponse.json();
-        console.log('Created ticket data:', ticketData);
-    };
-    
+
+        const parcelData = await parcelDataResponse.json();
+        console.log('Created parcel data:', parcelData.parcel_token);
+        router.push('/parcel_list');
+
+
+
+        if (parcelData.parcel_token != "") {
+            const parcelToken = parcelData.parcel_token;
+            try {
+                const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
+
+
+                console.log("get data", getTDetail.data[0]);
+                handleParcelPrint(getTDetail.data[0]);
+            } catch (error) {
+
+                console.error('Error fetching parcel data:', error);
+            }
+
+        };
+
+    }
+
     const router = useRouter();
 
-    
+
     async function addNewCity(stateId: string, cityName: string) {
         const requestBody = { city_name: cityName, state_id: stateId };
         const response = await fetch('http://localhost:3000/ticket/add_new_city_from_state', {
@@ -757,14 +712,14 @@ const ParcelBook: React.FC = () => {
             },
             body: JSON.stringify(requestBody),
         });
-    
+
         if (!response.ok) {
             throw new Error('Failed to add city');
         }
-    
+
         return await response.json();
     }
-    
+
     async function submitFormData(formData: FormData) {
         const response = await fetch('http://localhost:3000/parcel/create_parcel_data', {
             method: 'POST',
@@ -773,12 +728,11 @@ const ParcelBook: React.FC = () => {
             },
             body: JSON.stringify(formData),
         });
-        router.push('/parcel_list');
 
         return response;
     }
-    
-//-------------------------------------------------------------------------------------------------------------------------------
+
+    //-------------------------------------------------------------------------------------------------------------------------------
     const [receipt_no, setReceiptNo] = useState();
     useEffect(() => {
         receiptNo.getRecieptNo()
@@ -919,7 +873,7 @@ const ParcelBook: React.FC = () => {
 
 
 
-    
+
 
 
 
@@ -941,11 +895,19 @@ const ParcelBook: React.FC = () => {
                                 </div> */}
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="to">Booking date</label>
-                                    <input {...register('booking_date')} className="form-control form-control-sm" type="date" id="booking_date" placeholder="Booking date" defaultValue={currentDate}  min={currentDate} />
+                                    <input {...register('booking_date',
+                                        {
+                                            required: true
+                                        }
+                                    )} className="form-control form-control-sm" type="date" id="booking_date" placeholder="Booking date" defaultValue={currentDate} min={currentDate} />
+
                                 </div>
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="to">Disptach date</label>
-                                    <input {...register('dispatch_date')} className="form-control form-control-sm" type="date" id="dispatch_date" placeholder="Disptach date" defaultValue={currentDate}  min={currentDate} />
+                                    <input {...register('dispatch_date', {
+                                        required: true
+                                    })} className="form-control form-control-sm" type="date" id="dispatch_date" placeholder="Disptach date" defaultValue={currentDate} min={currentDate} />
+
                                 </div>
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="from">From State</label>
@@ -963,6 +925,8 @@ const ParcelBook: React.FC = () => {
                                             </option>
                                         ))}
                                     </select>
+                                    {/* {errors.from_state?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
+
                                 </div>
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="from">From</label>
@@ -982,6 +946,8 @@ const ParcelBook: React.FC = () => {
                                             <option style={{ background: '#4682B4', color: "#F5FFFA" }} value="tkt_from_other">Add new City</option>
                                         )}
                                     </select>
+                                    {/* {errors.book_from?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
+
                                     {showCustomFromCityInput && (
                                         <div id="custom_city_input">
                                             <input
@@ -998,7 +964,7 @@ const ParcelBook: React.FC = () => {
                             </div>
 
                             {/* second-Row */}
-                            <div className='row mb-3'>                            
+                            <div className='row mb-3'>
 
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="to">To State</label>
@@ -1016,6 +982,8 @@ const ParcelBook: React.FC = () => {
                                             </option>
                                         ))}
                                     </select>
+                                    {/* {errors.to_state?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
+
                                 </div>
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="to">To</label>
@@ -1035,6 +1003,8 @@ const ParcelBook: React.FC = () => {
                                             <option style={{ background: '#4682B4', color: "#F5FFFA" }} value="tkt_to_other">Add new City</option>
                                         )}
                                     </select>
+                                    {/* {errors.book_to?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
+
                                     {showCustomToCityInput && (
                                         <div id="custom_city_input">
                                             <input
@@ -1052,12 +1022,16 @@ const ParcelBook: React.FC = () => {
                                     <input {...register('sender_name', {
                                         required: true,
                                     })} className="form-control form-control-sm" type="text" id="sender_name" placeholder="Sender Name" />
+                                    {errors.sender_name?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
                                 </div>
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="rec_name">Receiver Name</label>
                                     <input {...register('rec_name', {
                                         required: true,
                                     })} className="form-control form-control-sm" type="text" id="rec_name" placeholder="Rec. Name" />
+                                    {errors.rec_name?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
                                 </div>
                             </div>
                             {/* Third-Row */}
@@ -1111,17 +1085,27 @@ const ParcelBook: React.FC = () => {
                             {/* Fifth-Row */}
                             <div className="row mb-3">
                                 <div className="col-lg-6">
-                                    <label className="form-label" htmlFor="send_mob">Select Sender ID Proof Type</label><br />
-                                    <input  {...register('sender_proof_type')} type="radio" checked={selectedOption === 'Aadhar_no'}
-                                        onChange={handleOptionChange} value="Aadhar_no" /> Aadhar
+                                    <label className="form-label" htmlFor="send_mob">Select Sender ID Proof Type</label>&nbsp;
+                                    {/* {errors.sender_proof_type?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
+                                    <br />
+                                    <input  {...register('sender_proof_type', {
+                                        required: true
+                                    })} type="radio" checked={selectedOption === 'Aadhar_no'}
+                                        onChange={handleOptionChange} value="Aadhar_no" />
+                                    Aadhar
                                     <input  {...register('sender_proof_type')} type="radio" checked={selectedOption === 'Pan_no'}
                                         onChange={handleOptionChange} value="Pan_no" /> PAN
                                     <input  {...register('sender_proof_type')} type="radio" checked={selectedOption === 'Gst_no'}
                                         onChange={handleOptionChange} value="Gst_no" /> GST
+
                                 </div>
                                 <div className="col-lg-6">
-                                    <label className="form-label" htmlFor="rec_mob">Select Receiver ID Proof Type</label><br />
-                                    <input  {...register('reciver_proof_type')} type="radio" checked={idoption === 'Aadhar_no'}
+                                    <label className="form-label" htmlFor="rec_mob">Select Receiver ID Proof Type</label>&nbsp;
+                                    {/* {errors.reciver_proof_type?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
+                                    <br />
+                                    <input  {...register('reciver_proof_type', {
+                                        required: true
+                                    })} type="radio" checked={idoption === 'Aadhar_no'}
                                         onChange={handleOptionIdChange} value="Aadhar_no" /> Aadhar
                                     <input {...register('reciver_proof_type')} type="radio" checked={idoption === 'Pan_no'}
                                         onChange={handleOptionIdChange} value="Pan_no" /> PAN
@@ -1141,7 +1125,7 @@ const ParcelBook: React.FC = () => {
                                             message: selectedOption === 'Aadhar_no' ? 'Invalid Aadhaar number format' : selectedOption === 'Pan_no' ? 'Invalid PAN number format' : 'Invalid GST number format'
                                         }
                                     })} className="form-control form-control-sm" type="text" name="sender_proof_detail" placeholder="Enter Sender ID Proof Detail" />
-                                    {errors.sender_proof_detail && <span className='error'>{errors.sender_proof_detail.message}</span>}
+                                    {/* {errors.sender_proof_detail?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
                                 </div>
                                 <div className="col-lg-6">
                                     <label className="form-label" htmlFor="rec_mob">Receiver Adhar No./PAN No./GST No.</label>
@@ -1155,7 +1139,7 @@ const ParcelBook: React.FC = () => {
 
 
                                         className="form-control form-control-sm" type="text" name="reciver_proof_detail" placeholder="Enter Sender ID Proof Detail" />
-                                    {errors.reciver_proof_detail && <span className='error'>{errors.reciver_proof_detail.message}</span>}
+                                    {/* {errors.reciver_proof_type?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
                                 </div>
                             </div>
 
@@ -1261,6 +1245,7 @@ const ParcelBook: React.FC = () => {
 
 
 
+                            {formError && <p className="text-danger">{formError}</p>}
 
 
                             {/* Bill-details */}
@@ -1284,7 +1269,7 @@ const ParcelBook: React.FC = () => {
                                         <label className="form-label" htmlFor="st_no">Invoice Amount</label>
                                         <input {...register(`bill_detail.${index}.invoice_amount`)} className="form-control form-control-sm" type="text" id="invoice_amount_1" placeholder="Invoice Amount" />
                                     </div>
-                                    <div className="col-lg-1 new" style={{ padding: "10px" , marginTop:"20px"}}>
+                                    <div className="col-lg-1 new" style={{ padding: "10px", marginTop: "20px" }}>
 
                                         <button type='button' className="btn btn-danger btn-sm" onClick={() => removeEwayAddress(index)} ><FontAwesomeIcon icon={faMinusCircle} /></button>
                                     </div>
@@ -1294,7 +1279,7 @@ const ParcelBook: React.FC = () => {
                             {/* ---Add bill details---- */}
                             <div className="col-lg-12 data" >
 
-                                <button type='button' style={{ marginRight: "12.60%" , }}
+                                <button type='button' style={{ marginRight: "12.60%", }}
 
                                     onClick={() => appendEwayAddress({ e_way_bill_no: '', p_o_no: '', invoice_no: '', invoice_amount: '' })} className="btn btn-primary  btn-sm add_more_row"><FontAwesomeIcon icon={faPlusCircle} /></button>
 
@@ -1522,7 +1507,7 @@ const ParcelBook: React.FC = () => {
                                     <div className="col-md-3">
                                         <label className="form-label">LR No.</label>
                                         <input {...register('lr_no')}
-                                          
+
                                             type="text" className="form-control form-control-sm" placeholder="LR No." />
                                     </div>
                                     <div className="col-md-3">
@@ -1619,21 +1604,24 @@ const ParcelBook: React.FC = () => {
                             <div className="row mb-3">
                                 <div className="col-md-2">
                                     <label className="form-label">Bilty Charges</label>
-                                    <input {...register('bilty_charge')} defaultValue="20" className="form-control" type="number" id="bilty_charge" placeholder="Blity Charge" />
+                                    <input {...register('bilty_charge')} 
+                                        className="form-control" type="number" id="bilty_charge" placeholder="Blity Charge"   />
                                 </div>
 
                                 <div className="col-md-3">
                                     <label className="form-label">Is Demurrage Charges ?</label><br />
-                                    <input {...register('is_demurrage')} type="checkbox"
+                                    <input {...register('is_demurrage', {
+                                        required: true
+                                    })} type="checkbox"
+                                        id="is_demurrage" />&nbsp;
+                                    {errors?.is_demurrage?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
 
-
-                                        id="is_demurrage" />
                                 </div>
 
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="receive">Actual Payable Amount</label>
                                     <input {...register('actual_payable_amount')}
-
+                                        value={watch('actual_payable_amount') > 0 ? watch('actual_payable_amount') : ''}
                                         className="form-control-plaintext" type="number" id="actual_payable_amount" />
                                     <input className="form-control-plaintext" type="hidden" id="actual_payable_amount" placeholder="Enter Balance" />
 

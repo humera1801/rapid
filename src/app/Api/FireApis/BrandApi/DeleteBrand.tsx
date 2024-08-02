@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Dev URL
-const baseURL = 'http://192.168.0.111:3001';
+export const baseURL = 'http://192.168.0.105:3001';
 
 
 

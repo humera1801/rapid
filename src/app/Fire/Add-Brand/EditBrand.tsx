@@ -11,7 +11,7 @@ const EditBrand = (props:any) => {
             <Modal {...props} aria-labelledby="contained-modal-title-vcenter">
                 <Modal.Header closeButton>
                     <Modal.Title id="contained-modal-title-vcenter">
-                        Add New Brand
+                        Edit Brand
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
@@ -29,7 +29,7 @@ const EditBrand = (props:any) => {
                             </div>
                         </div>
                         <Modal.Footer>
-                            <Button type='submit'>Add</Button>
+                            <Button type='submit'>Update</Button>
                         </Modal.Footer>
                     </form>
                 </Modal.Body>

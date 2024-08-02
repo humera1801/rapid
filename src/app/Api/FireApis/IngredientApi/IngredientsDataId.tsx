@@ -1,14 +1,15 @@
 import axios, { AxiosResponse } from 'axios';
+import { baseURL } from '../BrandApi/DeleteBrand';
 
 // Dev URL
-const baseURL = 'http://192.168.0.111:3001';
+// const baseURL = 'http://192.168.0.114:3001';
 
 
 
 export default {
     async getIngredientsIdData(id: string): Promise<any> {
         try {
-          const response: AxiosResponse = await axios.post(baseURL + '/capacity/get_fire_extingusher_capacity_data', {
+          const response: AxiosResponse = await axios.post(baseURL + '/ingredient/get_fire_ingredient_detail', {
             feit_id: id,
           }, {
             headers: {

@@ -41,7 +41,7 @@ interface User {
     total_demurrage_charges: number;
     demurrage_days: number;
     demurrage_charges: number;
-    bill_detail: { e_way_bill_no: string; p_o_no: string; invoice_no: string; invoice_amount: string }[];
+    parcel_bill_detail: { e_way_bill_no: string; p_o_no: string; invoice_no: string; invoice_amount: string }[];
     parcel_detail: {
         parcel_type: string;
         weight: number;
@@ -56,7 +56,67 @@ interface User {
 }
 
 const handleParcelPrint = (row: User) => {
+    const totalRate = Number(row.gst_amount) + Number(row.print_total)
+    const finalRate = totalRate + Number(row.total_demurrage_charges) + Number(row.pic_charge) + Number(row.dis_charge) + Number(row.bilty_charge)
+
+
+    console.log("data", row.parcel_detail);
+
+//------------------
+    // const parcelTypes = row.parcel_detail.map(parcel => parcel.parcel_type).join(', ');
+
+
+    const parcelTypeCounts = row.parcel_detail.reduce((counts, parcel) => {
+        const type = parcel.parcel_type;
+        counts[type] = (counts[type] || 0) + 1;
+        return counts;
+    }, {} as Record<string, number>);
+
+    // Format parcel type counts as "type (count)"
+    const parcelTypes = Object.entries(parcelTypeCounts)
+        .map(([type, count]) => `${type} (${count})`)
+        .join(', ');
+
+
+
+
+    const totalQuantity = row.parcel_detail.reduce((total, parcel) => {
+
+        const quantity = Number(parcel.qty);
+        return total + quantity;
+    }, 0);
+
+    const totalWeight = row.parcel_detail.reduce((total, parcel) => {
+
+        const quantity = Number(parcel.weight);
+        return total + quantity;
+    }, 0);
+
+//-------------------
+
+const eWayBillNos = row.parcel_bill_detail.map(bill => bill.e_way_bill_no).join(', ');
+
+  // Calculate total invoice amount and concatenate invoice numbers
+  const totalInvoiceAmount = row.parcel_bill_detail.reduce((total, bill) => {
+    // Ensure invoice_amount is treated as a number
+    return total + Number(bill.invoice_amount);
+}, 0);
+
+
+const invoiceNos = row.parcel_bill_detail.map(bill => bill.invoice_no).join(', ');
+
+const combinedInvoiceInfo = `${totalInvoiceAmount}, ${invoiceNos}`;
+
+
+console.log("invoice Amount",invoiceNos);
+
+//----------------------------------------------------------------------------------------------------------------------
+
+
     const printableContent = `
+
+
+
   
            <style>
     td {
@@ -133,15 +193,15 @@ const handleParcelPrint = (row: User) => {
                                 </table>
                             </td>
                             <td><b>No of Pkg</b></td>
-                            <td>${row.parcel_detail}</td>
+                            <td>${totalQuantity}</td>
                         </tr>
                         <tr>
                             <td><b>Actual Weight</b></td>
-                            <td>${row.parcel_detail}</td>
+                            <td>${totalWeight}</td>
                         </tr>
                         <tr>
                             <td><b>Demurrage Charges</b></td>
-                            <td>${row.demurrage_charges}</td>
+                            <td>${row.total_demurrage_charges}</td>
                         </tr>
                         <tr>
                             <td><b>Pickup Charges</b></td>
@@ -152,7 +212,7 @@ const handleParcelPrint = (row: User) => {
                             <td>${row.dis_charge}</td>
                         </tr>
                         <tr>
-                            <td colspan="2" rowspan="2"><b>Ewaybills</b>: ${row.bill_detail}</td>
+                            <td colspan="2" rowspan="2"><b>Ewaybills</b>: ${eWayBillNos}</td>
                             <td colspan=""><b>Freight</b></td>
                             <td colspan="">${row.print_total}</td>
                             <td><b>Bilty Charges</b></td>
@@ -162,17 +222,17 @@ const handleParcelPrint = (row: User) => {
                             <td colspan=""><b>GST</b></td>
                             <td colspan="">${row.gst_amount}</td>
                             <th rowspan="5">Grand Total</th>
-                            <td rowspan="4"></td>
+                            <td rowspan="4">${finalRate}</td>
                         </tr>
                         <tr>
                             <td colspan=""><b>Value / NoOflnv</b></td>
-                            <td>${row.bill_detail}</td>
+                            <td>${combinedInvoiceInfo}</td>
                             <td colspan=""><b>Total</b></td>
-                            <td colspan=""></td>
+                            <td colspan="">${totalRate}</td>
                         </tr>
                         <tr>
                             <td colspan=""><b>Parcel Type</b></td>
-                            <td colspan="3">${row.parcel_detail}</td>
+                            <td colspan="3">${parcelTypes}</td>
                         </tr>
                         <tr>
                             <td colspan=""><b>Particulars</b></td>

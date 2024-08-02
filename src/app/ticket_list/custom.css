@@ -87,5 +87,55 @@
 
 .designbtn{
   display: inline;
-  
+  /* display: flex; */
+
 }
+/* .column-visibility-menu {
+  display: none; /* Initially hidden */
+  /* position: absolute;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  z-index: 1000;
+} */
+/* 
+.column-visibility-menu.show {
+  display: block; /* Show when needed */
+/* }
+
+.column-visibility-menu input[type="checkbox"] {
+  margin-right: 5px;
+} */ 
+
+
+
+ /* Initially hide the dropdown menu */
+.column-visibility-menu {
+  display: none;
+  position: absolute;
+  background-color: #ffffffef;
+  border: 1px solid #ddd;
+  padding: 10px;
+  z-index: 1000;
+  margin-top: 30%;
+
+  margin-left: 30%; /* Adjust margin to align with button */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Optional for better visibility */
+}
+
+/* Show the dropdown menu when it has the 'show' class */
+.column-visibility-menu.show {
+  display: block;
+}
+
+/* Style for dropdown menu items */
+.column-visibility-menu div {
+  margin-bottom: 5px;
+}
+
+.column-visibility-menu input[type="checkbox"] {
+  margin-right: 5px;
+}
+
+
+

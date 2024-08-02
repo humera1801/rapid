@@ -13,9 +13,14 @@ import { faEye, faPencilSquare, faPlaneCircleCheck, faTrash } from '@fortawesome
 import Link from 'next/link';
 import Header from '@/components/Dashboard/Header';
 import getListFireData from '@/app/Api/FireApis/FireExtinghsherList/getListFireData';
+import getFireBookingId from '@/app/Api/FireApis/FireExtinghsherList/getFireBookingId';
+import {FirePdf} from "../Fire-List/FirePdf.js"
+import { handleFireDataPrint } from "./printFireUtills.js"
+
+
 
 export interface User {
-    febking_id:number;
+    febking_id: any;
     febking_created_by: any;
     fest_id: any;
     febking_final_amount: string;
@@ -25,21 +30,38 @@ export interface User {
     gstNo: string;
     client_mobileNo: string;
     vendorCode: string;
-    
     invNo: string;
     certificateNo: string;
     poNo: string;
-
-    // product_data: {
-    //     qty: any;
-    //     rate: any;
-    //     totalAmount: any;
-    //     hsnCode: string;
-    //     gst: 4;
-    //     capacity: string;
-    //     feit_id: any;
-    //     feb_id: string;
-    // }[];
+    febking_total_sgst: any;
+    febking_total_cgst: any;
+    febking_entry_type: 1;   
+    febking_total_amount: string;
+    firstName: string;
+    address: string;
+    client_city: string;
+    client_state: string;
+    client_pincode: string;   
+    mobileNo: string;    
+    client_id: any,   
+    fest_name:string
+    febking_invoice_no:string;
+    product_data: {
+        feit_hsn_code: any;
+        qty: any;
+        rate: any;
+        totalAmount: any;
+        hsnCode: string;
+        capacity: string;
+        feit_id: any;
+        febd_sgst: any;
+        feb_name:any;
+        feit_name:any;
+        febd_cgst: any;
+        febd_sgst_amount: any;
+        febd_cgst_amount: any;
+        feb_id: string;
+    }[];
 }
 
 
@@ -91,9 +113,9 @@ const FireExtinguisherList: React.FC = () => {
             try {
                 getListFireData.getFireListData().then((res: any) => {
                     console.log(' getListFireData.getFireListData', res);
-                
+
                     setRecords(res);
-                    console.log("data",res)
+                    console.log("data", res)
 
                 }).catch((e: any) => {
                     console.log('Err', e);
@@ -171,6 +193,43 @@ const FireExtinguisherList: React.FC = () => {
     //     handlePrint(row); // Call the imported handlePrint function
     // };
 
+
+
+
+    const handleFirePrintClick = async (febking_id: string) => {
+        try {         
+            const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);    
+             console.log("Fetched details:", getTDetail.data[0]);          
+            //  handleFirePrint( getTDetail.data[0]);
+        handleFireDataPrint( getTDetail.data[0]);
+            } catch (error) {
+            console.error("Error fetching ticket data:", error);
+            // Optionally show a user-friendly error message
+        }
+    };
+
+    const handleFireShareClick = async (febking_id: string) => {
+        try {         
+            const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);    
+             console.log("Fetched details:", getTDetail.data[0]);          
+
+             FirePdf( getTDetail.data[0]);
+            } catch (error) {
+            console.error("Error fetching ticket data:", error);
+            // Optionally show a user-friendly error message
+        }
+    };
+
+
+
+
+
+
+
+
+
+
+
     const columns = [
         {
             name: "Name",
@@ -216,7 +275,7 @@ const FireExtinguisherList: React.FC = () => {
         //     sortable: true,
 
         // },
-      
+
         {
             name: "Action",
             style: {
@@ -224,21 +283,21 @@ const FireExtinguisherList: React.FC = () => {
             },
             cell: (row: User) => (
                 <div className='designbtn'>
-                    <button className="btn btn-sm btn-success" style={{ color: '#ffffff' }}>Share</button>&nbsp;&nbsp;
-                    <button className="btn btn-sm btn-info" style={{ color: '#ffffff' }} >Print</button>&nbsp;&nbsp;
-                 <Link href="" className="btn btn-sm btn-warning" style={{ color: '#ffffff' }}> 
+                    <button className="btn btn-sm btn-success" style={{ color: '#ffffff' }} onClick={() => handleFireShareClick(row.febking_id)}>Share</button>&nbsp;&nbsp;
+                    <button className="btn btn-sm btn-info" style={{ color: '#ffffff' }}  onClick={() => handleFirePrintClick(row.febking_id)} >Print</button>&nbsp;&nbsp;
+                    <Link href={`Fire-List/FireView?id=${row.febking_id}`}    className="btn btn-sm btn-warning" style={{ color: '#ffffff' }}>
 
                         <FontAwesomeIcon icon={faEye} />
-                     </Link>&nbsp; 
-                  <Link href={`Fire-List/Edit?id=${row.febking_id}`} className="btn btn-sm btn-primary"> 
+                    </Link>&nbsp;
+                    <Link href={`Fire-List/Edit?id=${row.febking_id}`} className="btn btn-sm btn-primary">
 
                         <FontAwesomeIcon icon={faPencilSquare} />
-                    </Link> 
+                    </Link>
 
-                 <button  className="btn btn-sm btn-danger" style={{ cursor: 'pointer', color: '#ffffff' }}> 
+                    <Link href={""}  className="btn btn-sm btn-danger" style={{ cursor: 'pointer', color: '#ffffff' }}>
                         <FontAwesomeIcon icon={faTrash} />
 
-                 </button> 
+                    </Link>
                 </div>
 
             )
@@ -307,9 +366,9 @@ const FireExtinguisherList: React.FC = () => {
                         <h4>Fire Extinguisher  List</h4>
                     </div>
                     <div className="table-options">
-                       
-                        
-                       
+
+
+
                     </div>
 
                     <div id="pdf-content" className='table table-striped new-table'>

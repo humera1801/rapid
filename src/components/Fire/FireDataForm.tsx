@@ -13,9 +13,9 @@ import { useRouter } from 'next/navigation';
 import GetClientList from '@/app/Api/FireApis/FireExtinghsherList/GetClientList';
 import CapacityData from '@/app/Api/FireApis/IngredientApi/CapacityData';
 import { debounce } from 'lodash';
-import { createInvoice } from './InvoiceFire';
+import "../../../public/css/style.css"
 import axios from 'axios';
-import { generateInvoicePDF } from './Invoice/Pdf';
+import { generateInvoicePDF } from './Invoice/Pdf.js';
 
 interface extinguishingAgent {
     value: string;
@@ -33,6 +33,9 @@ export interface FormData {
     febking_total_amount: string;
     firstName: string;
     address: string;
+    client_city: string;
+    client_state: string;
+    client_pincode: string;
     email: string;
     gstNo: string;
     mobileNo: string;
@@ -46,7 +49,7 @@ export interface FormData {
         qty: any;
         rate: any;
         totalAmount: any;
-        hsnCode: string;       
+        hsnCode: string;
         capacity: string;
         feit_id: any;
         febd_sgst: any;
@@ -91,6 +94,9 @@ interface ClientData {
     client_mobileNo: string;
     poNo: string;
     vendorCode: string;
+    client_city: string;
+    client_state: string;
+    client_pincode: string;
 }
 
 interface CapacityData {
@@ -235,7 +241,7 @@ const FireData = () => {
             return;
         }
         fetchclientData(value);
-    },100); 
+    }, 100);
 
     const fetchclientData = async (value: string) => {
         try {
@@ -287,6 +293,9 @@ const FireData = () => {
             setValue("gstNo", selectedClient.client_gstNo);
             setValue("vendorCode", selectedClient.vendorCode);
             setValue("poNo", selectedClient.poNo);
+            setValue("client_city", selectedClient.client_city);
+            setValue("client_state", selectedClient.client_state);
+            setValue("client_pincode", selectedClient.client_pincode);
             setValue("mobileNo", selectedClient.client_mobileNo);
             setMobileNoValue(selectedClient.client_mobileNo); // Update mobileNoValue state
         }
@@ -306,6 +315,9 @@ const FireData = () => {
         setValue("vendorCode", '');
         setValue("poNo", '');
         setValue("mobileNo", '');
+        setValue("client_city", '');
+        setValue("client_state", '');
+        setValue("client_pincode", '');
         setMobileNoValue('');
 
     };
@@ -407,7 +419,7 @@ const FireData = () => {
 
     const addRow = () => {
         append({
-            qty: 0, rate: 0, totalAmount: 0, hsnCode: '', capacity: '', feit_id: '', feb_id: '',  febd_sgst_amount: '',
+            qty: 0, rate: 0, totalAmount: 0, hsnCode: '', capacity: '', feit_id: '', feb_id: '', febd_sgst_amount: '',
             febd_cgst_amount: '', febd_sgst: "", febd_cgst: ""
         });
     };
@@ -434,13 +446,13 @@ const FireData = () => {
             if (isAddingNewClient) {
                 await submitNewClientFormData(formData);
                 console.log('Form data submitted successfully for new client.');
-              
+
                 setIsAddingNewClient(false); // Reset to normal client selection mode
             } else if (selectedClientId) {
-               
+
                 formData.client_id = selectedClientId;
                 await submitFormData(formData, selectedClientId);
-            
+
                 console.log('Form data submitted successfully with selected client id:', selectedClientId);
             } else {
                 console.log('Please select a client or add a new client before submitting.');
@@ -453,15 +465,15 @@ const FireData = () => {
 
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.111:3001/booking/add_fire_extingusher_booking_data', formData).then((res:any)=>{
-                generateInvoicePDF (res.data.data[0]);
-                
-                console.log("res",res.data.data[0]);
-                
+            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
+                generateInvoicePDF(res.data.data[0]);
+                router.push("/Fire/Fire-List")
+                console.log("res", res.data.data[0]);
+
             });
             console.log('Form data submitted successfully with client id:', clientId);
             // console.log('Server response:', response.data);
-            
+
         } catch (error) {
             console.error('Error submitting form data:', error);
         }
@@ -470,10 +482,13 @@ const FireData = () => {
 
     const submitNewClientFormData = async (formData: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.111:3001/booking/add_fire_extingusher_booking_data', formData);
-            console.log('Form data submitted successfully for new client.');
-            console.log('Server response:', response.data);
-    
+            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
+                ;
+                generateInvoicePDF(res.data.data[0]);
+                router.push("/Fire/Fire-List")
+                console.log('Form data submitted successfully for new client.', res.data.data[0]);
+                console.log('Server response:', res.data.data[0]);
+            })
         } catch (error) {
             console.error('Error submitting form data:', error);
         }
@@ -499,7 +514,7 @@ const FireData = () => {
 
 
 
-//------------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
 
     // const onSubmit = async (FormData: any) => {
     //     console.log("form data", FormData);
@@ -584,27 +599,6 @@ const FireData = () => {
                                 <div>
                                     <div key={field.id} className="row mb-3">
 
-
-                                        {/* <div className="col-lg-2 col-sm-3">
-                                            <label className="form-label" htmlFor="feit_id">Select Ingredient Type:</label>
-                                            <select
-                                                className="form-control form-control-sm"
-                                                {...register(`product_data.${index}.feit_id`, {
-                                                    required: true
-                                                })}
-                                                id={`feit_id-${index}`}
-                                                onChange={handleIngredientChange(index)}
-                                                value={watch(`product_data.${index}.feit_id`)}
-                                            >
-                                                <option value="">--Select--</option>
-                                                {ingredients.map((ingredient) => (
-                                                    <option key={ingredient.feit_id} value={ingredient.feit_id}>{ingredient.feit_name}</option>
-                                                ))}
-                                            </select>
-                                        </div> */}
-
-
-
                                         <div className="col-lg-2 col-sm-3">
                                             <label className="form-label" htmlFor="feit_id">Select Item:</label>
                                             <select
@@ -622,17 +616,7 @@ const FireData = () => {
                                                 ))}
                                             </select>
                                         </div>
-                                        {/* <div className="col-lg-2 col-md-3 col-sm-4">
-                                            <label className="form-label" htmlFor="feb_brand">Select Brand:</label>
-                                            <select className="form-control form-control-sm" {...register(`product_data.${index}.capacity`, {
-                                                required: true,
-                                            })} id="fire_brand">
-                                                <option value="">--Select--</option>
-                                                {brands.map((brand) => (
-                                                    <option key={brand.feb_id} value={brand.feb_id}>{brand.feb_name}</option>
-                                                ))}
-                                            </select>
-                                        </div> */}
+
 
                                         <div className="col-lg-2 col-sm-3">
                                             <label className="form-label" htmlFor={`capacity-${index}`}>Select Capacity:</label>
@@ -640,7 +624,7 @@ const FireData = () => {
                                                 className="form-control form-control-sm"
                                                 {...register(`product_data.${index}.capacity`, { required: true })}
                                                 id={`capacity-${index}`}
-                                              
+
                                                 onChange={(e) => {
                                                     setValue(`product_data.${index}.capacity`, e.target.value);
                                                 }}
@@ -660,7 +644,7 @@ const FireData = () => {
 
 
 
-                                        <div className="col-lg-2 col-md-3 col-sm-4">
+                                        <div className="col-lg-2 col-sm-4">
                                             <label className="form-label" htmlFor="feb_brand">Select Brand:</label>
                                             <select className="form-control form-control-sm" {...register(`product_data.${index}.feb_id`, {
                                                 required: true,
@@ -679,7 +663,7 @@ const FireData = () => {
 
                                         </div>
 
-                                        <div className="col-lg-5 line" style={{ display: "flex", gap: "15px" }}>
+                                        <div className="col-lg-5 col-sm-5 line" style={{ display: "flex", gap: "15px" }}>
 
                                             <div >
                                                 <label className="form-label">Qty:</label>
@@ -770,7 +754,7 @@ const FireData = () => {
 
 
 
-                                            <div className="col-lg-1 new" style={{ marginTop: "30px" }}>
+                                            <div className="col-lg-1 col-sm-1 new" style={{ marginTop: "30px" }}>
                                                 <button type="button" className="btn btn-danger btn-sm" onClick={() => handleRemove(index)}>
                                                     <FontAwesomeIcon icon={faMinusCircle} />
                                                 </button>
@@ -785,6 +769,7 @@ const FireData = () => {
 
                             ))}
 
+
                             <div className="row">
                                 <div className="col-lg-12 finall">
                                     <button type="button" style={{ float: "right", marginRight: "14px" }} onClick={addRow} className="btn btn-primary btn-sm add_more_row">
@@ -794,8 +779,8 @@ const FireData = () => {
 
                             </div>
 
-                            <div className="row">
-                                <div className="col-lg-8" style={{ display: "flex", gap: "15px" }}>
+                            <div className="row mb-3">
+                                <div className="col-lg-8 col-sm-8" style={{ display: "flex", gap: "15px" }}>
                                     <div className="col-lg-2 col-sm-4 ">
                                         <label className="form-label">Total Amount</label>
                                         <input
@@ -809,7 +794,7 @@ const FireData = () => {
                                         />
 
                                     </div>
-                                    <div className="col-lg-2 col-sm-4 ">
+                                    <div className="col-lg-2 col-sm-2">
                                         <label className="form-label">Total SGST</label>
                                         <input
                                             className="form-control form-control-sm qty_cnt"
@@ -822,7 +807,7 @@ const FireData = () => {
                                         />
 
                                     </div>
-                                    <div className="col-lg-2 col-sm-4 ">
+                                    <div className="col-lg-2 col-sm-2 ">
                                         <label className="form-label">Total CGST</label>
                                         <input
                                             className="form-control form-control-sm qty_cnt"
@@ -835,7 +820,7 @@ const FireData = () => {
                                         />
 
                                     </div>
-                                    <div className="col-lg-2 col-sm-4 ">
+                                    <div className="col-lg-2 col-sm-2 ">
                                         <label className="form-label">Final Amount</label>
                                         <input
                                             className="form-control form-control-sm qty_cnt"
@@ -860,7 +845,7 @@ const FireData = () => {
                                 <hr />
                             </div>
                             <div className="row mb-3">
-                                <div className="col-lg-4 col-sm-4">
+                                <div className="col-lg-3 col-sm-3">
                                     <label className="form-label" htmlFor="clientId">Select Client:</label>
                                     <div className="">
                                         {isAddingNewClient ? (
@@ -881,6 +866,8 @@ const FireData = () => {
                                                     onChange={handleInputChange}
                                                     placeholder="Enter Client Name"
                                                 />
+                                                {errors?.firstName?.type === "required" && <span className="error">This field is required</span>}
+
                                                 {(inputValue.length > 0 || selectedClientId !== null) && (
                                                     <div className="list-group autocomplete-items">
                                                         {inputValue.length > 0 && (
@@ -911,7 +898,7 @@ const FireData = () => {
                                 </div>
 
 
-                                <div className="col-lg-4">
+                                <div className="col-lg-3">
                                     <label className="form-label" htmlFor="address">Address</label>
                                     <textarea
                                         {...register("address", { required: true })}
@@ -919,9 +906,51 @@ const FireData = () => {
                                         id="address"
                                         placeholder="Enter Address"
                                     />
+                                    {errors?.address?.type === "required" && <span className="error">This field is required</span>}
+
                                 </div>
 
-                                <div className="col-lg-4">
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="state">State</label>
+                                    <input
+                                        {...register("client_state", { required: true })}
+                                        className="form-control form-control-sm"
+                                        id="state"
+                                        placeholder="Enter state"
+                                    />
+                                    {errors?.client_state?.type === "required" && <span className="error">This field is required</span>}
+
+                                </div>
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="city">city</label>
+                                    <input
+                                        {...register("client_city", { required: true })}
+                                        className="form-control form-control-sm"
+                                        id="city"
+                                        placeholder="Enter city"
+                                    />
+                                    {errors?.client_city?.type === "required" && <span className="error">This field is required</span>}
+
+                                </div>
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="pincode">Pin-Code:</label>
+                                    <input
+                                        {...register("client_pincode", {
+                                            required: true,
+                                            maxLength: 6,
+                                            minLength: 6
+
+                                        })}
+                                        className="form-control form-control-sm"
+                                        id="pincode"
+                                        placeholder="Enter pincode"
+                                    />
+                                    {errors?.client_pincode?.type === "required" && <span className="error">This field is required</span>}
+                                    {errors?.client_pincode?.type === "minLength" && <span className="error">Enter valid Pin-code number. </span>}
+                                    {errors?.client_pincode?.type === "maxLength" && <span className="error">Enter valid Pin-code number .</span>}
+                                </div>
+
+                                <div className="col-lg-3">
                                     <label className="form-label" htmlFor="email">Email-id</label>
                                     <input
                                         {...register("email", { required: true })}
@@ -929,19 +958,29 @@ const FireData = () => {
                                         className="form-control form-control-sm"
                                         placeholder="Enter your email"
                                     />
+                                    {errors?.email?.type === "required" && <span className="error">This field is required</span>}
+                                    {/* {errors?.gstNo?.type === "pattern" && <span className="error">Enetr GST valid Number</span>} */}
+
                                 </div>
 
-                                <div className="col-lg-4">
+                                <div className="col-lg-3">
                                     <label className="form-label" htmlFor="gstNo">Gst-no</label>
                                     <input
-                                        {...register("gstNo", { required: true })}
+                                        {...register("gstNo", {
+                                            required: true,
+                                            pattern: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9A-Z]{1}$/
+                                        })}
                                         className="form-control form-control-sm"
                                         type="text"
                                         placeholder="Enter Gst no."
                                     />
+                                    {errors?.gstNo?.type === "required" && <span className="error">This field is required</span>}
+                                    {errors?.gstNo?.type === "pattern" && <span className="error">Enetr GST valid Number</span>}
+
+
                                 </div>
 
-                                <div className="col-lg-4">
+                                <div className="col-lg-3">
                                     <label className="form-label" htmlFor="vendorCode">Vendor code</label>
                                     <input
                                         {...register("vendorCode")}
@@ -952,7 +991,7 @@ const FireData = () => {
                                     />
                                 </div>
 
-                                <div className="col-lg-4">
+                                <div className="col-lg-3">
                                     <label className="form-label" htmlFor="poNo">P.o.No.</label>
                                     <input
                                         {...register("poNo")}

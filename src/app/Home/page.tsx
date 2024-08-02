@@ -10,8 +10,8 @@ import Tabs from 'react-bootstrap/Tabs';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Dashboard/Header';
 import FireData from '@/components/Fire/FireDataForm';
-
-
+import AuthProvider from '@/components/Dashboard/AuthProvider';
+import { generatePDF } from '@/components/PdfExport';
 
 
 
@@ -29,11 +29,13 @@ const page = () => {
 
 
     return (
-        <>
+        <> <AuthProvider>
             <Header />
              <br/> 
            
-                
+           
+             <button onClick={generatePDF}>Download PDF</button>
+
             <div className="container">
 
 
@@ -52,10 +54,10 @@ const page = () => {
                  
                 </Tabs>
 
-
+               
 
             </div>
-            
+            </AuthProvider>
         </>
     )
 }
