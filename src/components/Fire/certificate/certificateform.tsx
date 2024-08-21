@@ -74,7 +74,8 @@ export const Certificate = () => {
         if (febking_id) {
           const response = await GetCertificateData.GetCertificateId(febking_id);
           setFireData(response.data[0]);
-
+    
+          
 
         }
       }
@@ -244,7 +245,7 @@ export const Certificate = () => {
   return (
     <>
 
-      <div className="container">
+      <div className="container-fluid">
 
         <div className='card-header' >
           <h1>CERTIFICATE Detail</h1>
@@ -263,11 +264,8 @@ export const Certificate = () => {
             <label htmlFor="inputPassword4" className="form-label">Name</label>
             <input type="text" {...register('firstName')} value={fireData.firstName} onChange={(e) => setFireData({ ...fireData, firstName: e.target.value })} className="form-control" id="inputPassword4" />
           </div>
-          <div className="col-md-3">
-            <label htmlFor="inputPassword4" className="form-label">Service Type</label>
-            <input type="text" {...register('fest_name')} value={fireData.fest_name} readOnly disabled className="form-control" id="inputPassword4" />
-          </div>
-          <div className="col-12">
+        
+          <div className="col-3">
             <label htmlFor="inputAddress" className="form-label">Address</label>
             <textarea {...register('address')} onChange={(e) => setFireData({ ...fireData, address: e.target.value })} className="form-control" value={fireData.address} id="inputAddress" placeholder="1234 Main St" />
           </div>

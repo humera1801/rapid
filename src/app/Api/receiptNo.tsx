@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Dev URL
-const baseURL = 'http://localhost:3000';
+const baseURL = 'http://192.168.0.100:3001';
 
 
 export default {

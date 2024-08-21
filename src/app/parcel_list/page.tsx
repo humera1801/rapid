@@ -2,20 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import DataTable, { TableColumn } from 'react-data-table-component';
-import "../ticket_list/custom.css"
-
-import GetTicket from '../Api/GetTicket';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faPencilSquare, faPlaneCircleCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
-import EditTicketData from '../Api/EditTicketData';
-import Link from 'next/link';
+import DataTable from 'react-data-table-component';
+import "../parcel_list/parcel_data/custom.css"
 import GetParcelList from '../Api/GetParcelList';
+import EditParcelDataList from '../Api/EditParcelDataList';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faPencilSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
+import { handleparcelPDF } from '../parcel_list/parcel_data/handleparcelPDF';
+import { exportToParcelPDF } from './parcel_data/printParcelList';
+import { exportParcelToExcel } from './parcel_data/exportParcelList';
 import Header from '@/components/Dashboard/Header';
 import handleParcelPrint from './parcel_data/printpparcelUtils';
-import EditParcelDataList from '../Api/EditParcelDataList';
-import {handleparcelPDF} from "../parcel_list/parcel_data/handleparcelPDF.js"
-
+import "../parcel_list/parcel.css"
 
 export interface User {
     id: string;
@@ -39,7 +38,7 @@ export interface User {
     sender_proof_type: string;
     reciver_proof_type: string;
     sender_proof_detail: string;
-    reciver_proof_detail: string
+    reciver_proof_detail: string;
     pic_charge: number;
     dis_charge: number;
     total_print_rate: string;
@@ -51,7 +50,7 @@ export interface User {
     is_demurrage: boolean;
     actual_payable_amount: number;
     print_payable_amount: number;
-    lr_no: number
+    lr_no: number;
     print_paid_amount: number;
     actual_bal_amount: number;
     print_bal_amount: number;
@@ -69,265 +68,318 @@ export interface User {
         total_print_rate: number;
         QTYtotal: number;
     }[];
-
-
 }
 
 const customStyle = {
+    table: {
+        style: {
+            boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        }
+    },
     headRow: {
         style: {
             cursor: 'pointer',
-            fontFamily: 'Arial, sans-serif', // Example font family
-            color: '#333', // Example color
+            fontFamily: 'Arial, sans-serif',
+            color: '#333',
             fontWeight: 'bold',
-            fontSize: '14px',
-
-
-
-
-
-
+            fontSize: '16px',
         }
     },
-
     headCells: {
         style: {
-            fontSize: '18px',
+            fontSize: '16px',
             fontWeight: '600',
-            textTranForm: 'uppercase'
-
-
+            padding: '12px',
+           
         }
     },
-
     cells: {
         style: {
             fontSize: '16px',
-            wordbreak: "break-all",
-
+            padding: '10px',
+            borderBottom: '1px solid #ddd',
+        }
+    },
+    rows: {
+        style: {
+           
+            '&:hover': {
+                backgroundColor: '#f1f1f1',
+            },
+        }
+    },
+   
+    paginationButton: {
+        style: {
+            borderRadius: '4px',
+            border: '1px solid #ddd',
+            color: '#0275d8',
+            fontSize: '14px',
+            padding: '5px 10px',
+            margin: '0 2px',
+            cursor: 'pointer',
+            transition: 'background-color 0.2s ease',
+        },
+        active: {
+            style: {
+                color: '#fff',
+            }
+        },
+        disabled: {
+            style: {
+                color: '#6c757d',
+                cursor: 'not-allowed',
+            }
+        }
+    },
+    footer: {
+        style: {
+            padding: '10px',
+            borderTop: '1px solid #ddd',
         }
     }
-}
+};
 
-const page = () => {
-
-
-
-
-    const [editTicketId, setEditTicketId] = useState<string>('');
-
-    // Function to handle click on Edit button
-    const handleEditClick = (ticketId: string) => {
-        setEditTicketId(ticketId);
-    };
-
+const ParcelListPage = () => {
     const [records, setRecords] = useState<User[]>([]);
+    const [columns, setColumns] = useState<any[]>([]);
+    const [visibleColumns, setVisibleColumns] = useState<string[]>([
+        "Receipt No",
+        "Booking Date",
+        "From",
+        "To",
+        "Sender Name",
+        "Reciver Name",
+        "Date",
+        "Added By",
+        "Action"
+    ]);
 
     useEffect(() => {
         const fetchData = async () => {
-
             try {
-                GetParcelList.getParcelBookData().then((res: any) => {
-                    console.log('GetParcelList.getParcelBookData', res);
-                    setRecords(res.data);
+                const response = await GetParcelList.getParcelBookData();
+                setOriginalRecords(response.data);
 
-                }).catch((e: any) => {
-                    console.log('Err', e);
-
-                })
+                setRecords(response.data);
             } catch (error) {
-
+                console.error('Error fetching parcel data:', error);
             }
-
         };
         fetchData();
     }, []);
 
+    useEffect(() => {
+        const newColumns = [
+            visibleColumns.includes("Receipt No") && {
+                name: "Receipt No",
+                selector: (row: User) => row.receipt_no,
+                sortable: true,
+            },
+            visibleColumns.includes("Booking Date") && {
+                name: "Booking Date",
+                selector: (row: User) => row.booking_date,
+                sortable: true,
+            },
+            visibleColumns.includes("From") && {
+                name: "From",
+                selector: (row: User) => `${row.from_state_name}, ${row.from_city_name}`,
+                sortable: true,
+            },
+            visibleColumns.includes("To") && {
+                name: "To",
+                selector: (row: User) => `${row.to_state_name}, ${row.to_city_name}`,
+                sortable: true,
+            },
+            visibleColumns.includes("Sender Name") && {
+                name: "Sender Name",
+                selector: (row: User) => row.sender_name,
+                sortable: true,
+            },
+            visibleColumns.includes("Reciver Name") && {
+                name: "Reciver Name",
+                selector: (row: User) => row.rec_name,
+                sortable: true,
+            },
+            visibleColumns.includes("Date") && {
+                name: "Date",
+                selector: (row: User) => row.dispatch_date,
+                sortable: true,
+            },
+            visibleColumns.includes("Added By") && {
+                name: "Added By",
+                selector: (row: User) => row.added_by_name,
+                sortable: true,
+            },
+            visibleColumns.includes("Action") && {
+                name: "Action",
+                cell: (row: User) => (
+                    <div className='action-buttons'>
+                        <button className="btn btn-sm btn-success" onClick={() => handleShareClick(row.token)}>Share</button>
+                        <button className="btn btn-sm btn-info" onClick={() => handlePrintClick(row.token)}>Print</button>
+                        <Link href={`parcel_list/parcel_data?token=${row.token}`} className="btn btn-sm btn-warning">
+                            <FontAwesomeIcon icon={faEye} />
+                        </Link>
+                        <Link href={`parcel_list/Edit?token=${row.token}`} className="btn btn-sm btn-primary">
+                            <FontAwesomeIcon icon={faPencilSquare} />
+                        </Link>
+                        <button onClick={(e) => handleDeleteTicket(row.id, e)} className="btn btn-sm btn-danger">
+                            <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                    </div>
 
+                ),
+            },
+        ].filter(Boolean);
+        setColumns(newColumns);
+    }, [visibleColumns]);
+
+    const handleEditClick = (ticketId: string) => {
+        console.log('Edit ticket', ticketId);
+    };
 
     const handleDeleteTicket = async (ticketId: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
-
-        console.log("id", ticketId);
-        const formData = {
-            parcel_id: ticketId
-        }
-
         try {
-            // Make a POST request to the API endpoint with the ticket ID in the request body
+            const formData = { parcel_id: ticketId };
             const response = await axios.post(`http://localhost:3000/parcel/remove_parcel_detail_data`, formData);
             console.log('Ticket deleted successfully:', response.data);
-
-            // Reload the page after successful deletion
-            window.location.reload();
-
+            setRecords(records.filter(record => record.id !== ticketId));
         } catch (error) {
             console.error('Error deleting ticket:', error);
-            // Handle errors
         }
     };
-
-    // const handlePrintClick = (row: User) => {
-       
-    // };
-
 
     const handlePrintClick = async (ticketToken: string) => {
-        try {         
-            const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);    
-             console.log("Fetched details:", getTDetail.data[0]);            
-            handleParcelPrint(getTDetail.data[0]);                  
-            } catch (error) {
-            console.error("Error fetching ticket data:", error);
-            // Optionally show a user-friendly error message
+        try {
+            const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);
+            handleParcelPrint(getTDetail.data[0]);
+        } catch (error) {
+            console.error('Error fetching parcel data:', error);
         }
     };
-    
-
 
     const handleShareClick = async (ticketToken: string) => {
-        try {         
-            const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);    
-             console.log("Fetched details:", getTDetail.data[0]);          
-            handleparcelPDF(getTDetail.data[0])               
+        try {
+            const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);
+            handleparcelPDF(getTDetail.data[0]);
         } catch (error) {
-            console.error("Error fetching ticket data:", error);
-            // Optionally show a user-friendly error message
+            console.error('Error fetching parcel data:', error);
         }
     };
-    
 
+    const handleCopy = (): void => {
+        if (columns.length === 0) return;
 
+        const header = columns.map(col => col.name).join(',') + '\n';
+        const rows = records.map(record =>
+            columns.map(col => {
+                const cell = col.selector ? col.selector(record) : '';
+                return typeof cell === 'string' ? cell : '';
+            }).join(',')
+        ).join('\n');
 
+        const csvContent = header + rows;
 
-    const columns = [
-        {
-            name: "Receipt No",
-            selector: (row: User) => row.receipt_no,
-            sortable: true,
-            style: {
-                minWidth: '50px',
-                whiteSpace: 'nowrap  !important'
+        navigator.clipboard.writeText(csvContent)
+            .then(() => {
+                console.log('Data copied to clipboard');
+                alert('Data copied to clipboard');
+            })
+            .catch(err => {
+                console.error('Error copying data:', err);
+            });
+    };
 
-            }
+   
+    const handleGeneratePDF = () => {
+        exportToParcelPDF(records);
+    };
 
-        },
-        {
-            name: "Booking Date",
-            selector: (row: User) => row.booking_date,
-            sortable: true,
+    const handleExcelExport = () => {
+        exportParcelToExcel(records);
+    };
 
-        },
-        {
-            name: " From",
-            selector: (row: User) => `${row.from_state_name}, ${row.from_city_name}`,
-
-            sortable: true,
-
-        },
-        {
-            name: " To",
-            selector: (row: User) => `${row.to_state_name}, ${row.to_city_name}`,
-            sortable: true
-        },
-        {
-            name: "Sender Name",
-            selector: (row: User) => row.sender_name,
-            sortable: true
-        },
-        {
-            name: "Reciver Name",
-            selector: (row: User) => row.rec_name,
-            sortable: true
-        },
-        {
-            name: "Date",
-            selector: (row: User) => row.dispatch_date,
-            sortable: true,
-
-        },
-
-        {
-            name: "Added By",
-            selector: (row: User) => row.added_by_name,
-            sortable: true,
-
-        },
-        {
-            name: "Action",
-            style: {
-                minWidth: '100px', // Set width for "Action" column
-            },
-            cell: (row: User) => (
-                <div className='designbtn'>
-                    <button className="btn btn-sm btn-success" style={{ color: '#ffffff' }} onClick={() => handleShareClick(row.token)}>Share</button>&nbsp;&nbsp;
-                    <button className="btn btn-sm btn-info" style={{ color: '#ffffff' }} onClick={() => handlePrintClick(row.token)}>Print</button>&nbsp;&nbsp;
-                    <Link href={`parcel_list/parcel_data?token=${row.token}`} className="btn btn-sm btn-warning" style={{ color: '#ffffff' }}>
-
-                        <FontAwesomeIcon icon={faEye} />
-                    </Link>&nbsp;
-                    <Link href={`parcel_list/Edit?token=${row.token}`} className="btn btn-sm btn-primary">
-
-                        <FontAwesomeIcon icon={faPencilSquare} />
-                    </Link>
-
-                    <button onClick={(e) => handleDeleteTicket(row.id, e)} className="btn btn-sm btn-danger" style={{ cursor: 'pointer', color: '#ffffff' }}>
-                        <FontAwesomeIcon icon={faTrash} />
-
-                    </button>
-                </div>
-
-            )
-
+    const handleColumnVisibilityChange = (column: string, isVisible: boolean) => {
+        if (isVisible) {
+            setVisibleColumns([...visibleColumns, column]);
+        } else {
+            setVisibleColumns(visibleColumns.filter(col => col !== column));
         }
+    };
 
-    ];
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [originalRecords, setOriginalRecords] = useState<User[]>([]); // Holds original data
+
 
     const handleFilter = (event: React.ChangeEvent<HTMLInputElement>): void => {
         const searchTerm = event.target.value.toLowerCase();
-        const newData = records.filter((row: User) => {
-            return (
-                row.receipt_no.toLowerCase().includes(searchTerm) ||
-                row.booking_date.toLowerCase().includes(searchTerm) ||
-                row.dispatch_date.toLowerCase().includes(searchTerm) ||
-                row.from_state_name.toLowerCase().includes(searchTerm) ||
-                row.to_state_name.toLowerCase().includes(searchTerm) ||
-                row.from_city_name.toLowerCase().includes(searchTerm) ||
-                row.to_city_name.toLowerCase().includes(searchTerm) ||
-                row.sender_name.toLowerCase().includes(searchTerm) ||
-                row.rec_name.toLowerCase().includes(searchTerm) ||
-                row.added_by_name.toLowerCase().includes(searchTerm)
-            );
-        });
+        setSearchTerm(searchTerm);
+
+        const newData = originalRecords.filter((row: User) =>
+            Object.values(row).some(value =>
+                typeof value === 'string' && value.toLowerCase().includes(searchTerm)
+            )
+        );
+
         setRecords(newData);
     };
-
-
-    const handleAction = (row: User) => {
-        // Implement your action logic here
-        console.log("Performing action for row:", row);
-    };
-
-
-
-
 
 
 
 
     return (
         <>
-
-
-
             <Header />
             <div className="container-fluid mt-3">
                 <div className="card mb-3" style={{ width: 'auto' }}>
                     <div className="card-header">
                         <h4>Parcel Booking List</h4>
                     </div>
-
-
+                    <div className="table-options">
+                        {/* <div className="entries-selector">
+                            <label htmlFor="entries">Show </label>
+                            <select id="entries">
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                            </select>
+                            <span>entries</span>
+                        </div> */}
+                        <div className="action-buttons">
+                            <button className="pdf-button" onClick={handleGeneratePDF}>PDF</button>
+                            <button className="excel-button" onClick={handleExcelExport}>Excel</button>
+                            <button className="copy-button" onClick={handleCopy}>Copy</button>
+                            <button className="copy-button" onClick={() => document.getElementById('column-visibility-menu')?.classList.toggle('show')}>
+                                Column visibility
+                            </button>
+                        </div>
+                        <div id="column-visibility-menu" className="column-visibility-menu"  style={{marginLeft:"18%" , marginTop:"25%"}}>
+                            {["Receipt No", "Booking Date", "From", "To", "Sender Name", "Reciver Name", "Date", "Added By", "Action"].map(option => (
+                                <div key={option}>
+                                    <input
+                                        
+                                        type="checkbox"
+                                        id={option}
+                                        checked={visibleColumns.includes(option)}
+                                        onChange={(e) => handleColumnVisibilityChange(option, e.target.checked)}
+                                    />
+                                    <label htmlFor={option}>{option}</label>
+                                </div>
+                            ))}
+                        </div>
+                        <div className='search'>
+                            <label>Search&nbsp;</label>
+                            <input
+                                type="text"
+                                placeholder="Search..."
+                                onChange={handleFilter}
+                                className="search-input"
+                                value={searchTerm}
+                            />
+                        </div>
+                    </div>
                     <div className='table table-striped new-table'>
                         <DataTable
                             columns={columns}
@@ -336,29 +388,12 @@ const page = () => {
                             pagination
                             paginationPerPage={10}
                             paginationRowsPerPageOptions={[10, 20, 50]}
-                        // paginationTotalRows={records.length}
                         />
-
                     </div>
                 </div>
             </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         </>
-    )
+    );
 }
 
-export default page
+export default ParcelListPage;

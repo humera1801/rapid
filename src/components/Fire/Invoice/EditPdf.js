@@ -1,6 +1,6 @@
 import { toWords } from 'number-to-words';
 
-export const generateInvoicePDF = (formData, bankDetails) => {
+export const generateUpdatePDF = (formData, bankDetails) => {
     try {
 
 
@@ -66,10 +66,10 @@ export const generateInvoicePDF = (formData, bankDetails) => {
                                  ${product.febd_sr_no ? `Extinguisher Sr.No: ${product.febd_sr_no}` : ''}
                             </td>
                             <td>${product.feit_hsn_code}</td>
-                            <td>${product.febd_quantity} Nos.</td>
-                            <td>${product.febd_rate}</td>
+                            <td>${product.qty} Nos.</td>
+                            <td>${product.rate}</td>
                             <td>Each</td>
-                            <td>${product.febd_amount}</td>
+                            <td>${product.totalAmount}</td>
                         </tr>
                     `).join('')}
                
@@ -138,13 +138,13 @@ export const generateInvoicePDF = (formData, bankDetails) => {
                 <hr>
                 <h2 style="text-align: center;">Tax Invoice</h2>
                 <table>
-                    <tr><td rowspan=8 class="top-align">To, ${formData.client_firstName}<br>${formData.client_address}<br>${formData.client_city} - ${formData.client_state}<br>${formData.client_pincode}</td><td>Invoice No:</td><td>${formData.febking_invoice_no}</td></tr>
+                    <tr><td rowspan=8 class="top-align">To, ${formData.firstName}<br>${formData.address}<br>${formData.client_city} - ${formData.client_state}<br>${formData.client_pincode}</td><td>Invoice No:</td><td>${formData.febking_invoice_no}</td></tr>
                     <tr><td>Date:</td><td>${new Date().toLocaleDateString()}</td></tr>
                     <tr><td>Order Date:</td><td>${formData.febking_created_at}</td></tr>
                     <tr><td>Order No:</td><td>${formData.poNo}</td></tr>
                     <tr><td>Vendor Code:</td><td>${formData.vendorCode}</td></tr>
-                    <tr><td>Contact Person:</td><td>${formData.client_firstName}</td></tr>
-                    <tr><td>Contact No:</td><td>${formData.client_mobileNo}</td></tr>
+                    <tr><td>Contact Person:</td><td>${formData.firstName}</td></tr>
+                    <tr><td>Contact No:</td><td>${formData.mobileNo}</td></tr>
                 </table>
                  <table>
                     <thead>

@@ -6,6 +6,8 @@ import "../../../public/css/ticketview.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMinusCircle } from '@fortawesome/free-solid-svg-icons';
 import handleParcelPrint from '@/app/parcel_list/parcel_data/printpparcelUtils';
+import { Modal } from 'react-bootstrap';
+import Link from 'next/link';
 
 type FormData = {
     parcel_id: string;
@@ -69,6 +71,7 @@ type FormData = {
     demurrage_charges: number;
     parcel_detail: ParcelDetail[];
     bill_detail: ParcelBillDetail[];
+    transection_id: any;
 
 
 };
@@ -94,15 +97,17 @@ interface ParcelDetail {
 }
 
 
+
+
+
 const ViewParcelData = () => {
 
 
 
 
 
-
-
-
+    const [parcelImages, setParcelImages] = useState<string[]>([]);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
 
 
@@ -166,6 +171,8 @@ const ViewParcelData = () => {
 
                         });
 
+                        const fetchedParcelImages = response.data[0]?.parcel_imgs || [];
+                        setParcelImages(fetchedParcelImages);
 
                         const fetchedParcelDetail = response.data[0]?.parcel_detail;
                         if (fetchedParcelDetail) {
@@ -261,6 +268,29 @@ const ViewParcelData = () => {
     console.log("gffgdfhjf", parcelData)
 
 
+    const handleImageClick = (imageUrl: string) => {
+        setSelectedImage(imageUrl);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedImage(null);
+    };
+
+    const { register, handleSubmit, formState: { errors }, watch, setValue, reset } = useForm<FormData>({});
+    const paymentMethod = watch('payment_method');
+
+
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+
+
+    useEffect(() => {
+        if (parcelData) {
+            setSelectedPaymentMethod(parcelData.payment_method);
+            setValue('payment_method', parcelData.payment_method);
+            setValue('transection_id', parcelData.transection_id || '');
+        }
+    }, [parcelData, setValue]);
+
 
 
 
@@ -286,7 +316,7 @@ const ViewParcelData = () => {
                                 <button onClick={() => handleParcelPrint(parcelData)}
                                     className="btn btn-sm btn-primary" style={{ float: "right" }} >Print</button>
 
-                                <a href="/parcel_list" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</a>
+                                <Link href="/parcel_list" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</Link>
 
                             </div>
                         </div>
@@ -330,9 +360,13 @@ const ViewParcelData = () => {
                                                     <label className="set_labelData">Sender Mobile No:</label>
                                                     <span>{parcelData.send_mob}</span>
                                                 </div>
-                                                <div className="col-lg-6">
+                                                <div className="col-lg-3">
                                                     <label className="set_labelData">Reciver Mobile No:</label>
                                                     <span>{parcelData.rec_mob}</span>
+                                                </div>
+                                                <div className="col-lg-3">
+                                                    <label className="set_labelData">whatsapp No:</label>
+                                                    <span>{parcelData.whatsapp_no}</span>
                                                 </div>
                                             </div>
                                             <div className="row mb-3">
@@ -403,6 +437,7 @@ const ViewParcelData = () => {
                                                             <th>Total Print Rate</th>
                                                         </tr>
                                                     </thead>
+
                                                     {parcelDetail.map((field, index) => (
                                                         <tbody>
                                                             <tr key={index}>
@@ -417,6 +452,7 @@ const ViewParcelData = () => {
                                                         </tbody>
                                                     ))}
                                                     <tfoot>
+
                                                         <tr>
                                                             <td></td>
                                                             <td></td>
@@ -432,6 +468,38 @@ const ViewParcelData = () => {
 
                                             </div>
 
+
+
+
+
+                                            <div className="col-lg-12">
+                                                <label className="set_labelData">Parcel Images:</label>
+                                                <div className="image-gallery1">
+                                                    {parcelImages.length > 0 ? (
+                                                        parcelImages.map((imageUrl, index) => (
+                                                            <img
+                                                                key={index}
+                                                                src={imageUrl}
+                                                                alt={`Parcel ${index}`}
+                                                                className="parcel-image1"
+                                                                onClick={() => handleImageClick(imageUrl)}
+                                                                style={{ cursor: 'pointer' }}
+                                                            />
+                                                        ))
+                                                    ) : (
+                                                        <p>No images available.</p>
+                                                    )}
+                                                </div>
+
+
+                                                {selectedImage && (
+                                                    <div className="modal-parcel" onClick={handleCloseModal}>
+                                                        <span className="close" onClick={handleCloseModal}>&times;</span>
+                                                        <img src={selectedImage} alt="Enlarged" className="modal-content-parcel" />
+
+                                                    </div>
+                                                )}
+                                            </div>
                                             <div className="row mb-3">
                                                 <table className="table table-striped" style={{ width: "100%" }}>
                                                     <thead>
@@ -626,12 +694,19 @@ const ViewParcelData = () => {
 
                                                     <span>{parcelData.payment_method}</span>
                                                 </div>
+                                                {(paymentMethod === 'gpay' || paymentMethod === 'phonepay' || paymentMethod === 'paytm') && (
 
-                                                <div className="col-md-3">
+                                                    <div className="col-lg-3">
+                                                        <label className="set_label">Transction Id:</label>
+                                                        <span>{parcelData.transection_id}</span>
+                                                    </div>
+                                                )}
+
+                                                <div className="col-lg-3">
                                                     <label className="set_labelData">Print Payable Amount</label>
                                                     <span>{parcelData.print_payable_amount}</span>
                                                 </div>
-                                                <div className="col-md-3">
+                                                <div className="col-lg-3">
                                                     <label className="set_labelData">Actual Payable Amount</label>
                                                     <span>{parcelData.actual_payable_amount}</span>
                                                 </div>

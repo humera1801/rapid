@@ -1,160 +1,207 @@
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { toWords } from 'number-to-words';
+import html2canvas from 'html2canvas';
 
 export const FirePdf = async (formData, bankDetails) => {
     try {
-        const doc = new jsPDF('p', 'mm', 'a4');
+        const pageWidth = 210;
+        const margin = 5;
 
-        // Header with Background Color
-        doc.setFontSize(14);
-        const headerLines = [
-            '8866396939 , 910607741',
-            'rapidgroupbaroda@gmail.com'
-        ];
 
-        // Calculate the right-aligned X position
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const margin = 10; // 10 mm margin from the right edge
 
-        // Set the starting Y position for the text
-        const startY = 12;
-        const lineHeight = 5; // Adjust this value to control vertical spacing
 
-        headerLines.forEach((line, index) => {
-            const textWidth = doc.getTextWidth(line);
-            const xPosition = pageWidth - textWidth - margin;
-            const yPosition = startY + (index * lineHeight); // Calculate Y position for each line
-            doc.text(line, xPosition, yPosition);
+        const groupedData = Object.entries(formData.service_data).reduce((acc, [key, products]) => {
+            products.forEach(product => {
+                const festName = product.fest_name;
+                if (!acc[festName]) acc[festName] = [];
+                acc[festName].push(product);
+            });
+            return acc;
+        }, {});
+
+        let serialNumber = 1;
+
+        const productRows = Object.entries(groupedData).map(([festName, products]) => `
+            <tr>
+                <td colspan="7" style="text-align: left; font-weight: bold;">${festName}</td>
+            </tr>
+            ${products.map((product) => `
+                <tr>
+                    <td>${serialNumber++}</td>
+                    <td>
+                        Fire Extinguisher ${product.capacity} Capacity<br>
+                        (WITH Pressure Gauge, Safety pin, Valve, Wall clamp, Warranty seal, Instruction Sticker)<br>
+                        ${product.febd_sr_no ? `Extinguisher Sr.No: ${product.febd_sr_no}` : ''}
+                    </td>
+                    <td>${product.feit_hsn_code}</td>
+                    <td>${product.qty} Nos.</td>
+                    <td>${product.rate}</td>
+                    <td>Each</td>
+                    <td>${product.totalAmount}</td>
+                </tr>
+            `).join('')}
+        `).join('');
+
+        const html = `
+            <html>
+            <head>
+                <style>
+                    @media print {
+                        .no-print {
+                            display: none;
+                        }
+                    }
+                    body {
+                        font-family: Arial, sans-serif;
+                        
+                    }
+                    .header {
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        text-align: right;
+                        font-size: 18px;
+                        margin-bottom: 5px;
+                    }
+                    .logo {
+                        max-height: 50px;
+                        margin-right: 10px;
+                    }
+                    .header-info {
+                        text-align: right;
+                    }
+                    .rect {
+                        text-align: center;
+                        font-size: 12px;
+                        margin-bottom: 3px;
+                    }
+                    .address {
+                        background-color: rgb(185, 186, 207);
+                        padding: 10px;
+                        text-align: center;
+                        font-size: 10px;
+                        margin-bottom: 5px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 1px;
+                    }
+                    td {
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                    }
+                    th {
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                        background-color: rgb(185, 186, 207);
+                        text-align: center;
+                    }
+                    .footer {
+                        margin-top: 1px;
+                        font-size: 12px;
+                    }
+                    .top-align {
+                        vertical-align: top;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <img src="https://prolificdemo.com/dev_rapid_group/assets/theme/admin/logo/rapid_logo_black.png" alt="Logo" class="logo">
+                    <div class="header-info">
+                        <div>8866396939 , 910607741</div>
+                        <div>rapidgroupbaroda@gmail.com</div>
+                    </div>
+                </div>
+                <div class="rect">SUPPLIER OF FIRE FIGHTING, SAFETY & SECURITY EQUIPMENTS.</div>
+                <div class="address">G/12, Swastik Chambers, Nr. Makarpura Bus Depot, Makarpura Road, Vadodara-390 010.</div>
+                <hr>
+                <h2 style="text-align: center;">Tax Invoice</h2>
+                <table>
+                    <tr><td rowspan=8 class="top-align">To, ${formData.firstName}<br>${formData.address}<br>${formData.client_city} - ${formData.client_state}<br>${formData.client_pincode}</td><td>Invoice No:</td><td>${formData.febking_invoice_no}</td></tr>
+                    <tr><td>Date:</td><td>${new Date().toLocaleDateString()}</td></tr>
+                    <tr><td>Order Date:</td><td>${formData.febking_created_at}</td></tr>
+                    <tr><td>Order No:</td><td>${formData.poNo}</td></tr>
+                    <tr><td>Vendor Code:</td><td>${formData.vendorCode}</td></tr>
+                    <tr><td>Contact Person:</td><td>${formData.firstName}</td></tr>
+                    <tr><td>Contact No:</td><td>${formData.mobileNo}</td></tr>
+                </table>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SR.</th>
+                            <th>PARTICULARS</th>
+                            <th>HSN CODE</th>
+                            <th>QTY</th>
+                            <th>RATE</th>
+                            <th>PER</th>
+                            <th>AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${productRows}
+                    </tbody>
+                </table>
+                <div class="footer">
+                    <table>
+                        <tr><td colspan="4">Composite Dealer:</td></tr>
+                        <tr><td colspan="4">OUR GST NO: ${formData.bank_details.gst_no || 'N/A'}</td></tr>
+                        <tr><td colspan="4">Our Bank Name: ${formData.bank_details.bnk_name} , Branch: ${formData.bank_details.bnk_branch}</td></tr>
+                        <tr><td colspan="4">Account No: ${formData.bank_details.bnk_acc_no} , IFSC Code: ${formData.bank_details.bnk_ifsc_code}</td></tr>
+                        <tr><td colspan="4">${toWords(formData.febking_final_amount)} Only</td></tr>
+                        <tr>
+                            <td colspan="3"></td>
+                            <td colspan="4" style="text-align: right;">Grand Total: ${formData.febking_final_amount}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" style="text-align: left;">Thank You<br>Prevention Is Better Than Cure</td>
+                            <td colspan="3" style="text-align: right;">For Rapid Fire Prevention<br><br><br>Proprietor</td>
+                        </tr>
+                    </table>
+                </div>
+            </body>
+            </html>
+        `;
+
+        const tempElement = document.createElement('div');
+        tempElement.style.position = 'absolute';
+        tempElement.style.left = '-9999px';
+        tempElement.innerHTML = html;
+        document.body.appendChild(tempElement);
+
+        const canvas = await html2canvas(tempElement, {
+            scrollY: -window.scrollY,
+            scrollX: -window.scrollX,
+            useCORS: true,
         });
-        // Draw a rectangle with background color behind the text
-        doc.setFillColor(185, 186, 207); // Set fill color (RGB format)
-        doc.rect(10, 33, 190, 8, 'F'); // Draw filled rectangle (x, y, width, height, style)
 
-        doc.setFontSize(12);
-        doc.text('SUPPLIER OF FIRE FIGHTING, SAFETY & SECURITY EQUIPMENTS.', 105, 30, { align: 'center' });
+        document.body.removeChild(tempElement);
 
-        // Address line with styled background
-        doc.setFontSize(10); // Increase font size
-        doc.setTextColor(0, 0, 0); // Set text color to black
-        doc.text('G/12, Swastik Chambers, Nr. Makarpura Bus Depot, Makarpura Road, Vadodara-390 010.', 105, 39, { align: 'center' });
-        doc.line(10, 42, 200, 42);  // Horizontal line under header
-        doc.setFontSize(14);
-        doc.text('BILL TO SUPPLY', 105, 49, { align: 'center' });
-
-        // Details Table
-        const detailsData = [
-            [
-                { content: `To, ${formData.firstName}\n${formData.address}\n${formData.client_city} - ${formData.client_state}\n${formData.client_pincode}`, rowSpan: 8 },
-                'Invoice No:', formData.febking_invoice_no
-            ],
-            ['Date:', new Date().toLocaleDateString()],
-            ['Certificate No:', '132'],
-            ['Order Date:', formData.febking_created_at],
-            ['Order No:', formData.poNo],
-            ['Vendor Code:', formData.vendorCode],
-            ['Contact Person:', formData.firstName],
-            ['Contact No:', formData.mobileNo]
-        ];
-
-        autoTable(doc, {
-            startY: 55,
-            body: detailsData,
-            columnStyles: {
-                0: { cellWidth: 90 },
-                1: { cellWidth: 65 },
-                2: { cellWidth: 35 },
-                3: { cellWidth: 65 }
-            },
-            styles: { fontSize: 10, valign: 'top', overflow: 'linebreak' },
-            margin: { top: 10 },
-            theme: 'grid'
-        });
-
-        // Product Table
-        const productRows = formData.product_data.map((product, index) => [
-            index + 1,
-            `${product.feit_name} Fire Extinguisher ${product.capacity} Capacity\n(WITH Pressure Gauge, Safety pin, Valve, Wall clamp, Warranty seal, Instruction Sticker)`,
-            product.feit_hsn_code,
-            `${product.qty} Nos.`,
-            product.rate,
-            'Each',
-            product.totalAmount
-        ]);
-
-        autoTable(doc, {
-            startY: doc.autoTable.previous.finalY,
-            head: [['SR.', 'PARTICULARS', 'HSN CODE', 'QTY', 'RATE', 'PER', 'AMOUNT']],
-            body: productRows,
-            columnStyles: {
-                0: { cellWidth: 10 },
-                1: { cellWidth: 80 },
-                2: { cellWidth: 20 },
-                3: { cellWidth: 20 },
-                4: { cellWidth: 20 },
-                5: { cellWidth: 20 },
-                6: { cellWidth: 20 }
-            },
-            styles: { fontSize: 10, valign: 'middle', overflow: 'linebreak' },
-            theme: 'grid',
-            headStyles: { fillColor: [185, 186, 207], textColor: [0, 0, 0] } // RGB color for background and black text
-        });
-
-        // Footer
-        const finalAmountWords = toWords(formData.febking_final_amount);
-        const footerStartY = doc.autoTable.previous.finalY + 0;
-
-        const bankData = [
-            [{ content: `Composite Dealer:` || 'N/A', colSpan: 4 }, '', '',],
-            [{ content: `OUR GST NO: ${formData.bank_details[0]?.gst_no}` || 'N/A', colSpan: 4 }, '', '', ''],
-            [{ content: `Our Bank Name: ${formData.bank_details[0]?.bnk_name} , Branch: ${formData.bank_details[0]?.bnk_branch} ` || 'N/A', colSpan: 4 }, '', '',],
-            [{ content: `Account No: ${formData.bank_details[0]?.bnk_acc_no} , IFSC Code: ${formData.bank_details[0]?.bnk_ifsc_code} ` || 'N/A', colSpan: 4 }, '', '', ''],
-            [{ content: `${finalAmountWords} Only`, colSpan: 4, styles: { halign: 'center' } }, '', '', ''],
-            [
-                { content: '', hideBorder: true, colSpan: 4 },
-                { content: `Grand Total: ${formData.febking_final_amount}`, colSpan: 2 },
-            ],
-            [
-                { 
-                    content: `Thank You\nPrevention Is Better Than Cure`, colSpan: 3, styles: { halign: 'left', fontSize: 12, cellPadding: 5 }, 
-                    margin: { top: 20, bottom: 20 }
-                },                { 
-                    content: `For Rapid Fire Prevention\n\n\nProprietor`, colSpan: 3, styles: { halign: 'right', fontSize: 12, cellPadding: 5 },
-                    margin: { top: 20, bottom: 20 }
-                }
-            ]        ];
-        autoTable(doc, {
-            startY: footerStartY,
-            body: bankData,
-            columnStyles: {
-                0: { cellWidth: 90 },
-                1: { cellWidth: 20 },
-                2: { cellWidth: 20 },
-                3: { cellWidth: 20 },
-                4: { cellWidth: 20 },
-                5: { cellWidth: 20 }
-            },
-            styles: { fontSize: 10, align: 'center', fontStyle: 'bold', valign: 'top', overflow: 'linebreak' },
-            margin: { top: 10 },
-            theme: 'grid',
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', margin, 8, 0, pageWidth, canvas.height * pageWidth / canvas.width);
 
 
-        });
+        //------------------------------------------------
+        // for pdf download 
 
-        // Additional Footer Text
-        const additionalFooterText = `\nThank You\nPrevention Is Better Than Cure\n\nfor Rapid Fire Prevention\nProprietor`;
-        doc.setFontSize(10);
-        doc.text(additionalFooterText, 14, doc.autoTable.previous.finalY + 30);
 
-        // Create a Blob and URL, then open it in a new tab
-        const blob = doc.output('blob');
-        const url = URL.createObjectURL(blob);
-        window.open(url);
+        // pdf.save('invoice.pdf');
+        //------------------------------------------
+        const pdfBlob = pdf.output('blob');
 
-        // Optional: Revoke the Object URL after some time
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+
+        const message = `Here is your invoice: ${pdfUrl}`;
+        const whatsappUrl = `https://wa.me/${formData.whatsup_no}?text=${encodeURIComponent(message)}`;
+
+        window.open(whatsappUrl, '_blank');
+
+        // Optional: Revoke the object URL after use
+        URL.revokeObjectURL(pdfUrl);
 
     } catch (error) {
-        console.error('Error generating PDF:', error);
+        console.error('Error generating PDF or sharing via WhatsApp:', error);
     }
 };

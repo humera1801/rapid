@@ -78,42 +78,57 @@ function Header() {
               <Nav className="me-auto w-100" id="collapsibleNavbar" >
 
                 <ul className="navbar-nav ul1 " >
-                  <li >
+                  {/* <li >
                     <Link href="/Home" className="nav-link">Home</Link>
-                  </li>
-                  {/* <NavDropdown title="Fire Extinguisher" id="basic-nav-dropdown">
-                    <NavDropdown.Item as="div">
-                      <Link className="nav-link" href="/Fire/Fire-Extinguisher">
-                        Fire Extinguisher Book
+                  </li> */}
+                  <NavDropdown title=" Ticket Booking" id="basic-nav-dropdown" className="custom-nav-dropdown">
+
+                    <NavDropdown.Item className="custom-dropdown-item">
+                      <Link href="/Home/Ticket" className="nav-link custom-nav-link">Add Ticket Booking</Link>
+                    </NavDropdown.Item>
+                    <NavDropdown.Item className="custom-dropdown-item">
+                      <Link href="/ticket_list" className="nav-link custom-nav-link">Ticket Booking List</Link>
+                    </NavDropdown.Item>
+
+                  </NavDropdown>
+                  <NavDropdown title=" Parcel Booking" id="basic-nav-dropdown" className="custom-nav-dropdown">
+
+                    <NavDropdown.Item className="custom-dropdown-item">
+                      <Link href="/Home/parcel" className="nav-link custom-nav-link">Add Parcel Booking</Link>
+                    </NavDropdown.Item>
+                    <NavDropdown.Item className="custom-dropdown-item">
+                      <Link href="/parcel_list" className="nav-link custom-nav-link">Parcel Booking List</Link>
+                    </NavDropdown.Item>
+
+                  </NavDropdown>
+
+                  <NavDropdown title="Fire Extinguisher" id="basic-nav-dropdown" className="custom-nav-dropdown">
+                    <NavDropdown.Item as="div" className="custom-dropdown-item">
+                      <Link className="nav-link custom-nav-link" href="/Fire/Fire-Extinguisher">
+                        Fire Extinguisher Booking
                       </Link>
                     </NavDropdown.Item>
-                    <NavDropdown.Item href="/Fire/Fire-Extinguisher">   Brand  </NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.3"> Ingredient</NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.3">Service</NavDropdown.Item>
-                    <NavDropdown.Item href="#action/3.3">Fire  List</NavDropdown.Item>
-                   
-                  </NavDropdown> */}
-                  <li >
-                    <Link href="/Fire/Fire-Extinguisher" className="nav-link">Fire Extinguisher</Link>
-                  </li>
-                  <li >
-                    <Link href="/Fire/Add-Brand" className="nav-link">Brand List</Link>
-                  </li>
-                  <li >
-                    <Link href="/Fire/Add-Ingredient" className="nav-link">Ingredient List</Link>
-                  </li>
-                  <li >
-                    <Link href="/Fire/Add-Service" className="nav-link">Service List</Link>
-                  </li>
-                  <li >
-                    <Link href="/Fire/Fire-List" className="nav-link">Fire  List</Link>
-                  </li>
-                  <li >
+                    <NavDropdown.Item className="custom-dropdown-item">
+                      <Link href="/Fire/Add-Brand" className="nav-link custom-nav-link">Add Brand</Link>
+                    </NavDropdown.Item>
+                    <NavDropdown.Item className="custom-dropdown-item">
+                      <Link href="/Fire/Add-Ingredient" className="nav-link custom-nav-link">Add Item</Link>
+                    </NavDropdown.Item>
+                    <NavDropdown.Item className="custom-dropdown-item">
+                      <Link href="/Fire/Add-Service" className="nav-link custom-nav-link">Add Service</Link>
+                    </NavDropdown.Item>
+                    <NavDropdown.Item className="custom-dropdown-item">
+                      <Link href="/Fire/Fire-List" className="nav-link custom-nav-link">Fire Booking List</Link>
+                    </NavDropdown.Item>
+                  </NavDropdown>
+
+
+                  {/* <li >
                     <Link href="/ticket_list" className="nav-link">Ticket Booking List</Link>
-                  </li>
-                  <li className="nav-item">
+                  </li> */}
+                  {/* <li className="nav-item">
                     <Link href="/parcel_list" className="nav-link">Parcel Booking List</Link>
-                  </li>
+                  </li> */}
 
                   <NavDropdown className="nav-item" title={userName} id="collapsible-nav-dropdown">
                     <NavDropdown.Item href="/Change_Password">Change Password</NavDropdown.Item>

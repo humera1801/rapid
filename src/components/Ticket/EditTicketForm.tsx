@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 
 import EditTicketData from '@/app/Api/EditTicketData';
 import handleUpdatePrint from '@/app/ticket_list/Ticket_data/EditPrint';
+import Link from 'next/link';
 
 
 
@@ -40,6 +41,7 @@ type FormData = {
   slr_print_rate: number;
   slr_total_print_rate: number;
   st: number;
+  whatsapp_no: any;
   st_rate: number;
   st_total_amount: number;
   st_print_rate: number;
@@ -70,7 +72,11 @@ type FormData = {
   to_state_name: string;
   from_city_name: string;
   to_city_name: string;
-  ticket_no:string
+  ticket_no: string
+  passengers_proof_type: string;
+  passengers_proof_details: string;
+  transection_id: String;
+
 
 };
 
@@ -273,7 +279,9 @@ function EditForm() {
       remarks: '',
       ticket_no: '',
       received: 'Get',
-      user_id: storedData
+      user_id: storedData,
+      transection_id: '',
+
 
 
     },
@@ -291,7 +299,6 @@ function EditForm() {
   setValue("mobile_no", ticketData.mobile)
   setValue("cmp_mobile", ticketData.cmp_mobile)
   setValue("cmp_name", ticketData.cmp_name)
-
   setValue("is_duplicate", ticketData.is_duplicate)
   setValue("is_extra", ticketData.is_extra)
   setValue("slr", ticketData.slr)
@@ -316,7 +323,7 @@ function EditForm() {
   setValue("bus_name", ticketData.bus_name)
   setValue("bus_no", ticketData.bus_no)
   setValue("boarding", ticketData.boarding)
-  setValue("payment_method", ticketData.payment_method)
+  // setValue("payment_method", ticketData.payment_method)
   setValue("final_total_amount", ticketData.final_total_amount)
   setValue("ticket_actual_total", ticketData.final_total_amount)
   setValue("print_final_total_amount", ticketData.print_final_total_amount)
@@ -326,11 +333,19 @@ function EditForm() {
   setValue("print_remaining_amount", ticketData.print_remaining_amount)
   setValue("remarks", ticketData.remarks)
 
+  const paymentMethod = watch('payment_method');
 
 
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
 
 
-
+  useEffect(() => {
+    if (ticketData) {
+      setSelectedPaymentMethod(ticketData.payment_method);
+      setValue('payment_method', ticketData.payment_method);
+      setValue('transection_id', ticketData.transection_id || '');
+    }
+  }, [ticketData, setValue]);
 
 
 
@@ -403,11 +418,11 @@ function EditForm() {
   const [customCity, setCustomCity] = useState('');
   const [showCustomToCityInput, setShowCustomToCityInput] = useState(false);
   const [customToCity, setCustomToCity] = useState('');
-  
+
   const handleCustomToCityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCustomToCity(event.target.value);
   };
-  
+
   const handleCustomCityChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCustomCity(event.target.value);
   };
@@ -422,36 +437,36 @@ function EditForm() {
       let toStateName = '';
       let fromCityName = '';
       let toCityName = '';
-  
+
       // Initialize tkt_no variable
       const tkt_no = formData.ticket_no;
-  
+
       // Convert state.id to a string
       const selectedFromStateIdStr = String(selectedFromStateId);
       const selectedToStateIdStr = String(selectedToStateId);
-  
+
       // Fetch state names directly from the `fromStates` and `toStates` arrays
       const fromState = fromStates.find(state => String(state.id) === selectedFromStateIdStr);
       const toState = toStates.find(state => String(state.id) === selectedToStateIdStr);
-  
+
       if (fromState) {
         fromStateName = fromState.name;
       }
       if (toState) {
         toStateName = toState.name;
       }
-  
+
       // Fetch city names directly from the `fromCities` and `toCities` arrays
       const fromCity = fromCities.find(city => String(city.id) === formData.travel_from);
       const toCity = toCities.find(city => String(city.id) === formData.travel_to);
-  
+
       if (fromCity) {
         fromCityName = fromCity.city_name;
       }
       if (toCity) {
         toCityName = toCity.city_name;
       }
-  
+
       // Custom city handling if applicable
       if (showCustomCityInput && customCity) {
         const response = await axios.post('http://localhost:3000/ticket/add_new_city_from_state', {
@@ -461,7 +476,7 @@ function EditForm() {
         formData.travel_from = response.data.city_id; // Assuming API returns city_id
         fromCityName = customCity;
       }
-  
+
       if (showCustomToCityInput && customToCity) {
         const response = await axios.post('http://localhost:3000/ticket/add_new_city_from_state', {
           city_name: customToCity,
@@ -470,7 +485,7 @@ function EditForm() {
         formData.travel_to = response.data.city_id; // Assuming API returns city_id
         toCityName = customToCity;
       }
-  
+
       // Populate formData with state and city names
       formData.from_state = selectedFromStateIdStr;
       formData.to_state = selectedToStateIdStr;
@@ -478,12 +493,12 @@ function EditForm() {
       formData.to_state_name = toStateName;
       formData.from_city_name = fromCityName;
       formData.to_city_name = toCityName;
-  
+
       // Set tkt_no in formData (if needed to include it)
       formData.tkt_no = tkt_no;
-  
+
       // Submit the final form data
-      const response = await axios.post('http://localhost:3000/ticket/update_ticket_detail_data', formData);
+      const response = await axios.post('http://192.168.0.100:3001/ticket/update_ticket_detail_data', formData);
       console.log('Form submitted successfully:', response.data);
       handleUpdatePrint(formData);
       router.push('/ticket_list');
@@ -492,10 +507,10 @@ function EditForm() {
       // Handle errors
     }
   };
-  
-  
 
-  
+
+
+
 
   const handleShowCustomCityInput = () => {
     setShowCustomCityInput(true);
@@ -544,6 +559,24 @@ function EditForm() {
   };
 
 
+  const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
+    setTicketData({ ...ticketData, whatsapp_no: value });
+
+  };
+
+
+  const [selectedOption, setSelectedOption] = useState<string | null>();
+  const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedOption(event.target.value)
+  };
+
+
+
+  const aadhaarPattern = /^\d{12}$/;
+  const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+  const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9A-Z]{1}$/;
+
   //--------------------------------------------------------------------------------------------------------------------------------
   return (
     <>
@@ -554,7 +587,16 @@ function EditForm() {
         <Card>
 
 
-          <Card.Header><h3>Update Ticket booking</h3></Card.Header>
+          <Card.Header><div  style={{ display: "flex", justifyContent: "space-between" }}>
+            <h4>Update Booking Detail</h4>
+            <div>
+             
+
+              <Link href="/ticket_list" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</Link>
+
+            </div>
+          </div>
+          </Card.Header>
           {error && <p>{error}</p>}
           {ticketData && (
             <Card.Body>
@@ -699,16 +741,16 @@ function EditForm() {
                   </div>
                   <div className="col-lg-3">
                     <label className="form-label" htmlFor="bdate">Booking date</label>
-                    <input  {...register('bdate')} value={ticketData.bdate} onChange={(e) => handleFieldChange('bdate', e.target.value)} className="form-control form-control-sm" type="date" id="bdate" placeholder="Enter Booking date"  />
+                    <input  {...register('bdate')} value={ticketData.bdate} onChange={(e) => handleFieldChange('bdate', e.target.value)} className="form-control form-control-sm" type="date" id="bdate" placeholder="Enter Booking date" />
                   </div>
 
                   <div className="col-lg-3">
                     <label className="form-label" htmlFor="jdate">Journey date</label>
                     <input  {...register('jdate')} value={ticketData.jdate} onChange={(e) => handleFieldChange('jdate', e.target.value)} className="form-control form-control-sm" type="date" id="jdate" placeholder="Enter J.date" />
                   </div>
-                  
+
                 </div>
-             
+
                 {/* Fourth-Row */}
                 <div className="row mb-3">
                   <div className="col-lg-6">
@@ -733,13 +775,13 @@ function EditForm() {
                   </div>
                 </div>
                 {/* Fifth-Row */}
-                <div className="row mb-3">
-                  <div className="col-lg-6">
+                <div className="row mb-4">
+                  <div className="col-lg-4">
                     <label className="form-label" htmlFor="name">Company Name</label>
                     <input {...register('cmp_name')} value={ticketData.cmp_name} onChange={(e) => handleFieldChange('cmp_name', e.target.value)} className="form-control form-control-sm" type="text" id="cmp_name" placeholder="Enter Company Name" />
                   </div>
 
-                  <div className="col-lg-6">
+                  <div className="col-lg-4">
                     <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">Company Mobile No</label>
                     <input type="text"
                       {...register("cmp_mobile", {
@@ -752,7 +794,119 @@ function EditForm() {
                     {errors?.cmp_mobile?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
 
                   </div>
+
+                  <div className="col-lg-4">
+                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">What's-up No</label>
+                    <input
+                      type="text"
+                      {...register("whatsapp_no", {
+                        required: true,
+                        minLength: 10,
+                        maxLength: 10,
+                        pattern: /^[0-9]+$/
+                      })}
+                      value={ticketData.whatsapp_no}
+                      onChange={handleWMobileNoChange}
+                      className={`form-control form-control-sm ${errors.whatsapp_no ? 'is-invalid' : ''}`}
+                      id="whatsapp_no"
+
+                      placeholder="Enter Mobile No"
+                    />
+                    {errors?.whatsapp_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                    {errors?.whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                    {errors?.whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+
+                  </div>
                 </div>
+
+
+
+                <div className="row mb-3">
+                  <div className="col-lg-6">
+                    <label className="form-label" htmlFor="passengers_proof_type">Select Sender ID Proof Type</label><br />
+                    <input type="radio"
+                      {...register('passengers_proof_type')}
+                      value="Aadhar_no"
+                      checked={ticketData.passengers_proof_type === "Aadhar_no"}
+                      onChange={() => {
+                        handleFieldChange('passengers_proof_type', "Aadhar_no")
+
+                      }} /> Aadhar
+
+
+                    <input
+
+                      type="radio"
+                      {...register('passengers_proof_type')}
+                      value="Pan_no"
+                      checked={ticketData.passengers_proof_type === "Pan_no"}
+                      onChange={() => {
+                        handleFieldChange('passengers_proof_type', "Pan_no")
+
+                      }}
+
+
+                    /> PAN
+
+                    <input type='radio' {...register('passengers_proof_type')}
+                      value="Gst_no"
+                      checked={ticketData.passengers_proof_type === "Gst_no"}
+                      onChange={() => {
+                        handleFieldChange('passengers_proof_type', "Gst_no")
+
+                      }} /> GST
+                  </div>
+
+
+                </div>
+
+                {/* --------------*/}
+                <div className="col-lg-6">
+                  <label className="form-label" htmlFor="send_mob">Sender Adhar No./PAN No./GST No.</label>
+                  <input
+                    {...register('passengers_proof_details', {
+                      required: ticketData.passengers_proof_type === 'Aadhar_no' ? 'Invalid Aadhaar number format' : ticketData.passengers_proof_type === 'Pan_no' ? 'Invalid PAN number format' : 'Invalid GST number format',
+                      pattern: {
+                        value: ticketData.passengers_proof_type === 'Aadhar_no' ? aadhaarPattern : ticketData.passengers_proof_type === 'Pan_no' ? panPattern : gstPattern,
+                        message: ticketData.passengers_proof_type === 'Aadhar_no' ? 'Invalid Aadhaar number format' : ticketData.passengers_proof_type === 'Pan_no' ? 'Invalid PAN number format' : 'Invalid GST number format',
+                      }
+                    })}
+                    value={ticketData.passengers_proof_details}
+                    onChange={(e) => handleFieldChange('passengers_proof_details', e.target.value)}
+                    className="form-control form-control-sm"
+                    type="text"
+                    name="passengers_proof_details"
+                    placeholder="Enter Sender ID Proof Detail" />
+
+                  {errors.passengers_proof_details && <span className='error'>{errors.passengers_proof_details.message}</span>}
+                </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
                 {/* Select-seat */}
                 <div className="row mb-3">
                   <div className="col-lg-6 col-sm-6">
@@ -932,6 +1086,20 @@ function EditForm() {
                       <option value="paytm">Paytm</option>
                       <option value="credit">Credit</option>
                     </select>
+
+
+                    {(paymentMethod === 'gpay' || paymentMethod === 'phonepay' || paymentMethod === 'paytm') && (
+                      <div className="mt-2">
+                        <label className="form-label">Transaction ID</label>
+                        <input
+                          {...register('transection_id')}
+                          type="text"
+                          className="form-control"
+                          placeholder="Enter transaction ID"
+                          defaultValue={ticketData?.transection_id || ''}
+                        />
+                      </div>
+                    )}
                   </div>
                   <div className="col-lg-3">
                     <label className="form-label">Actual Total</label>
@@ -974,8 +1142,8 @@ function EditForm() {
                   </div>
                   <div className="col-lg-6">
                     <label className="form-label" htmlFor="remark">Is Duplicate?</label><br />
-                    <input  {...register('is_duplicate')}    checked={ticketData.is_duplicate === "1"} // Check if ticketData.is_duplicate is "1"
-                      onChange={(e) => handleFieldChange('is_duplicate', e.target.checked ? "1" : "0")}  value={ticketData.is_duplicate} type="checkbox" id="is_duplicate" />
+                    <input  {...register('is_duplicate')} checked={ticketData.is_duplicate === "1"} // Check if ticketData.is_duplicate is "1"
+                      onChange={(e) => handleFieldChange('is_duplicate', e.target.checked ? "1" : "0")} value={ticketData.is_duplicate} type="checkbox" id="is_duplicate" />
                   </div>
                 </div>
 

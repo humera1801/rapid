@@ -63,6 +63,7 @@ type FormData = {
     to_city_name: string;
     added_by_name: string;
     mobile: string;
+    transection_id: string;
 
 };
 
@@ -171,7 +172,16 @@ const ViewTicketDetail = () => {
     });
 
     const is_extra = watch('is_extra');
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+    const paymentMethod = watch('payment_method');
 
+    useEffect(() => {
+        if (ticketData) {
+            setSelectedPaymentMethod(ticketData.payment_method);
+            setValue('payment_method', ticketData.payment_method);
+            setValue('transection_id', ticketData.transection_id || '');
+        }
+    }, [ticketData, setValue]);
 
 
 
@@ -242,9 +252,13 @@ const ViewTicketDetail = () => {
                                                     <label className="set_label">Passenger Name:</label>
                                                     <span>{ticketData.name}</span>
                                                 </div>
-                                                <div className="col-lg-6">
+                                                <div className="col-lg-3">
                                                     <label className="set_label">Passenger Mobile No:</label>
                                                     <span>{ticketData.mobile}</span>
+                                                </div>
+                                                <div className="col-lg-3">
+                                                    <label className="set_label">whatsapp No:</label>
+                                                    <span>{ticketData.whatsapp_no}</span>
                                                 </div>
                                             </div>
                                             <div className="row mb-3">
@@ -413,7 +427,13 @@ const ViewTicketDetail = () => {
 
                                                     <p>{ticketData.payment_method}</p>
                                                 </div>
+                                                {(paymentMethod === 'gpay' || paymentMethod === 'phonepay' || paymentMethod === 'paytm') && (
 
+                                                    <div className="col-lg-2">
+                                                        <label className="set_label">Transction Id</label>
+                                                        <p>{ticketData.transection_id}</p>
+                                                    </div>
+                                                )}
                                                 <div className="col-lg-3">
                                                     <label className="set_label">Actual Total Amount</label>
                                                     <p>{ticketData.final_total_amount} </p>
@@ -446,7 +466,7 @@ const ViewTicketDetail = () => {
                                             <div className="row mb-3">
                                                 <div className="col-lg-6">
                                                     <label className="set_label">Particulars</label>
-                                                    <span></span>
+                                                    <span>{ticketData.remarks}</span>
                                                 </div>
                                             </div>
 

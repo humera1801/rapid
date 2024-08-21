@@ -7,6 +7,8 @@ import GetServiceList from '@/app/Api/FireApis/ServiceApi/GetServiceList';
 import { faMinusCircle, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import axios from 'axios';
+import Select from 'react-select';
+
 import { debounce } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
@@ -40,6 +42,9 @@ export interface FormData {
     certificateNo: string;
     poNo: string;
     product_data: ProductData[];
+    discount: any;
+    discount_amount: any;
+    whatsup_no: any;
 }
 
 interface ProductData {
@@ -57,6 +62,7 @@ interface ProductData {
     febd_sgst_amount: any;
     febd_cgst_amount: any;
     feb_id: string;
+    febd_sr_no: any;
 }
 
 interface ingredient {
@@ -84,6 +90,40 @@ interface Service {
 
 }
 
+
+
+interface employee {
+    e_id: string,
+    e_name: string
+}
+
+
+interface Product {
+    febd_sr_no: any;
+    fest_name: string;
+    feit_name: any;
+    capacity: any;
+    feb_name: any;
+    qty: any;
+    rate: any;
+    totalAmount: any;
+    febd_sgst: any;
+    febd_cgst: any;
+    // Add other properties as needed
+}
+
+interface ServiceData {
+    [key: string]: Product[];
+}
+
+interface ResponseData {
+    service_data: ServiceData;
+}
+
+// Define the type for the response
+interface ApiResponse {
+    data: ResponseData[];
+}
 interface ClientData {
     client_id: number;
     client_firstName: string;
@@ -144,15 +184,9 @@ const ViewFire = () => {
 
 
 
-
-
-
-
-
-
     const [fireData, setFireData] = useState<any>("");
     const [error, setError] = useState<string>('');
-
+    const [groupedData, setGroupedData] = useState<{ [key: string]: Product[] }>({});
 
     useEffect(() => {
         fetchservice();
@@ -192,13 +226,63 @@ const ViewFire = () => {
                         setValue("address", response.data[0].address);
                         setValue("email", response.data[0].email);
                         setValue("gstNo", response.data[0].gstNo);
+                        setValue("discount", response.data[0].discount);
+                        setValue("discount_amount", response.data[0].discount_amount || '');
                         setValue("vendorCode", response.data[0].vendorCode);
                         setValue("poNo", response.data[0].poNo);
                         setValue("mobileNo", response.data[0].mobileNo);
                         setMobileNoValue(response.data[0].mobileNo);
-
+                        setValue("whatsup_no", response.data[0].whatsup_no || ''); // Set whatsup_no in form
 
                     }
+
+
+                    // Assuming you get an array of selected fest_ids
+                    const selectedFestIds: number[] = response.data[0].fest_id || []; // Modify based on your actual response
+                    console.log("dfsadf", response.data[0].fest_id);
+
+                    // Set services with proper selected state
+                    // setServices((prevServices) =>
+                    //     prevServices.map(service =>
+                    //         selectedFestIds.includes(service.fest_id)
+                    //             ? { ...service, selected: true }
+                    //             : service
+                    //     )
+                    // );
+                    console.log(">>>>", response.data[0].service_data);
+
+
+
+
+
+                    // if (typeof response.data[0].service_data !== 'object' || response.data[0].service_data === null) {
+                    //     throw new Error('formData.service_data is not an object');
+                    // }
+
+                    // // Group data by fest_name
+                    // const groupedData = Object.entries(response.data[0].service_data).reduce((acc, [key, products]) => {
+                    //     products.forEach(product => {
+                    //         const festName = product.fest_name; // Extract fest_name
+                    //         if (!acc[festName]) acc[festName] = [];
+                    //         acc[festName].push(product);
+                    //     });
+                    //     return acc;
+                    // }, {});
+
+
+                    // Group data by fest_name
+                    const grouped = Object.entries(response.data[0].service_data).reduce((acc, [key, products]) => {
+                        (products as Product[]).forEach(product => {
+                            const festName = product.fest_name; // Extract fest_name
+                            if (!acc[festName]) acc[festName] = [];
+                            acc[festName].push(product);
+                        });
+                        return acc;
+                    }, {} as { [key: string]: Product[] });
+
+                    setGroupedData(grouped);
+                    console.log(">>>><", groupedData);
+
 
 
 
@@ -265,12 +349,15 @@ const ViewFire = () => {
             febking_final_amount: '0.00',
             client_id: "",
             firstName: '',
+            discount: "",
+            discount_amount: "",
             address: '',
             email: '',
             gstNo: '',
             vendorCode: '',
             poNo: '',
             mobileNo: '',
+            whatsup_no: '',
         }
     });
 
@@ -294,6 +381,7 @@ const ViewFire = () => {
                 febd_sgst_amount: product.febd_sgst_amount,
                 febd_cgst_amount: product.febd_cgst_amount,
                 feb_id: product.feb_id,
+                febd_sr_no: product.febd_sr_no,
             }));
 
 
@@ -419,23 +507,7 @@ const ViewFire = () => {
 
     //-------------------------------------------------------------------------------------------------------------------------
 
-    const handleServiceSelection = (index: any) => {
-        const updatedServices = services.map((service, idx) => ({
-            ...service,
-            selected: idx === index
-        }));
-        setServices(updatedServices);
-        setFireData({ fest_id: services[index].fest_id });
-    };
 
-    const handleChange = (e: { target: { name: any; value: any; }; }) => {
-        setFireData({ ...fireData, [e.target.name]: e.target.value });
-    };
-
-
-    function handleIngredientSelect(index: number): React.ChangeEventHandler<HTMLSelectElement> | undefined {
-        throw new Error('Function not implemented.');
-    }
 
     //-----------------------------------------------get Client list -----------------------------------------------------------------
     const [mobileNoValue, setMobileNoValue] = useState<string>('');
@@ -470,7 +542,7 @@ const ViewFire = () => {
             // generateclientPDF(response.data[0]);
             console.log("data", response.data[0]);
             // handleclientPrint(response.data[0]);
-          
+
 
         } catch (error) {
             console.error('Error fetching here:', error);
@@ -491,57 +563,37 @@ const ViewFire = () => {
 
 
 
-
-
-
-
     return (
         <div className="container-fluid">
-
-            <div className="card mb-3" style={{ width: "auto" }} >
-                <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
-                    <h3>Update Fire Extinguisher </h3>
+            <div className="card mb-3">
+                <div className="card-header d-flex justify-content-between align-items-center">
+                    <h3>Update Fire Extinguisher</h3>
                     <div>
-
-                        <Link href={`../Certificte?id=${fireData.febking_id}`} style={{ float: "right" }} className="btn btn-sm btn-primary">
-                           Create Certificate
+                        <Link href={`../Certificte?id=${fireData.febking_id}`} className="btn btn-sm btn-primary me-2">
+                            Create Certificate
                         </Link>
-                        {/* <button className="btn btn-sm btn-primary" style={{ float: "right" }} onClick={() => handlecertificate(fireData.febking_id)}>Certificate</button> */}
-
-                        <Link href="/Fire/Fire-List" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</Link>
-
+                        <Link href="/Fire/Fire-List" className="btn btn-sm btn-success">
+                            Back
+                        </Link>
                     </div>
                 </div>
 
-
-
                 {fireData && (
                     <div className="card-body">
-                        <div className=" d-flex flex-wrap">
-                            <div className="col-lg-6">
-                                <label className="">Invoice No : </label><span> {fireData.febking_invoice_no}</span>
+                        <div className="row mb-3">
+                            <div className="col-lg-6 col-md-12">
+                                <label>Invoice No:</label> <span>{fireData.febking_invoice_no}</span>
                             </div>
                         </div>
-
-                        <div className="  d-flex flex-wrap">
-                            <div className="col-lg-6">
-                                <label className="set_label">Service Type : </label><span> {fireData.fest_name}</span>
-                            </div>
-                        </div>
-
-
-
-
-
-
-
-
-
 
                         <div className="row mb-3">
+                            <div className="col-lg-6 col-md-12">
+                                <label className="form-label">Select Employees:</label> <span>{fireData.employee_names}</span>
+                            </div>
+                        </div>
 
-                            <table id="example" className="table table-striped" style={{ width: "100%" }}>
-
+                        <div className="table-responsive mb-3">
+                            <table className="table table-striped">
                                 <thead>
                                     <tr>
                                         <th>Item</th>
@@ -552,144 +604,106 @@ const ViewFire = () => {
                                         <th>Total</th>
                                         <th>SGST</th>
                                         <th>CGST</th>
-
+                                        <th>Febd SR No</th>
                                     </tr>
                                 </thead>
-                                {fields.map((field, index) => (
-                                    <tbody>
-                                        <tr key={index}>
-                                            <td>{field.feit_name}</td>
-                                            <td>{field.capacity}</td>
-                                            <td>{field.feb_name}</td>
-                                            <td>{field.qty}</td>
-                                            <td>{field.rate}</td>
-                                            <td>{field.totalAmount}</td>
-                                            <td>{field.febd_sgst}%  </td>
-                                            <td>{field.febd_cgst}%</td>
-                                        </tr>
-                                    </tbody>
-                                ))}
+                                <tbody>
+                                    {Object.entries(groupedData).map(([groupName, products]) => (
+                                        <React.Fragment key={groupName}>
+                                            <tr>
+                                                <td colSpan={9} className="font-weight-bold">{groupName}</td>
+                                            </tr>
+                                            {products.map((product, index) => (
+                                                <tr key={index}>
+                                                    <td>{product.feit_name}</td>
+                                                    <td>{product.capacity}</td>
+                                                    <td>{product.feb_name}</td>
+                                                    <td>{product.qty}</td>
+                                                    <td>{product.rate}</td>
+                                                    <td>{product.totalAmount}</td>
+                                                    <td>{product.febd_sgst}</td>
+                                                    <td>{product.febd_cgst}</td>
+                                                    <td>{product.febd_sr_no}</td>
+                                                </tr>
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
+                                </tbody>
                                 <tfoot>
                                     <tr>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
-                                        <td></td>
+                                        <td colSpan={5}></td>
                                         <td>{fireData.febking_total_amount}</td>
-                                        <td> {fireData.febking_total_sgst}</td>
-                                        <td> {fireData.febking_total_cgst}</td>
-
+                                        <td>{fireData.febking_total_sgst}</td>
+                                        <td>{fireData.febking_total_cgst}</td>
+                                        <td></td>
                                     </tr>
-
                                 </tfoot>
-
                             </table>
-
                         </div>
 
-                        <div>
-                            <h5 style={{ textAlign: "end", marginRight: "20px" }}>Final Amount: {fireData.febking_final_amount}</h5>
+                        <div className="text-end mb-3">
+                            <h5>Final Amount: {fireData.febking_final_amount}</h5>
                         </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                        <div className="row mt-4">
-                            <div className="col-md-12">
-                                <h4>Client Details:</h4>
-                            </div>
-                            <hr />
-                        </div>
-
-
-
 
                         <div className="row mb-3">
-                            <div className="col-lg-4 col-sm-4">
-                                <label className="form-label" htmlFor="clientId">Client Name: </label>
-                                <span> {formData.firstName}</span>
-
+                            <div className="col-lg-6 col-md-12">
+                                <label className="set_label">Discount:</label> <span>{fireData.febking_discount}</span>
                             </div>
-
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="address">Address:</label>
-                                <span> {formData.address}</span>
-                            </div>
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="address">City:</label>
-                                <span> {formData.client_city}</span>
-                            </div>
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="address">State:</label>
-                                <span> {formData.client_state}</span>
-                            </div>
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="address">Pin-code:</label>
-                                <span> {formData.client_pincode}</span>
-                            </div>
-
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="email">Email-id:</label>
-                                <span> {formData.email}</span>
-                            </div>
-
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="gstNo">Gst-no:</label>
-                                <span> {formData.gstNo}</span>
-                            </div>
-
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="vendorCode">Vendor code:</label>
-                                <span> {formData.vendorCode}</span>
-                            </div>
-
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="poNo">P.o.No.:</label>
-                                <span> {formData.poNo}</span>
-                            </div>
-
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="mobileNo">Mobile No:</label>
-
-                                <span> {formData.mobileNo}</span>
+                            <div className="col-lg-6 col-md-12">
+                                <label className="set_label">Discount Amount:</label> <span>{fireData.febking_discount_amount}</span>
                             </div>
                         </div>
 
+                        <div className="row mb-3">
+                            <div className="col-lg-6 col-md-12">
+                                <label className="set_label">What's-up No:</label> <span>{fireData.whatsup_no}</span>
+                            </div>
+                        </div>
 
+                        <div className="row mb-4">
+                            <div className="col-md-12">
+                                <h4>Client Details:</h4>
+                                <hr />
+                            </div>
+                        </div>
 
-
-
+                        <div className="row">
+                            <div className="col-lg-4 col-md-6 mb-3">
+                                <label className="form-label">Client Name:</label> <span>{formData.firstName}</span>
+                            </div>
+                            <div className="col-lg-4 col-md-6 mb-3">
+                                <label className="form-label">Address:</label> <span>{formData.address}</span>
+                            </div>
+                            <div className="col-lg-4 col-md-6 mb-3">
+                                <label className="form-label">City:</label> <span>{formData.client_city}</span>
+                            </div>
+                            <div className="col-lg-4 col-md-6 mb-3">
+                                <label className="form-label">State:</label> <span>{formData.client_state}</span>
+                            </div>
+                            <div className="col-lg-4 col-md-6 mb-3">
+                                <label className="form-label">Pin-code:</label> <span>{formData.client_pincode}</span>
+                            </div>
+                            <div className="col-lg-4 col-md-6 mb-3">
+                                <label className="form-label">Email-id:</label> <span>{formData.email}</span>
+                            </div>
+                            <div className="col-lg-4 col-md-6 mb-3">
+                                <label className="form-label">Gst-no:</label> <span>{formData.gstNo}</span>
+                            </div>
+                            <div className="col-lg-4 col-md-6 mb-3">
+                                <label className="form-label">Vendor code:</label> <span>{formData.vendorCode}</span>
+                            </div>
+                            <div className="col-lg-4 col-md-6 mb-3">
+                                <label className="form-label">P.o.No.:</label> <span>{formData.poNo}</span>
+                            </div>
+                            <div className="col-lg-4 col-md-6 mb-3">
+                                <label className="form-label">Mobile No:</label> <span>{formData.mobileNo}</span>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
-
-
-
         </div>
+
     );
 };
 

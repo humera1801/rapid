@@ -7,62 +7,54 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMinusCircle, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import GetUnit from '@/app/Api/FireApis/FireExtinghsherList/GetUnit';
 
+// Define the data structure for form handling
 interface FormData {
-  
     feitId: number | null;
     Capacity: {
         fec_capacity: string;
         fec_unit: string;
     }[];
 }
+
+// Define the data structure for unit options
 interface Unit {
     unit_id: number;
     unit_type: string;
 }
+
+// Define props for the Capacity component
 interface CapacityProps {
     show: boolean;
     onHide: () => void;
     feitId: number | null;
-    capacityData: any[]; // Adjust type as per actual data structure
+    capacityData: {
+        fec_capacity: string;
+        fec_unit: string;
+    }[];
 }
 
+// Capacity component
 const Capacity: React.FC<CapacityProps> = ({ show, onHide, feitId, capacityData }) => {
-
-
-
-    const [capacity, setCapacity] = useState<Unit[]>([]);
+    const [units, setUnits] = useState<Unit[]>([]);
 
     useEffect(() => {
-        fetchData();
+        fetchUnits();
     }, []);
 
-    const fetchData = async () => {
+    // Fetch units data
+    const fetchUnits = async () => {
         try {
             const response = await GetUnit.getunitdata();
-            setCapacity(response);
-            console.log("unit", response);
+            setUnits(response);
         } catch (error) {
             console.error('Error fetching units:', error);
         }
     };
 
-
-
-
-
-
-
-
-
-
+    // Initialize form handling
     const { register, control, handleSubmit, reset, setValue } = useForm<FormData>({
         defaultValues: {
-           
             Capacity: [{ fec_capacity: "", fec_unit: "" }]
-            // Capacity: capacityData.map(item => ({
-            //     fec_capacity: item.fec_capacity,
-            //     fec_unit: item.fec_unit
-            // }))
         }
     });
     const { fields, append, remove } = useFieldArray({
@@ -70,14 +62,17 @@ const Capacity: React.FC<CapacityProps> = ({ show, onHide, feitId, capacityData 
         name: 'Capacity',
     });
 
+    // Add a new row to the form
     const addRow = () => {
         append({ fec_capacity: "", fec_unit: "" });
     };
 
+    // Remove a row from the form
     const handleRemove = (index: number) => {
         remove(index);
     };
 
+    // Handle form submission
     const onSubmit: SubmitHandler<FormData> = async (formData) => {
         try {
             const dataToSubmit = {
@@ -85,16 +80,16 @@ const Capacity: React.FC<CapacityProps> = ({ show, onHide, feitId, capacityData 
                 capacity: formData.Capacity
             };
 
-            const response = await axios.post('http://192.168.0.105:3001/capacity/add_fire_extingusher_capacity_data', dataToSubmit);
+            const response = await axios.post('http://192.168.0.100:3001/capacity/add_fire_extingusher_capacity_data', dataToSubmit);
             console.log('Data submitted successfully:', response.data);
             reset(); // Reset the form fields to default values
+            window.location.reload();
             onHide(); // Close the modal after successful submission
         } catch (error) {
             console.error('Error submitting data:', error);
         }
     };
 
-  
     useEffect(() => {
         if (capacityData && capacityData.length > 0) {
             reset({
@@ -110,8 +105,7 @@ const Capacity: React.FC<CapacityProps> = ({ show, onHide, feitId, capacityData 
                 Capacity: [{ fec_capacity: "", fec_unit: "" }]
             });
         }
-    }, [feitId, capacityData, reset]);
-    
+    }, [capacityData, feitId, reset]);
 
     return (
         <Modal show={show} onHide={onHide} size="lg" centered>
@@ -121,9 +115,8 @@ const Capacity: React.FC<CapacityProps> = ({ show, onHide, feitId, capacityData 
             <Modal.Body>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     {/* Render dynamic fields */}
-                    {fields.map((field, index) => (                        
+                    {fields.map((field, index) => (
                         <div key={field.id} className="row mb-3">
-                            <>
                             <div className="col-lg-3">
                                 <label className="form-label" htmlFor={`capacity-${index}`}>Add Capacity:</label>
                                 <input
@@ -138,16 +131,14 @@ const Capacity: React.FC<CapacityProps> = ({ show, onHide, feitId, capacityData 
                                 <label className="form-label" htmlFor={`unit-${index}`}>Select Unit:</label>
                                 <select
                                     className="form-control form-control-sm"
-                                    {...register(`Capacity.${index}.fec_unit`, {
-                                        required: true,
-                                    })}
+                                    {...register(`Capacity.${index}.fec_unit`, { required: true })}
                                     id={`unit-${index}`}
                                 >
                                     <option value="">--Select--</option>
-                                    {/* Render options based on capacityData */}
-                                    {capacity.map((unit) => (
-                                            <option key={unit.unit_id} value={unit.unit_type}>{unit.unit_type}</option>
-                                        ))}
+                                    {/* Render options based on units data */}
+                                    {units.map((unit) => (
+                                        <option key={unit.unit_id} value={unit.unit_type}>{unit.unit_type}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="col-lg-1" style={{ marginTop: "30px" }}>
@@ -159,7 +150,6 @@ const Capacity: React.FC<CapacityProps> = ({ show, onHide, feitId, capacityData 
                                     <FontAwesomeIcon icon={faMinusCircle} />
                                 </button>
                             </div>
-                            </>
                         </div>
                     ))}
                     {/* Button to add a new row (field) */}

@@ -59,7 +59,7 @@ const Page: React.FC = () => {
   
         // Redirect to Home page or wherever needed
         // Replace with your router logic
-        router.push('/Home');
+        router.push('/Home/Ticket');
       } else {
         setError('Error logging in. Please try again.');
       }

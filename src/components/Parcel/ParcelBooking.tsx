@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Card } from 'react-bootstrap'
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
 import axios from 'axios';
@@ -24,7 +24,9 @@ import handleParcelPrint from '@/app/parcel_list/parcel_data/printpparcelUtils';
 type FormData = {
     is_delivery: boolean;
     particulars: string;
-
+    whatsapp_no: any;
+    parcel_imgs: any;
+    transection_id:any;
     receipt_no: string;
     booking_date: string;
     dispatch_date: string;
@@ -44,7 +46,7 @@ type FormData = {
     pic_address: { pickup_client_address: string; pickup_office_address: string }[];
     dis_address: { dispatch_client_address: string; dispatch_office_address: string }[];
     pic_office_detail: string;
-    actual_paid_amount: number;
+    actual_paid_amount: any;
     dis_delivery_type: string;
     dis_charge: number;
     bus_no: string;
@@ -63,17 +65,17 @@ type FormData = {
     print_total: string;
     gst_amount: string;
     print_gst_amount: string;
-    bilty_charge: number;
+    bilty_charge: any;
     is_demurrage: boolean;
     actual_payable_amount: number;
     print_payable_amount: number;
     lr_no: number
-    print_paid_amount: number;
-    actual_bal_amount: number;
-    print_bal_amount: number;
+    print_paid_amount: any;
+    actual_bal_amount: any;
+    print_bal_amount: any;
     total_demurrage_charges: number;
-    demurrage_days: number;
-    demurrage_charges: number;
+    demurrage_days: any;
+    demurrage_charges: any;
     bill_detail: { e_way_bill_no: string; p_o_no: string; invoice_no: string; invoice_amount: string }[];
     parcel_detail: {
         parcel_type: string;
@@ -101,6 +103,7 @@ interface BillDetail {
     invoice_no: string;
     invoice_Amount: string;
 }
+
 
 interface OPTION {
 
@@ -133,7 +136,7 @@ const ParcelBook: React.FC = () => {
     const storedData = localStorage.getItem('userData');
 
 
-    const { register, control, handleSubmit, formState: { errors }, watch, setValue } = useForm<FormData>(
+    const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>(
         {
             defaultValues: {
                 is_delivery: false,
@@ -247,26 +250,8 @@ const ParcelBook: React.FC = () => {
         const printGstAmount = (totalPrintAmount + totalCharge) * 0.05;
         setValue('print_gst_amount', printGstAmount.toFixed(2));
 
-        // const blityCharge = parseFloat(watch('bilty_charge').toString(20));
 
-        // const actualPayableAmount = newTotalAmount + gstAmount + blityCharge + totalCharge;
-        // setValue('actual_payable_amount', actualPayableAmount);
-
-
-
-        // const printPayableAmount = totalPrintAmount + printGstAmount + blityCharge + totalCharge;
-        // setValue('print_payable_amount', printPayableAmount);
-
-        // const actualPaidAmount = watch('actual_paid_amount') || 0;
-        // const printPaidAmount = watch('print_paid_amount') || 0;
-
-        // const actualBalAmount = actualPayableAmount - actualPaidAmount;
-        // setValue('actual_bal_amount', actualBalAmount);
-
-        // const printBalAmount = printPayableAmount - printPaidAmount;
-        // setValue('print_bal_amount', printBalAmount);
-
-    }, [picCharge, disCharge, parcelDetail, watch, setValue ]);
+    }, [picCharge, disCharge, parcelDetail, watch, setValue]);
 
     const calculateAmounts = (index: number) => {
         const qty = watch(`parcel_detail.${index}.qty`);
@@ -299,12 +284,65 @@ const ParcelBook: React.FC = () => {
 
     }, [
         watch('parcel_detail'),
-      
+
         watch('is_demurrage'),
         watch('demurrage_days'),
         watch('demurrage_charges'),
-     
+
     ]);
+
+
+
+
+
+    const paymentMethod = watch('payment_method');
+    const actual_total = parseFloat(getValues('actual_total') || '0');
+    const bilty_charge = parseFloat(getValues('bilty_charge') || '0');
+    // const is_demurrage = getValues('is_demurrage');
+    const demurrage_charges = parseFloat(getValues('demurrage_charges') || '0');
+    const demurrage_days = parseFloat(getValues('demurrage_days') || '0');
+    const actual_paid_amount = parseFloat(getValues('actual_paid_amount') || '0');
+    const print_paid_amount = parseFloat(getValues('print_paid_amount') || '0');
+
+    useEffect(() => {
+        if (paymentMethod === 'credit') {
+            // Reset all calculated fields to default values
+            setValue('print_total', '0');
+            setValue('gst_amount', '0');
+            setValue('print_gst_amount', '0');
+            setValue('total_demurrage_charges', 0);
+            setValue('actual_payable_amount', 0);
+            setValue('print_payable_amount', 0);
+            setValue('actual_bal_amount', 0);
+            setValue('print_bal_amount', 0);
+            setValue('actual_total', '0');
+            setValue('bilty_charge', '0');
+            setValue('actual_paid_amount', '0');
+            setValue('print_paid_amount', '0');
+        } else {
+            // Perform calculations based on current values if not 'credit'
+            const print_total = (actual_total + bilty_charge).toFixed(2);
+            const gst_amount = (actual_total * 0.05).toFixed(2); // Assuming 5% GST
+            const total_demurrage_charges = is_demurrage ? (demurrage_charges * demurrage_days) : 0;
+            const actual_payable_amount = (actual_total + parseFloat(gst_amount) + total_demurrage_charges).toFixed(2);
+            const print_payable_amount = parseFloat(actual_payable_amount);
+
+            // Update form values
+            setValue('gst_amount', gst_amount);
+            setValue('print_gst_amount', gst_amount);
+            setValue('total_demurrage_charges', total_demurrage_charges);
+            setValue('actual_payable_amount', parseFloat(actual_payable_amount));
+            setValue('print_payable_amount', print_payable_amount);
+
+            // Calculate balances
+            const actual_bal_amount = (parseFloat(actual_payable_amount) - actual_paid_amount).toFixed(2);
+            const print_bal_amount = (print_payable_amount - print_paid_amount).toFixed(2);
+
+            setValue('actual_bal_amount', parseFloat(actual_bal_amount));
+            setValue('print_bal_amount', parseFloat(print_bal_amount));
+        }
+    }, [paymentMethod, actual_total, bilty_charge, is_demurrage, demurrage_charges, demurrage_days, actual_paid_amount, print_paid_amount, setValue]);
+
 
 
     const handleQtyChange = (index: number, qty: number) => {
@@ -322,7 +360,7 @@ const ParcelBook: React.FC = () => {
         setValue('actual_total', formattedNewTotalAmount);
 
         const fixedBiltyCharge = 20;
-        setValue("bilty_charge",fixedBiltyCharge)
+        setValue("bilty_charge", fixedBiltyCharge)
 
 
         setValue(`parcel_detail.${index}.qty`, qty);
@@ -501,7 +539,7 @@ const ParcelBook: React.FC = () => {
             const qty = watch(`parcel_detail.${index}.qty`);
             updateTotalDemurrageCharges(qty);
         });
-    }, [watch('parcel_detail'),watch('bilty_charge') ,watch('demurrage_days'), watch('demurrage_charges')]);
+    }, [watch('parcel_detail'), watch('bilty_charge'), watch('demurrage_days'), watch('demurrage_charges')]);
 
 
 
@@ -566,6 +604,7 @@ const ParcelBook: React.FC = () => {
     const [toCities, setToCities] = useState<City[]>([]);
     const [showCustomFromCityInput, setShowCustomFromCityInput] = useState(false);
     const [showCustomToCityInput, setShowCustomToCityInput] = useState(false);
+    const [addedFiles, setaddedFiles] = useState<any>([]);
 
     useEffect(() => {
         fetchStates(true); // Fetch "From" states
@@ -640,72 +679,131 @@ const ParcelBook: React.FC = () => {
 
 
 
+    const [files, setFiles] = useState<FileList | null>(null);
 
-
-
-
-
-
+    const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setFiles(e.target.files);
+        }
+    };
     const [customFromCityName, setCustomFromCityName] = useState<string>('');
     const [customToCityName, setCustomToCityName] = useState<string>('');
 
     const onSubmit: SubmitHandler<FormData> = async (formData: FormData) => {
         console.log('form submitted', formData);
 
-        let newFromCityId = formData.book_from;  // Initialize with existing values
-        let newToCityId = formData.book_to;  // Initialize with existing values
+        let newFromCityId = formData.book_from;
+        let newToCityId = formData.book_to;
 
-        // Add new city for "From" state
         if (formData.book_from === 'tkt_from_other' && selectedFromStateId) {
             const fromCityResponse = await addNewCity(selectedFromStateId, customFromCityName);
             newFromCityId = fromCityResponse.city_id.toString();
         }
 
-        // Add new city for "To" state
         if (formData.book_to === 'tkt_to_other' && selectedToStateId) {
             const toCityResponse = await addNewCity(selectedToStateId, customToCityName);
             newToCityId = toCityResponse.city_id.toString();
         }
 
-        // Update form data with new city ids if they were added
         formData.book_from = newFromCityId;
         formData.book_to = newToCityId;
 
-        // Submit the form
-        const parcelDataResponse = await submitFormData(formData);
-        if (!parcelDataResponse.ok) {
-            throw new Error('Failed to create parcel data');
-        }
+        try {
+            const parcelDataResponse = await submitFormData(formData);
+            console.log("aaa", parcelDataResponse);
 
-        const parcelData = await parcelDataResponse.json();
-        console.log('Created parcel data:', parcelData.parcel_token);
-        router.push('/parcel_list');
-
-
-
-        if (parcelData.parcel_token != "") {
-            const parcelToken = parcelData.parcel_token;
-            try {
-                const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
-
-
-                console.log("get data", getTDetail.data[0]);
-                handleParcelPrint(getTDetail.data[0]);
-            } catch (error) {
-
-                console.error('Error fetching parcel data:', error);
+            if (!parcelDataResponse.ok) {
+                throw new Error('Failed to create parcel data');
             }
 
-        };
+            const parcelData = await parcelDataResponse.json();
+            console.log('Created parcel data:', parcelData.parcel_token);
+            console.log("datadata", parcelData);
 
-    }
+            if (parcelData.status == 1) {
+                console.log("formData0", formData);
+
+                if (formData.parcel_imgs.length > 0) {
+                    const data = new FormData();
+
+                    data.append("parcel_token", parcelData.parcel_token);
+
+                    for (const file of formData.parcel_imgs) {
+                        data.append("parcel_imgs", file);
+                    }
+
+                    console.log('FormData prepared:', data);
+
+                    try {
+                        const response = await fetch("http://192.168.0.100:3001/parcel/upload_parcel_image", {
+                            method: "POST",
+                            body: data,
+                        });
+
+                        const result = await response.json();
+                        console.log('API response:', result);
+
+                        if (result.status === "1") {
+                            console.log("Added successfully");
+
+                        } else {
+                            console.log("failed to upload");
+                        }
+                    } catch (error) {
+                        console.error("Error:", error);
+                        alert("Failed to add record");
+                    }
+                    if (parcelData.parcel_token != "") {
+                        const parcelToken = parcelData.parcel_token;
+                        try {
+                            const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
+
+
+                            console.log("get data", getTDetail.data[0]);
+                            handleParcelPrint(getTDetail.data[0]);
+                            router.push("/parcel_list")
+
+                        } catch (error) {
+
+                            console.error('Error fetching parcel data:', error);
+                        }
+
+                    };
+                } else {
+                    if (parcelData.parcel_token != "") {
+                        const parcelToken = parcelData.parcel_token;
+                        try {
+                            const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
+
+
+                            console.log("get data", getTDetail.data[0]);
+                            handleParcelPrint(getTDetail.data[0]);
+                            router.push("/parcel_list")
+
+                        } catch (error) {
+
+                            console.error('Error fetching parcel data:', error);
+                        }
+
+                    };
+                    console.log("No images to upload");
+                }
+
+
+            }
+
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
 
     const router = useRouter();
 
 
     async function addNewCity(stateId: string, cityName: string) {
         const requestBody = { city_name: cityName, state_id: stateId };
-        const response = await fetch('http://localhost:3000/ticket/add_new_city_from_state', {
+        const response = await fetch('http://192.168.0.100:3001/ticket/add_new_city_from_state', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -720,8 +818,10 @@ const ParcelBook: React.FC = () => {
         return await response.json();
     }
 
+
     async function submitFormData(formData: FormData) {
-        const response = await fetch('http://localhost:3000/parcel/create_parcel_data', {
+
+        const response = await fetch('http://192.168.0.100:3001/parcel/create_parcel_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -730,6 +830,12 @@ const ParcelBook: React.FC = () => {
         });
 
         return response;
+
+
+
+        // if(response.status == 1){
+
+        // }
     }
 
     //-------------------------------------------------------------------------------------------------------------------------------
@@ -805,14 +911,25 @@ const ParcelBook: React.FC = () => {
 
 
 
+    const [WmobileNoValue, setWMobileNoValue] = useState<string>('');
+    const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setWMobileNoValue(value);
+            setValue("whatsapp_no", value); // Update form value
+        }
+    };
 
 
+//--------------------------------------------------------------------------------------------------------
 
 
+const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
 
-
-
-
+// Handler for payment method change
+const handlePaymentMethodChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
+    setSelectedPaymentMethod(event.target.value);
+};
 
 
 
@@ -1051,7 +1168,7 @@ const ParcelBook: React.FC = () => {
                             </div> */}
                             {/* Fourth-Row */}
                             <div className="row mb-3">
-                                <div className="col-lg-6">
+                                <div className="col-lg-4">
                                     <label className="form-label" htmlFor="send_mob">Sender Mobile No.</label>
                                     <input type="number"
                                         {...register("send_mob", {
@@ -1064,7 +1181,7 @@ const ParcelBook: React.FC = () => {
                                     {errors.send_mob?.type === "required" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
                                     {errors?.send_mob?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}                                    <span id="send_mobile_err" ></span>
                                 </div>
-                                <div className="col-lg-6">
+                                <div className="col-lg-4">
                                     <label className="form-label" htmlFor="rec_mob">Receiver Mobile No.</label>
                                     <input type="number"
                                         {...register("rec_mob", {
@@ -1080,68 +1197,158 @@ const ParcelBook: React.FC = () => {
 
                                     <span id="rec_mobile_err" ></span>
                                 </div>
+
+
+
+                                <div className="col-lg-4">
+                                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">What's-up No</label>
+                                    <input
+                                        type="text"
+                                        {...register("whatsapp_no", {
+                                            required: true,
+                                            minLength: 10,
+                                            maxLength: 10,
+                                            pattern: /^[0-9]+$/
+                                        })}
+                                        value={WmobileNoValue}
+                                        onChange={handleWMobileNoChange}
+                                        className={`form-control form-control-sm ${errors.whatsapp_no ? 'is-invalid' : ''}`}
+                                        id="whatsapp_no"
+
+                                        placeholder="Enter Mobile No"
+                                    />
+                                    {errors?.whatsapp_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+
+                                </div>
+
                             </div>
 
                             {/* Fifth-Row */}
                             <div className="row mb-3">
                                 <div className="col-lg-6">
                                     <label className="form-label" htmlFor="send_mob">Select Sender ID Proof Type</label>&nbsp;
-                                    {/* {errors.sender_proof_type?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
                                     <br />
-                                    <input  {...register('sender_proof_type', {
-                                        required: true
-                                    })} type="radio" checked={selectedOption === 'Aadhar_no'}
-                                        onChange={handleOptionChange} value="Aadhar_no" />
-                                    Aadhar
-                                    <input  {...register('sender_proof_type')} type="radio" checked={selectedOption === 'Pan_no'}
-                                        onChange={handleOptionChange} value="Pan_no" /> PAN
-                                    <input  {...register('sender_proof_type')} type="radio" checked={selectedOption === 'Gst_no'}
-                                        onChange={handleOptionChange} value="Gst_no" /> GST
+                                    <div className="d-flex gap-2">
 
+                                        <input
+                                            {...register('sender_proof_type', { required: true })}
+                                            type="radio"
+                                            checked={selectedOption === 'Aadhar_no'}
+                                            onChange={handleOptionChange}
+                                            value="Aadhar_no"
+                                        /> Aadhar
+                                        <input
+                                            {...register('sender_proof_type')}
+                                            type="radio"
+                                            checked={selectedOption === 'Pan_no'}
+                                            onChange={handleOptionChange}
+                                            value="Pan_no"
+                                        /> PAN
+                                        <input
+                                            {...register('sender_proof_type')}
+                                            type="radio"
+                                            checked={selectedOption === 'Gst_no'}
+                                            onChange={handleOptionChange}
+                                            value="Gst_no"
+                                        /> GST
+                                        <input
+                                            {...register('sender_proof_type')}
+                                            type="radio"
+                                            checked={selectedOption === 'Other'}
+                                            onChange={handleOptionChange}
+                                            value="Other"
+                                        /> Other
+                                    </div>
                                 </div>
                                 <div className="col-lg-6">
                                     <label className="form-label" htmlFor="rec_mob">Select Receiver ID Proof Type</label>&nbsp;
-                                    {/* {errors.reciver_proof_type?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
                                     <br />
-                                    <input  {...register('reciver_proof_type', {
-                                        required: true
-                                    })} type="radio" checked={idoption === 'Aadhar_no'}
-                                        onChange={handleOptionIdChange} value="Aadhar_no" /> Aadhar
-                                    <input {...register('reciver_proof_type')} type="radio" checked={idoption === 'Pan_no'}
-                                        onChange={handleOptionIdChange} value="Pan_no" /> PAN
-                                    <input  {...register('reciver_proof_type')} type="radio" checked={idoption === 'Gst_no'}
-                                        onChange={handleOptionIdChange} value="Gst_no" /> GST
+                                    <div className="d-flex gap-2">
+
+                                        <input
+                                            {...register('reciver_proof_type', { required: true })}
+                                            type="radio"
+                                            checked={idoption === 'Aadhar_no'}
+                                            onChange={handleOptionIdChange}
+                                            value="Aadhar_no"
+                                        /> Aadhar
+                                        <input
+                                            {...register('reciver_proof_type')}
+                                            type="radio"
+                                            checked={idoption === 'Pan_no'}
+                                            onChange={handleOptionIdChange}
+                                            value="Pan_no"
+                                        /> PAN
+                                        <input
+                                            {...register('reciver_proof_type')}
+                                            type="radio"
+                                            checked={idoption === 'Gst_no'}
+                                            onChange={handleOptionIdChange}
+                                            value="Gst_no"
+                                        /> GST
+                                        <input
+                                            {...register('reciver_proof_type')}
+                                            type="radio"
+                                            checked={idoption === 'Other'}
+                                            onChange={handleOptionIdChange}
+                                            value="Other"
+                                        /> Other
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* --------------*/}
                             <div className="row mb-3">
                                 <div className="col-lg-6">
                                     <label className="form-label" htmlFor="send_mob">Sender Adhar No./PAN No./GST No.</label>
-                                    <input {...register('sender_proof_detail', {
-                                        required: selectedOption === 'Aadhar_no' ? 'Aadhaar number is required' : false,
-                                        pattern: {
-                                            value: selectedOption === 'Aadhar_no' ? aadhaarPattern : selectedOption === 'Pan_no' ? panPattern : gstPattern,
-                                            message: selectedOption === 'Aadhar_no' ? 'Invalid Aadhaar number format' : selectedOption === 'Pan_no' ? 'Invalid PAN number format' : 'Invalid GST number format'
-                                        }
-                                    })} className="form-control form-control-sm" type="text" name="sender_proof_detail" placeholder="Enter Sender ID Proof Detail" />
-                                    {/* {errors.sender_proof_detail?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
+                                    <input
+                                        {...register('sender_proof_detail', {
+                                            required: selectedOption === 'Aadhar_no' ? 'Aadhaar number is required' :
+                                                selectedOption === 'Pan_no' ? 'PAN number is required' :
+                                                    selectedOption === 'Gst_no' ? 'GST number is required' : false,
+
+                                            pattern: {
+                                                value: selectedOption === 'Aadhar_no' ? aadhaarPattern : selectedOption === 'Pan_no' ? panPattern : gstPattern,
+
+
+                                                message: selectedOption === 'Aadhar_no' ? 'Invalid Aadhaar number format' : selectedOption === 'Pan_no' ? 'Invalid PAN number format' : selectedOption === 'Gst_no' ? 'Invalid GST number format ' : ''
+
+                                            }
+                                        })}
+                                        className="form-control form-control-sm"
+                                        type="text"
+                                        name="sender_proof_detail"
+                                        placeholder="Enter Sender ID Proof Detail"
+                                    />
+                                    {errors.sender_proof_detail && <span className='error'>{errors.sender_proof_detail.message}</span>}
                                 </div>
                                 <div className="col-lg-6">
                                     <label className="form-label" htmlFor="rec_mob">Receiver Adhar No./PAN No./GST No.</label>
-                                    <input  {...register('reciver_proof_detail', {
-                                        required: idoption === 'Aadhar_no' ? 'Aadhaar number is required' : false,
-                                        pattern: {
-                                            value: idoption === 'Aadhar_no' ? radioaadhaarPattern : idoption === 'Pan_no' ? radiopanPattern : radiogstPattern,
-                                            message: idoption === 'Aadhar_no' ? 'Invalid Aadhaar number format' : idoption === 'Pan_no' ? 'Invalid PAN number format' : 'Invalid GST number format'
-                                        }
-                                    })}
+                                    <input
+                                        {...register('reciver_proof_detail', {
+                                            required: idoption === 'Aadhar_no' ? 'Aadhaar number is required' :
+                                                idoption === 'Pan_no' ? 'PAN number is required' :
+                                                    idoption === 'Gst_no' ? 'GST number is required' :
+                                                        idoption === 'Other' ? false : false,
+                                            pattern: {
+                                                value: idoption === 'Aadhar_no' ? radioaadhaarPattern : idoption === 'Pan_no' ? radiopanPattern : radiogstPattern,
+
+                                                message: idoption === 'Aadhar_no' ? 'Invalid Aadhaar number format' : idoption === 'Pan_no' ? 'Invalid PAN number format' : idoption === 'Gst_no' ? 'Invalid GST number format ' : ''
 
 
-                                        className="form-control form-control-sm" type="text" name="reciver_proof_detail" placeholder="Enter Sender ID Proof Detail" />
-                                    {/* {errors.reciver_proof_type?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
+                                            }
+                                        })}
+                                        className="form-control form-control-sm"
+                                        type="text"
+                                        name="reciver_proof_detail"
+                                        placeholder="Enter Receiver ID Proof Detail"
+                                    />
+                                    {errors.reciver_proof_detail?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+                                    {errors.reciver_proof_detail && <span className='error'>{errors.reciver_proof_detail.message}</span>}
                                 </div>
                             </div>
+
 
                             {/* --------------*/}
                             <div className="row mb-3">
@@ -1303,6 +1510,18 @@ const ParcelBook: React.FC = () => {
 
                                 </div>
                             </div>
+
+                            <div className="row mb-3">
+                                <div className="col-lg-6">
+                                    <label className="form-label" htmlFor="particulars">Image Upload</label>
+                                    <input className="form-control form-control-sm" type="file" {...register("parcel_imgs")} multiple />
+
+                                </div>
+
+                            </div>
+
+
+
 
                             {/* ---checkbox visibility--- */}
                             {is_delivery && <div id="showDeliveryDetail">
@@ -1549,7 +1768,10 @@ const ParcelBook: React.FC = () => {
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="total">Payment Method</label>
 
-                                    <select {...register('payment_method')} className="form-control" name="payment_method" id="payment_method">
+                                    <select {...register('payment_method')} 
+                                        value={selectedPaymentMethod}
+                                        onChange={handlePaymentMethodChange}
+                                    className="form-control" name="payment_method" id="payment_method">
                                         <option value="">--Select-</option>
                                         <option value="cash">Cash</option>
                                         <option value="transfer">Transfer</option>
@@ -1559,6 +1781,20 @@ const ParcelBook: React.FC = () => {
                                         <option value="paytm">Paytm</option>
                                         <option value="credit">Credit</option>
                                     </select>
+                                    {/* Conditionally render the transaction ID input field */}
+                                    {(selectedPaymentMethod === 'gpay' || selectedPaymentMethod === 'phonepay' || selectedPaymentMethod === 'paytm') && (
+                                        <div className="mt-2">
+                                            <label className="form-label">Transaction ID</label>
+                                            <input
+                                                {...register('transection_id')}
+                                                type="text"
+                                                className="form-control"
+                                                placeholder="Enter transaction ID"
+                                            // Use appropriate handler or register here if using form libraries
+                                            />
+                                        </div>
+                                    )}
+
                                 </div>
                                 <div className="col-lg-2">
                                     <label className="form-label" htmlFor="total">Actual Final Total</label>
@@ -1604,8 +1840,8 @@ const ParcelBook: React.FC = () => {
                             <div className="row mb-3">
                                 <div className="col-md-2">
                                     <label className="form-label">Bilty Charges</label>
-                                    <input {...register('bilty_charge')} 
-                                        className="form-control" type="number" id="bilty_charge" placeholder="Blity Charge"   />
+                                    <input {...register('bilty_charge')}
+                                        className="form-control" type="number" id="bilty_charge" placeholder="Blity Charge" />
                                 </div>
 
                                 <div className="col-md-3">
@@ -1621,7 +1857,7 @@ const ParcelBook: React.FC = () => {
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="receive">Actual Payable Amount</label>
                                     <input {...register('actual_payable_amount')}
-                                        value={watch('actual_payable_amount') > 0 ? watch('actual_payable_amount') : ''}
+
                                         className="form-control-plaintext" type="number" id="actual_payable_amount" />
                                     <input className="form-control-plaintext" type="hidden" id="actual_payable_amount" placeholder="Enter Balance" />
 
@@ -1630,7 +1866,7 @@ const ParcelBook: React.FC = () => {
                                     <label className="form-label" htmlFor="receive">Print Payable Amount</label>
 
 
-                                    <input {...register('print_payable_amount')} value={watch('print_payable_amount') > 0 ? watch('print_payable_amount') : ''}
+                                    <input {...register('print_payable_amount')}
                                         className="form-control-plaintext" type="number" id="print_payable_amount" />
                                 </div>
 

@@ -16,6 +16,7 @@ import EditParcelDataList from '@/app/Api/EditParcelDataList';
 import { useRouter } from 'next/navigation';
 import handleParcelPrint from '@/app/parcel_list/parcel_data/printpparcelUtils';
 import UpdateParcelPrint from '@/app/parcel_list/parcel_data/EditParcelprint';
+import Link from 'next/link';
 
 
 type FormData = {
@@ -33,6 +34,7 @@ type FormData = {
     rec_mob: string;
     send_add: string;
     rec_add: string;
+    whatsapp_no: any;
     sender_proof_type: string;
     reciver_proof_type: string;
     sender_proof_detail: string;
@@ -80,7 +82,9 @@ type FormData = {
     demurrage_charges: number;
     parcel_detail: ParcelDetail[];
     bill_detail: ParcelBillDetail[];
-
+    parcel_imgs: any;
+    remove_files: any;
+    transection_id: any;
 
 };
 
@@ -132,6 +136,11 @@ interface State {
 
 
 const EditParcelData = () => {
+
+
+    const [parcelImages, setParcelImages] = useState<string[]>([]);
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
 
 
     const [parcelData, setParcelData] = useState<any>("");
@@ -195,6 +204,8 @@ const EditParcelData = () => {
 
                         });
 
+                        const fetchedParcelImages = response.data[0]?.parcel_imgs || [];
+                        setParcelImages(fetchedParcelImages);
 
                         const fetchedParcelDetail = response.data[0]?.parcel_detail;
                         if (fetchedParcelDetail) {
@@ -343,7 +354,7 @@ const EditParcelData = () => {
                 actual_payable_amount: 0,
                 user_id: storedData,
                 last_updated_by: storedData,
-        
+
 
 
 
@@ -378,7 +389,7 @@ const EditParcelData = () => {
     setValue("reciver_proof_detail", parcelData.reciver_proof_detail)
     setValue("dis_office_detail", parcelData.dis_office_detail)
     setValue("pic_office_detail", parcelData.pic_office_detail)
-    setValue("payment_method", parcelData.payment_method)
+    // setValue("payment_method", parcelData.payment_method)
     setValue("actual_total", parcelData.actual_total)
     setValue("print_total", parcelData.print_total)
     setValue("print_payable_amount", parcelData.print_payable_amount)
@@ -393,6 +404,22 @@ const EditParcelData = () => {
     setValue("demurrage_days", parcelData.demurrage_days)
     setValue("total_demurrage_charges", parcelData.total_demurrage_charges)
     setValue("is_demurrage", parcelData.is_demurrage)
+    const paymentMethod = watch('payment_method');
+
+
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+
+
+    useEffect(() => {
+        if (parcelData) {
+            setSelectedPaymentMethod(parcelData.payment_method);
+            setValue('payment_method', parcelData.payment_method);
+            setValue('transection_id', parcelData.transection_id || '');
+        }
+    }, [parcelData, setValue]);
+
+
+
 
     //=========================================================================================================================   
 
@@ -464,62 +491,11 @@ const EditParcelData = () => {
         ]);
     };
 
-    /*********************************************************************parcel_details*********************************************/
+    const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
+        setParcelData({ ...parcelData, whatsapp_no: value });
 
-    // const handleSelectChange = (
-    //     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    //     index: number,
-    //     field: keyof ParcelDetail
-    // ) => {
-    //     const updatedFields = [...parcelDetail];
-    //     const currentValue = Number(e.target.value);
-
-    //     // Check if the field is 'rate' and the current value is less than the existing rate
-    //     if (field === 'rate' && currentValue < updatedFields[index].rate) {
-    //         // Do nothing if trying to decrease rate
-    //         return;
-    //     }
-
-    //     // Update the field in the specific index
-    //     updatedFields[index] = {
-    //         ...updatedFields[index],
-    //         [field]: currentValue
-    //     };
-
-    //     // Recalculate total_amount or print_rate based on qty and rate/print_rate changes
-    //     if (field === 'qty' || field === 'rate') {
-    //         const qty = Number(updatedFields[index].qty);
-    //         const rate = Number(updatedFields[index].rate);
-    //         updatedFields[index].total_amount = qty * rate;
-
-    //         // Update print_rate and total_print_rate accordingly
-    //         if (field === 'rate') {
-    //             const print_rate = rate; // Example calculation, replace with your logic
-    //             updatedFields[index].print_rate = print_rate;
-    //             updatedFields[index].total_print_rate = print_rate * qty;
-    //         }
-    //     } else if (field === 'print_rate') {
-    //         const print_rate = Number(updatedFields[index].print_rate);
-    //         updatedFields[index].print_rate = print_rate;
-    //         updatedFields[index].total_print_rate = print_rate * updatedFields[index].qty;
-    //     }
-
-    //     // Update actual_total and print_total by summing up total_amount and total_print_rate from all items
-    //     const sumTotalAmount = updatedFields.reduce((acc, item) => acc + (item.total_amount || 0), 0);
-    //     const sumPrintTotalAmount = updatedFields.reduce((acc, item) => acc + (item.total_print_rate || 0), 0);
-
-    //     // Update state with updatedFields and set actual_total and print_total
-    //     setparcelDetail(updatedFields);
-    //     setParcelData((prevState: any) => ({
-    //         ...prevState,
-    //         actual_total: sumTotalAmount,
-    //         print_total: sumPrintTotalAmount
-    //     }));
-
-    //     // Update form values for react-hook-form
-    //     setValue('parcel_detail', updatedFields);
-    // };
-
+    };
 
 
 
@@ -671,10 +647,6 @@ const EditParcelData = () => {
 
     };
 
-
-
-
-
     const handleFieldChange = (fieldName: string, value: string) => {
         // Update parcelData state with the new value for the specified field
         const updatedParcelData = { ...parcelData, [fieldName]: value };
@@ -758,31 +730,72 @@ const EditParcelData = () => {
     };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     const removeParcelDetail = (index: number) => {
+        // Step 1: Remove the item from parcelDetail
         const updatedFields = [...parcelDetail];
         updatedFields.splice(index, 1);
-        setparcelDetail(updatedFields);
-        // Update form values for react-hook-form
-        setValue('parcel_detail', updatedFields);
+
+        // Step 2: Recalculate totals and other values
+        const sumTotalAmount = updatedFields.reduce((acc, item) => acc + (item.total_amount || 0), 0);
+        const formattedSumAmount = sumTotalAmount.toFixed(2);
+
+        const sumPrintTotalAmount = updatedFields.reduce((acc, item) => acc + (item.total_print_rate || 0), 0);
+        const formattedPrintSumAmount = sumPrintTotalAmount.toFixed(2);
+
+        const totaltransportcharge = Number(parcelData.pic_charge) + Number(parcelData.dis_charge);
+
+        const totalAmountWithTransport = sumTotalAmount + totaltransportcharge;
+        const gstAmount = totalAmountWithTransport * 0.05;
+        const formattedGstAmount = gstAmount.toFixed(2);
+
+        const printtotalAmountWithTransport = sumPrintTotalAmount + totaltransportcharge;
+        const pritngstAmount = printtotalAmountWithTransport * 0.05;
+        const printformattedGstAmount = pritngstAmount.toFixed(2);
+
+        // Recalculate QTYtotal for remaining items
+        let runningQtyTotal = 0;
+        const recalculatedFields = updatedFields.map(item => {
+            runningQtyTotal += Number(item.qty || 0); // Accumulate qty values
+            return {
+                ...item,
+                QTYtotal: runningQtyTotal // Update QTYtotal for each item
+            };
+        });
+
+        const blityCharge = Number(parcelData.bilty_charge); // Assuming blityCharge is fetched from parcelData
+        const demurragedays = Number(parcelData.demurrage_days);
+        const demurrageCharges = Number(parcelData.demurrage_charges);
+
+        const totalDemurrageCharges = demurragedays * demurrageCharges * runningQtyTotal;
+
+        const actualPayableAmount = sumTotalAmount + gstAmount + blityCharge + totaltransportcharge + totalDemurrageCharges;
+        const actualPrintPaybleamount = sumPrintTotalAmount + pritngstAmount + blityCharge + totaltransportcharge + totalDemurrageCharges;
+
+        // Calculate actual balance amount
+        const actualPaidAmount = parseFloat(parcelData.actual_paid_amount) || 0;
+        const actualbalamount = actualPayableAmount - actualPaidAmount;
+
+        const actualPrintPaidAmount = parseFloat(parcelData.print_paid_amount) || 0;
+        const actualprintbalamount = actualPrintPaybleamount - actualPrintPaidAmount;
+
+        // Step 3: Update state with recalculated values
+        setparcelDetail(recalculatedFields);
+        setParcelData((prevState: any) => ({
+            ...prevState,
+            actual_total: formattedSumAmount,
+            print_total: formattedPrintSumAmount,
+            gst_amount: formattedGstAmount,
+            print_gst_amount: printformattedGstAmount,
+            actual_payable_amount: actualPayableAmount,
+            print_payable_amount: actualPrintPaybleamount,
+            total_demurrage_charges: totalDemurrageCharges,
+            transport_charge: totaltransportcharge,
+            actual_bal_amount: actualbalamount.toFixed(2),
+            print_bal_amount: actualprintbalamount.toFixed(2)
+        }));
+
+        // Update form values for react-hook-form if needed
+        setValue('parcel_detail', recalculatedFields);
     };
 
 
@@ -896,13 +909,10 @@ const EditParcelData = () => {
 
 
     const onSubmit: SubmitHandler<FormData> = async (formData: any) => {
-
-        console.log("datadddd", formData)
+        console.log("datadddd", formData);
 
         try {
-
-
-
+            // State variables (you need to define these based on your component or context)
             let fromStateName = '';
             let toStateName = '';
             let fromCityName = '';
@@ -910,29 +920,29 @@ const EditParcelData = () => {
 
             const selectedFromStateIdStr = String(selectedFromStateId);
             const selectedToStateIdStr = String(selectedToStateId);
-        
+
             // Fetch state names directly from the `fromStates` and `toStates` arrays
             const fromState = fromStates.find(state => String(state.id) === selectedFromStateIdStr);
             const toState = toStates.find(state => String(state.id) === selectedToStateIdStr);
-        
+
             if (fromState) {
-              fromStateName = fromState.name;
+                fromStateName = fromState.name;
             }
             if (toState) {
-              toStateName = toState.name;
+                toStateName = toState.name;
             }
-        
+
             // Fetch city names directly from the `fromCities` and `toCities` arrays
             const fromCity = fromCities.find(city => String(city.id) === formData.travel_from);
             const toCity = toCities.find(city => String(city.id) === formData.travel_to);
-        
+
             if (fromCity) {
                 fromCityName = fromCity.city_name;
-              }
-              if (toCity) {
+            }
+            if (toCity) {
                 toCityName = toCity.city_name;
-              }
-  
+            }
+
             formData.from_state = selectedFromStateIdStr;
             formData.to_state = selectedToStateIdStr;
             formData.from_state_name = fromStateName;
@@ -940,44 +950,99 @@ const EditParcelData = () => {
             formData.from_city_name = fromCityName;
             formData.to_city_name = toCityName;
 
-
+            // Handle custom city input if needed
             if (showCustomCityInput && customCity) {
-                const response = await axios.post('http://localhost:3000/ticket/add_new_city_from_state', {
+                const response = await axios.post('http://192.168.0.100:3001/ticket/add_new_city_from_state', {
                     city_name: customCity,
                     state_id: selectedFromStateId,
                 });
-                formData.book_from = response.data.city_id; // Assuming API returns city_id
+                formData.book_from = response.data.city_id;
             }
 
             if (showCustomToCityInput && customToCity) {
-                const response = await axios.post('http://localhost:3000/ticket/add_new_city_from_state', {
+                const response = await axios.post('http://192.168.0.100:3001/ticket/add_new_city_from_state', {
                     city_name: customToCity,
                     state_id: selectedToStateId,
                 });
-                formData.book_to = response.data.city_id; // Assuming API returns city_id
+                formData.book_to = response.data.city_id;
             }
-            formData.from_state = selectedFromStateId;
-            formData.to_state = selectedToStateId;
 
-            const response = await axios.post(`http://localhost:3000/parcel/update_parcel_detail_data`, formData);
+
+            formData.from_state = selectedFromStateIdStr;
+            formData.to_state = selectedToStateIdStr;
+
+            formData.remove_files = removedFileNames;
+
+            const response = await axios.post('http://192.168.0.100:3001/parcel/update_parcel_detail_data', formData);
 
             console.log('Form submitted successfully:', response.data);
-            UpdateParcelPrint(formData);
 
+            if (response.data.status == 1) {
+                console.log("formData0", formData);
 
-            router.push('/parcel_list');
+                if (formData.parcel_imgs && formData.parcel_imgs.length > 0) {
+                    const formDataImages = new FormData();
+                    formDataImages.append("parcel_token", response.data.parcel_token);
 
+                    for (const file of formData.parcel_imgs) {
+                        formDataImages.append("parcel_imgs", file);
+                    }
+
+                    console.log('FormData prepared for images:', formDataImages);
+
+                    try {
+                        const uploadResponse = await axios.post("http://192.168.0.100:3001/parcel/upload_parcel_image", formDataImages, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        });
+
+                        const uploadResult = uploadResponse.data;
+                        console.log('Image upload response:', uploadResult);
+
+                        if (uploadResult.status === "1") {
+                            console.log("Images added successfully");
+                        } else {
+                            console.log("Failed to upload images");
+                        }
+                    } catch (uploadError) {
+                        console.error("Error uploading images:", uploadError);
+                        alert("Failed to upload images");
+                    }
+                } else {
+                    console.log("No images to upload");
+                }
+
+                if (response.data.parcel_token) {
+                    try {
+                        const parcelDetailResponse = await EditParcelDataList.getEditParcelData(response.data.parcel_token);
+                        console.log("Parcel data:", parcelDetailResponse.data[0]);
+                        handleParcelPrint(parcelDetailResponse.data[0]);
+                        router.push("/parcel_list");
+                    } catch (fetchError) {
+                        console.error('Error fetching parcel data:', fetchError);
+                    }
+                }
+
+            } else {
+                console.log("Failed to update parcel details");
+            }
+            // UpdateParcelPrint(formData);
+
+            // router.push('/parcel_list');
         } catch (error) {
             console.error('Error submitting form:', error);
-            // Handle errors
+
         }
     };
 
 
+    // const onSubmit = async (data: any) => {
 
-    //    const onSubmit = async (data: any) => {
 
-    //         console.log('Formatted Form data:', data);
+    //     console.log('Submitting form with removed file names:', removedFileNames);
+
+
 
     //     };
 
@@ -989,6 +1054,7 @@ const EditParcelData = () => {
     const handleShowCustomToCityInput = () => {
         setShowCustomToCityInput(true);
     };
+
 
 
     //*************************************************************************************************************************** */
@@ -1054,37 +1120,6 @@ const EditParcelData = () => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // useEffect(() => {
-    //     if (parcelData.sender_proof_type && parcelData.reciver_proof_type) {
-    //       setValue('sender_proof_type', parcelData.sender_proof_type);
-    //       setValue('reciver_proof_type', parcelData.reciver_proof_type);
-    //       setValue('sender_proof_detail', parcelData.sender_proof_detail);
-    //       setValue('reciver_proof_detail', parcelData.reciver_proof_detail);
-    //     }
-    //   }, [parcelData, setValue]);
-
-
-
-
-
-
-
     const handleIparceltypeChange = (
         e: React.ChangeEvent<HTMLSelectElement>,
         index: number,
@@ -1099,9 +1134,18 @@ const EditParcelData = () => {
     };
 
 
+    const [removedFileNames, setRemovedFileNames] = useState<string[]>([]);
 
+    const extractFileName = (url: string) => {
+        return url.substring(url.lastIndexOf('/') + 1);
+    };
 
+    const removeImage = (imageUrl: string) => {
+        const fileName = extractFileName(imageUrl);
+        setRemovedFileNames((prevRemovedFileNames) => [...prevRemovedFileNames, fileName]);
 
+        setParcelImages((prevImages) => prevImages.filter((url) => url !== imageUrl));
+    };
 
 
 
@@ -1113,7 +1157,15 @@ const EditParcelData = () => {
             <div className="container-fluid">
                 <br />
                 <Card>
-                    <Card.Header><h3>Update Parcel Booking</h3></Card.Header>
+                    <Card.Header style={{ display: "flex", justifyContent: "space-between" }}><h3>Update Parcel Booking</h3>
+                        <div>
+                           
+
+                            <Link href="/parcel_list" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</Link>
+
+                        </div>
+
+                    </Card.Header>
                     {error && <p>{error}</p>}
                     {parcelData && (
                         <Card.Body>
@@ -1121,7 +1173,7 @@ const EditParcelData = () => {
 
                                 {/* First-Row */}
                                 <div className="row mb-3">
-                                   
+
                                     <div className="col-lg-3">
                                         <label className="form-label" htmlFor="to">Booking date</label>
                                         <input {...register('booking_date')} className="form-control form-control-sm" value={parcelData.booking_date} onChange={(e) => handleFieldChange('booking_date', e.target.value)} type="date" id="booking_date" placeholder="Booking date" />
@@ -1197,7 +1249,7 @@ const EditParcelData = () => {
 
                                 {/* second-Row */}
                                 <div className='row mb-3'>
-                                  
+
 
                                     <div className="col-lg-3">
                                         <label className="form-label" htmlFor="to">To State</label>
@@ -1272,10 +1324,10 @@ const EditParcelData = () => {
                                     </div>
 
                                 </div>
-                              
+
                                 {/* Fourth-Row */}
                                 <div className="row mb-3">
-                                    <div className="col-lg-6">
+                                    <div className="col-lg-4">
                                         <label className="form-label" htmlFor="send_mob">Sender Mobile No.</label>
                                         <input type="text"
                                             {...register("send_mob", {
@@ -1288,7 +1340,7 @@ const EditParcelData = () => {
                                         {errors?.send_mob?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
 
                                     </div>
-                                    <div className="col-lg-6">
+                                    <div className="col-lg-4">
                                         <label className="form-label" htmlFor="rec_mob">Receiver Mobile No.</label>
                                         <input type="text"
                                             {...register("rec_mob", {
@@ -1303,7 +1355,31 @@ const EditParcelData = () => {
 
                                         <span id="rec_mobile_err" ></span>
                                     </div>
+
+                                    <div className="col-lg-4">
+                                        <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">What's-up No</label>
+                                        <input
+                                            type="text"
+                                            {...register("whatsapp_no", {
+                                                required: true,
+                                                minLength: 10,
+                                                maxLength: 10,
+                                                pattern: /^[0-9]+$/
+                                            })}
+                                            value={parcelData.whatsapp_no}
+                                            onChange={handleWMobileNoChange}
+                                            className={`form-control form-control-sm ${errors.whatsapp_no ? 'is-invalid' : ''}`}
+                                            id="whatsapp_no"
+
+                                            placeholder="Enter Mobile No"
+                                        />
+                                        {errors?.whatsapp_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+
+                                    </div>
                                 </div>
+
 
                                 {/* Fifth-Row */}
                                 <div className="row mb-3">
@@ -1379,10 +1455,10 @@ const EditParcelData = () => {
                                         <label className="form-label" htmlFor="send_mob">Sender Adhar No./PAN No./GST No.</label>
                                         <input
                                             {...register('sender_proof_detail', {
-                                                // required: parcelData.sender_proof_type === 'Aadhar_no' ? 'Aadhaar number is required' : false,
+                                                required: parcelData.sender_proof_type === 'Aadhar_no' ? 'Invalid Aadhaar number format' : parcelData.sender_proof_type === 'Pan_no' ? 'Invalid PAN number format' : 'Invalid GST number format',
                                                 pattern: {
                                                     value: parcelData.sender_proof_type === 'Aadhar_no' ? aadhaarPattern : parcelData.sender_proof_type === 'Pan_no' ? panPattern : gstPattern,
-                                                    message: parcelData.sender_proof_type === 'Aadhar_no' ? 'Invalid Aadhaar number format' : parcelData.sender_proof_type === 'Pan_no' ? 'Invalid PAN number format' : 'Invalid GST number format'
+                                                    message: parcelData.sender_proof_type === 'Aadhar_no' ? 'Invalid Aadhaar number format' : parcelData.sender_proof_type === 'Pan_no' ? 'Invalid PAN number format' : 'Invalid GST number format',
                                                 }
                                             })}
                                             value={parcelData.sender_proof_detail}
@@ -1398,7 +1474,7 @@ const EditParcelData = () => {
                                         <label className="form-label" htmlFor="rec_mob">Receiver Adhar No./PAN No./GST No.</label>
                                         <input
                                             {...register('reciver_proof_detail', {
-                                                // required: parcelData.reciver_proof_type === 'Aadhar_no' ? 'Aadhaar number is required' : false,
+                                                required: parcelData.reciver_proof_type === 'Aadhar_no' ? 'Invalid Aadhaar number format' : parcelData.reciver_proof_type === 'Pan_no' ? 'Invalid PAN number format' : 'Invalid GST number format',
                                                 pattern: {
                                                     value: parcelData.reciver_proof_type === 'Aadhar_no' ? radioaadhaarPattern : parcelData.reciver_proof_type === 'Pan_no' ? radiopanPattern : radiogstPattern,
                                                     message: parcelData.reciver_proof_type === 'Aadhar_no' ? 'Invalid Aadhaar number format' : parcelData.reciver_proof_type === 'Pan_no' ? 'Invalid PAN number format' : 'Invalid GST number format'
@@ -1535,7 +1611,7 @@ const EditParcelData = () => {
                                                 placeholder="Total Print Amount"
                                             />
                                         </div>
-                                        <div className="col-lg-1 new" style={{ padding: '10px' , marginTop:"20px" }}>
+                                        <div className="col-lg-1 new" style={{ padding: '10px', marginTop: "20px" }}>
                                             <button type="button" className="btn btn-danger btn-sm" onClick={() => removeParcelDetail(index)}>
                                                 <FontAwesomeIcon icon={faMinusCircle} />
                                             </button>
@@ -1634,6 +1710,47 @@ const EditParcelData = () => {
                                     </div>
 
                                 </div>
+
+                                <div className="col-lg-12">
+                                    <label className="set_labelData">Parcel Images:</label>
+                                    <div className="image-gallery">
+                                        {parcelImages.length > 0 ? (
+                                            parcelImages.map((imageUrl, index) => (
+                                                <div key={index} className="image-container">
+                                                    <img
+                                                        src={imageUrl}
+                                                        alt={`Parcel ${index}`}
+                                                        className="parcel-image"
+                                                        style={{ cursor: 'pointer' }}
+                                                    />
+                                                    <button
+                                                        type='button'
+                                                        className="remove-button"
+                                                        onClick={() => removeImage(imageUrl)}
+                                                    >
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p>No images available.</p>
+                                        )}
+                                    </div>
+                                </div>
+
+
+
+                                <div className="row mb-3" style={{ marginTop: "15px" }}>
+                                    <div className="col-lg-6">
+                                        <label className="form-label" htmlFor="particulars">Add New Images:</label>
+                                        <input className="form-control form-control-sm" type="file" {...register("parcel_imgs")} multiple />
+
+                                    </div>
+
+                                </div>
+
+
+
 
                                 {/* ---is_deliverybox visibility--- */}
                                 <div id="showDeliveryDetail">
@@ -1940,6 +2057,18 @@ const EditParcelData = () => {
                                             <option value="paytm">Paytm</option>
                                             <option value="credit">Credit</option>
                                         </select>
+                                        {(paymentMethod === 'gpay' || paymentMethod === 'phonepay' || paymentMethod === 'paytm') && (
+                                            <div className="mt-2">
+                                                <label className="form-label">Transaction ID</label>
+                                                <input
+                                                    {...register('transection_id')}
+                                                    type="text"
+                                                    className="form-control"
+                                                    placeholder="Enter transaction ID"
+                                                    defaultValue={parcelData?.transection_id || ''}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="col-lg-2">
                                         <label className="form-label" htmlFor="total">Actual Final Total</label>

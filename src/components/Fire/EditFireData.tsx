@@ -11,10 +11,11 @@ import { debounce } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
-
+import Select from 'react-select';
+import {generateUpdatePDF} from './Invoice/EditPdf.js'
 
 export interface FormData {
-    febking_id:any;
+    febking_id: any;
     febking_total_sgst: any;
     febking_total_cgst: any;
     febking_entry_type: 1;
@@ -32,10 +33,13 @@ export interface FormData {
     client_pincode: string;
     vendorCode: string;
     client_id: any,
-    city:string;
-    state:string;
-    pincode:string;
+    city: string;
+    state: string;
+    pincode: string;
     invNo: string;
+    discount: any;
+    discount_amount: any;
+    whatsup_no: any;
     certificateNo: string;
     poNo: string;
     product_data: ProductData[];
@@ -75,7 +79,7 @@ interface Brand {
 
 interface Service {
     selected: boolean | undefined;
-    fest_id: string,
+    fest_id: any,
     fest_name: string,
     fest_created_by: any
 
@@ -88,14 +92,14 @@ interface ClientData {
     client_email: string;
     client_gstNo: string;
     client_mobileNo: string;
-    client_city:string;
-    client_state:string;
-    client_pincode:string;
+    client_city: string;
+    client_state: string;
+    client_pincode: string;
     poNo: string;
     vendorCode: string;
 }
 
-interface Client{
+interface Client {
     client_id: any,
     firstName: string;
     address: string;
@@ -104,9 +108,9 @@ interface Client{
     mobileNo: string;
     vendorCode: string;
     poNo: string;
-    city:string;
-    state:string;
-    pincode:string;
+    city: string;
+    state: string;
+    pincode: string;
 }
 
 
@@ -120,12 +124,12 @@ interface CapacityData {
 const EditFormData = () => {
 
     //-------------------------------------------------------------------------------------------------------------------------------------
-   
+
     //---------------------------------------get id data --------------------------------------------------------------------------
-  
-  
+
+
     const [formData, setFormData] = useState<Client>({
-        client_id:"",
+        client_id: "",
         firstName: '',
         address: '',
         email: '',
@@ -133,27 +137,27 @@ const EditFormData = () => {
         vendorCode: '',
         poNo: '',
         mobileNo: '',
-        city:"",
-        state:"",
-        pincode:"",
+        city: "",
+        state: "",
+        pincode: "",
     });
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
+
+
+
+
     const [fireData, setFireData] = useState<any>("");
     const [error, setError] = useState<string>('');
 
 
     useEffect(() => {
         fetchservice();
-       
+
 
         const fetchData = async () => {
             try {
@@ -161,6 +165,7 @@ const EditFormData = () => {
                 if (febking_id) {
                     const response = await getFireBookingId.GetFireBookingId(febking_id);
                     setFireData(response.data[0]);
+                    console.log("discount", response.data[0].discount);
 
                     if (response.data && response.data.length > 0) {
                         const client_id = response.data[0].client_id;
@@ -182,24 +187,38 @@ const EditFormData = () => {
                         setInputValue(response.data[0].firstName);
 
                         setValue("febking_id", response.data[0].febking_id);
-                        setValue("client_id",response.data[0].client_id)
+                        setValue("client_id", response.data[0].client_id)
                         setValue("firstName", response.data[0].firstName);
                         setValue("address", response.data[0].address);
                         setValue("email", response.data[0].email);
                         setValue("gstNo", response.data[0].gstNo);
                         setValue("vendorCode", response.data[0].vendorCode);
                         setValue("poNo", response.data[0].poNo);
-                        setValue("mobileNo",response.data[0].mobileNo);
+                        setValue("mobileNo", response.data[0].mobileNo);
+                        setValue("discount", response.data[0].discount);
+                        setValue("discount_amount", response.data[0].discount_amount || '');
                         setValue("client_city", response.data[0].client_city);
                         setValue("client_state", response.data[0].client_state);
-                        setValue("client_pincode",response.data[0].client_pincode);
-                        setMobileNoValue( response.data[0].mobileNo);
-                   
+                        setValue("client_pincode", response.data[0].client_pincode);
+                        setMobileNoValue(response.data[0].mobileNo);
+                        setValue("whatsup_no", response.data[0].whatsup_no || ''); // Set whatsup_no in form
+                        setWMobileNoValue(response.data[0].whatsup_no);
 
                     }
 
 
+                    // Assuming you get an array of selected fest_ids
+                    const selectedFestIds: number[] = response.data[0].fest_id || []; // Modify based on your actual response
+                    console.log("dfsadf", response.data[0].fest_id);
 
+                    // Set services with proper selected state
+                    setServices((prevServices) =>
+                        prevServices.map(service =>
+                            selectedFestIds.includes(service.fest_id)
+                                ? { ...service, selected: true }
+                                : service
+                        )
+                    );
 
 
 
@@ -246,22 +265,24 @@ const EditFormData = () => {
         }
     };
 
-//-------------------------------------------------------------------------------------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------------------------------------------
     const storedData = localStorage.getItem('userData');
 
 
     const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>({
         defaultValues: {
-            febking_id:fireData.febking_id || '',
+            febking_id: fireData.febking_id || '',
             febking_created_by: storedData,
             febking_entry_type: 1,
-            fest_id:"",
+            fest_id: "",
             product_data: [],
             febking_total_amount: '0.00',
             febking_total_sgst: '0.00',
             febking_total_cgst: '0.00',
             febking_final_amount: '0.00',
-            client_id:"",
+            client_id: "",
+            discount: "",
+            discount_amount: "",
             firstName: '',
             address: '',
             email: '',
@@ -269,6 +290,7 @@ const EditFormData = () => {
             vendorCode: '',
             poNo: '',
             mobileNo: '',
+            whatsup_no: '',
         }
     });
 
@@ -428,29 +450,56 @@ const EditFormData = () => {
 
     //------------------------------------------------------calculation data -----------------------------------------------------------------------------------    
 
+
+
+
+
+
+
+
     const calculateActualTotal = () => {
-        const productdata = watch('product_data');
+        const productdata = watch('product_data') as ProductData[];
+        const discountPercentage = parseFloat(watch('discount')) || 0;
 
         if (productdata.length > 0) {
             const newTotalAmount = productdata.reduce((sum, parcel) => sum + parseFloat(parcel.totalAmount), 0);
-            setValue('febking_total_amount', newTotalAmount.toFixed(2)); // Set febking_total_amount
+            setValue('febking_total_amount', newTotalAmount.toFixed(2));
 
             const newTotalSGST = productdata.reduce((sum, parcel) => sum + parseFloat(parcel.febd_sgst_amount), 0);
-            setValue('febking_total_sgst', newTotalSGST.toFixed(2)); // Set febking_total_sgst
+            setValue('febking_total_sgst', newTotalSGST.toFixed(2));
 
             const newTotalCGST = productdata.reduce((sum, parcel) => sum + parseFloat(parcel.febd_cgst_amount), 0);
-            setValue('febking_total_cgst', newTotalCGST.toFixed(2)); // Set febking_total_cgst
+            setValue('febking_total_cgst', newTotalCGST.toFixed(2));
 
-            // Calculate febking_final_amount
-            const finalAmount = newTotalAmount + newTotalSGST + newTotalCGST;
-            setValue('febking_final_amount', finalAmount.toFixed(2)); // Set febking_final_amount
+            const discountAmount = (newTotalAmount * discountPercentage) / 100;
+            setValue('discount_amount', discountAmount.toFixed(2));
+
+            const finalAmount = newTotalAmount + newTotalSGST + newTotalCGST - discountAmount;
+            setValue('febking_final_amount', finalAmount.toFixed(2));
         } else {
             setValue('febking_total_amount', '0.00');
             setValue('febking_total_sgst', '0.00');
             setValue('febking_total_cgst', '0.00');
+            setValue('discount_amount', '0.00');
             setValue('febking_final_amount', '0.00');
         }
     };
+
+
+
+
+    useEffect(() => {
+        calculateActualTotal();
+    }, [watch('product_data'), watch('discount')]);
+
+
+
+
+
+
+
+
+
 
     const handleQtyChange = (index: number, qty: number) => {
         const rate = parseFloat(watch(`product_data.${index}.rate`) || '0');
@@ -536,14 +585,33 @@ const EditFormData = () => {
 
     //-------------------------------------------------------------------------------------------------------------------------
 
-    const handleServiceSelection = (index: any) => {
-        const updatedServices = services.map((service, idx) => ({
-            ...service,
-            selected: idx === index
-        }));
-        setServices(updatedServices);
-        setFireData({ fest_id: services[index].fest_id });
+    // const handleServiceSelection = (index: any) => {
+    //     const updatedServices = services.map((service, idx) => ({
+    //         ...service,
+    //         selected: idx === index
+    //     }));
+    //     setServices(updatedServices);
+    //     setFireData({ fest_id: services[index].fest_id });
+    // };
+
+
+    const handleServiceSelection = (serviceId: number) => {
+        setServices((prevServices) =>
+            prevServices.map(service =>
+                service.fest_id === serviceId
+                    ? { ...service, selected: !service.selected }
+                    : service
+            )
+        );
     };
+
+
+
+
+
+
+
+
 
     const handleChange = (e: { target: { name: any; value: any; }; }) => {
         setFireData({ ...fireData, [e.target.name]: e.target.value });
@@ -568,9 +636,36 @@ const EditFormData = () => {
         const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
         if (value.length <= 10) { // Restrict to 10 digits
             setMobileNoValue(value);
-            setValue("mobileNo", value); 
+            setValue("mobileNo", value);
         }
     };
+
+
+
+    const [WmobileNoValue, setWMobileNoValue] = useState<string>('');
+
+
+
+    const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setWMobileNoValue(value);
+            setValue("whatsup_no", value); // Update form value
+        }
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     const debounceApiCall = debounce((value: string) => {
@@ -616,14 +711,14 @@ const EditFormData = () => {
         debounceApiCall(value);
     };
 
-    
+
     const handleSelectClient = (clientId: number) => {
         setSelectedClientId(null);
         setIsAddingNewClient(true);
         setInputValue('');
         setFilteredClients([]);
         // Clear existing form values
-        setValue("client_id","")
+        setValue("client_id", "")
         setValue("firstName", '');
         setValue("address", '');
         setValue("email", '');
@@ -659,7 +754,7 @@ const EditFormData = () => {
         setInputValue('');
         setFilteredClients([]);
         // Clear existing form values
-        setValue("client_id","")
+        setValue("client_id", "")
         setValue("firstName", '');
         setValue("address", '');
         setValue("email", '');
@@ -678,21 +773,36 @@ const EditFormData = () => {
     const router = useRouter();
 
 
-    const onSubmit = async (FormData: any) => {
+    const onSubmit = async (formData: any) => {
+        // Convert selected fest_ids to a comma-separated string
+        const selectedFestIds = services
+            .filter(service => service.selected)
+            .map(service => service.fest_id)
+            .join(','); // Convert to comma-separated string
 
-        console.log("form submit",FormData);
-        console.log("form submit",mobileNoValue);
-        
+        // Prepare form data with selected fest_ids
+        const dataToSubmit = {
+            ...formData,
+            fest_id: selectedFestIds, // Add selected fest_ids to form data
+            mobileNo: mobileNoValue // Include mobileNo if necessary
+        };
+
+        console.log("Form submit data", dataToSubmit);
+        console.log("Form submit data", dataToSubmit.fest_id);
+
 
         try {
- 
-            const response = await axios.post('http://192.168.0.105:3001/booking/edit_fire_extingusher_booking_detail',FormData);
-            router.push('/Fire/Fire-List');
-            console.log('Ingredient updated successfully:', response.data);
-       
-          
-        } catch (error) {
-            console.error('Error updating ingredient:', error);
+            // Post the form data to the API endpoint
+            const response = await axios.post('http://192.168.0.100:3001/booking/edit_fire_extingusher_booking_detail', dataToSubmit).then((res: any) => {
+                generateUpdatePDF(res.data.data);
+                // generateUpdatePDF(dataToSubmit)
+                router.push('/Fire/Fire-List'); // Navigate to the desired route
+                console.log('Data submitted successfully:', res.data.data);
+
+            })
+            }   
+              catch (error) {
+            console.error('Error updating data:', error);
         }
     };
 
@@ -716,12 +826,12 @@ const EditFormData = () => {
                     {fireData && (
                         <div className="card-body">
 
-                            <div className="mb-3 form-check d-flex flex-wrap">
+                            {/* <div className="mb-3 form-check d-flex flex-wrap">
                                 {services.map((service, index) => (
                                     <div key={index} className="form-check mb-2" style={{ marginRight: '20px' }}>
                                         <input
                                             type="radio"
-                                          
+
                                             {...register("fest_id", { required: true })}
                                             value={service.fest_id}
                                             checked={fireData.fest_id === service.fest_id}
@@ -732,8 +842,39 @@ const EditFormData = () => {
                                         <label htmlFor={`service-${index}`} className="form-check-label ml-2">{service.fest_name}</label>
                                     </div>
                                 ))}
-                            </div>
+                            </div> */}
+                            <div className="row mb-3">
 
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="employee">Select Employees:</label>
+                                    <Select
+                                        className="form-control-sm"
+                                        id="employee"
+                                        isMulti
+                                        placeholder="--Select--"
+                                    />
+                                </div>
+
+
+
+
+                                <div className="col-lg-6 form-check d-flex" style={{ marginTop: "35px" }}>
+                                    {services.length > 0 && services.map((service, index) => (
+                                        <div key={index} className="form-check mb-2" style={{ marginRight: '20px' }}>
+                                            <input
+                                                type="checkbox"
+                                                value={service.fest_id}
+                                                checked={service.selected}
+                                                onChange={() => handleServiceSelection(service.fest_id)}
+                                                className="form-check-input"
+                                            />
+                                            <label htmlFor={`service-${index}`} className="form-check-label ml-2">
+                                                {service.fest_name}
+                                            </label>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
 
 
 
@@ -946,6 +1087,33 @@ const EditFormData = () => {
                                             disabled
                                         />
                                     </div>
+
+
+                                    <div className="col-lg-2 col-sm-4 ">
+                                        <label className="form-label">Discount(%)</label>
+                                        <input
+                                            className="form-control form-control-sm qty_cnt"
+                                            {...register('discount')}
+                                            type="text"
+
+                                            placeholder='Enter Discount'
+
+                                        />
+
+                                    </div>
+                                    <div className="col-lg-2 col-sm-4 ">
+                                        <label className="form-label">Discount Amount</label>
+                                        <input
+                                            className="form-control form-control-sm qty_cnt"
+                                            {...register('discount_amount')}
+                                            type="text"
+
+                                            placeholder='Enter Discount'
+
+                                        />
+
+                                    </div>
+
                                     <div className="col-lg-2 col-sm-4 ">
                                         <label className="form-label">Total SGST</label>
                                         <input
@@ -988,6 +1156,44 @@ const EditFormData = () => {
                                     </div>
                                 </div>
                             </div>
+
+                            <br />
+                            <div className="row mb-3">
+                                <div className="col-lg-8 col-sm-8" style={{ display: "flex", gap: "15px" }}>
+                                    <div className="col-lg-4">
+                                        <label className="form-label" htmlFor="what's_up">What'up No</label>
+                                        <input
+                                            type="text"
+                                            {...register("whatsup_no", {
+                                                required: true,
+                                                minLength: 10,
+                                                maxLength: 10,
+                                                pattern: /^[0-9]+$/
+                                            })}
+                                            value={WmobileNoValue}
+                                            onChange={handleWMobileNoChange}
+                                            className={`form-control form-control-sm ${errors.whatsup_no ? 'is-invalid' : ''}`}
+                                            id="whatsup_no"
+
+                                            placeholder="Enter Mobile No"
+                                        />
+                                        {errors?.whatsup_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.whatsup_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.whatsup_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+
+
+
+
+
+
+
+
 
                             <div className="row mt-4">
                                 <div className="col-md-12">
@@ -1040,7 +1246,7 @@ const EditFormData = () => {
                                                                 className="list-group-item list-group-item-action"
                                                                 onClick={() => handleSelectClient(client.client_id)}
                                                             >
-                                                                {client.client_firstName} 
+                                                                {client.client_firstName}
                                                             </button>
                                                         ))}
                                                     </div>
@@ -1054,7 +1260,7 @@ const EditFormData = () => {
                                     <label className="form-label" htmlFor="address">Address</label>
                                     <textarea
                                         {...register("address", { required: true })}
-                                       
+
                                         className="form-control form-control-sm"
                                         id="address"
                                         placeholder="Enter Address"
@@ -1185,3 +1391,4 @@ const EditFormData = () => {
 };
 
 export default EditFormData;
+

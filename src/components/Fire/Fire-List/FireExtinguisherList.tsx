@@ -3,9 +3,8 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import DataTable, { TableColumn } from 'react-data-table-component';
-// import "../../ticket_list/custom.css"
-import "../../../app/ticket_list/custom.css"
+import DataTable from 'react-data-table-component';
+import "../../../app/ticket_list/custom.css";
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,14 +13,17 @@ import Link from 'next/link';
 import Header from '@/components/Dashboard/Header';
 import getListFireData from '@/app/Api/FireApis/FireExtinghsherList/getListFireData';
 import getFireBookingId from '@/app/Api/FireApis/FireExtinghsherList/getFireBookingId';
-import {FirePdf} from "../Fire-List/FirePdf.js"
-import { handleFireDataPrint } from "./printFireUtills.js"
-
-
+import { FirePdf } from "../Fire-List/FirePdf.js";
+import { handleFireDataPrint } from "./printFireUtills.js";
+import "../../../../public/css/style.css";
+import { exportToFireListPDF } from './pdfFireList';
+import { exportToFireExcel } from './FireExcel';
 
 export interface User {
     febking_id: any;
+    client_email: any;
     febking_created_by: any;
+    client_gstNo: any;
     fest_id: any;
     febking_final_amount: string;
     client_firstName: string;
@@ -35,17 +37,18 @@ export interface User {
     poNo: string;
     febking_total_sgst: any;
     febking_total_cgst: any;
-    febking_entry_type: 1;   
+    febking_entry_type: 1;
     febking_total_amount: string;
     firstName: string;
     address: string;
     client_city: string;
     client_state: string;
-    client_pincode: string;   
-    mobileNo: string;    
-    client_id: any,   
-    fest_name:string
-    febking_invoice_no:string;
+    client_pincode: string;
+    mobileNo: string;
+    client_id: any;
+    created_by_name: any;
+    fest_name: string;
+    febking_invoice_no: string;
     product_data: {
         feit_hsn_code: any;
         qty: any;
@@ -55,8 +58,8 @@ export interface User {
         capacity: string;
         feit_id: any;
         febd_sgst: any;
-        feb_name:any;
-        feit_name:any;
+        feb_name: any;
+        feit_name: any;
         febd_cgst: any;
         febd_sgst_amount: any;
         febd_cgst_amount: any;
@@ -64,328 +67,268 @@ export interface User {
     }[];
 }
 
-
-
 const customStyle = {
     headRow: {
         style: {
             cursor: 'pointer',
-            fontFamily: 'Arial, sans-serif', // Example font family
-            color: '#333', // Example color
-            fontWeight: 'bold',
+            fontFamily: 'Arial, sans-serif',
+            color: '#333',
             fontSize: '14px',
-
-
-
-
-
-
         }
     },
-
     headCells: {
         style: {
             fontSize: '18px',
             fontWeight: '600',
-            textTranForm: 'uppercase'
-
-
         }
     },
-
     cells: {
         style: {
             fontSize: '16px',
-            wordbreak: "break-all",
-
         }
     }
-}
+};
 
 const FireExtinguisherList: React.FC = () => {
-
-
     const [records, setRecords] = useState<User[]>([]);
+    const [columns, setColumns] = useState<any[]>([]);
+    const [visibleColumns, setVisibleColumns] = useState<string[]>([
+        "Invoice No", "Name", "State/City", "Address", "Mobile No", "Actual Total", "Added By", "Action"
+    ]);
 
     useEffect(() => {
         const fetchData = async () => {
-
             try {
-                getListFireData.getFireListData().then((res: any) => {
-                    console.log(' getListFireData.getFireListData', res);
+                const res = await getListFireData.getFireListData();
 
-                    setRecords(res);
-                    console.log("data", res)
 
-                }).catch((e: any) => {
-                    console.log('Err', e);
+                setOriginalRecords(res);
 
-                })
+
+                 setRecords(res);
             } catch (error) {
-
+                console.error('Error fetching data:', error);
             }
-
         };
         fetchData();
     }, []);
 
-    // const handleDeleteTicket = async (ticketId: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    //     e.preventDefault();
+    useEffect(() => {
+        const newColumns = [
+            visibleColumns.includes('Invoice No') && {
+                name: "Invoice No",
+                selector: (row: User) => row.febking_invoice_no,
+                sortable: true,
+            },
+            visibleColumns.includes('Name') && {
+                name: "Name",
+                selector: (row: User) => row.client_firstName,
+                sortable: true,
+                style: {
+                    minWidth: '50px',
+                    whiteSpace: 'nowrap !important',
+                }
+            },
+            visibleColumns.includes('State/City') && {
+                name: "State/City",
+                selector: (row: User) => `${row.client_state}, ${row.client_city}`,
+                sortable: true,
+            },
+            visibleColumns.includes('Address') && {
+                name: "Address",
+                selector: (row: User) => row.client_address,
+                sortable: true,
+            },
+            visibleColumns.includes('Mobile No') && {
+                name: "Mobile No",
+                selector: (row: User) => row.client_mobileNo,
+                sortable: true,
+            },
+            visibleColumns.includes('Actual Total') && {
+                name: "Actual Total",
+                selector: (row: User) => row.febking_final_amount,
+                sortable: true,
+            },
+            visibleColumns.includes('Added By') && {
+                name: "Added By",
+                selector: (row: User) => row.created_by_name,
+                sortable: true,
+            },
+            visibleColumns.includes('Action') && {
+                name: "Action",
+                cell: (row: User) => (
+                    <div className='action-buttons'>
+                        <button className="btn btn-sm btn-success" style={{ color: '#ffffff' }} onClick={() => handleFireShareClick(row.febking_id)}>Share</button>
+                        <button className="btn btn-sm btn-info" style={{ color: '#ffffff' }} onClick={() => handleFirePrintClick(row.febking_id)}>Print</button>
+                        <Link href={`Fire-List/FireView?id=${row.febking_id}`} className="btn btn-sm btn-warning" style={{ color: '#ffffff' }}>
+                            <FontAwesomeIcon icon={faEye} />
+                        </Link>
+                        <Link href={`Fire-List/Edit?id=${row.febking_id}`} className="btn btn-sm btn-primary">
+                            <FontAwesomeIcon icon={faPencilSquare} />
+                        </Link>
+                        <Link href={""} className="btn btn-sm btn-danger" style={{ cursor: 'pointer', color: '#ffffff' }}>
+                            <FontAwesomeIcon icon={faTrash} />
+                        </Link>
+                    </div>
+                ),
+            },
+        ].filter(Boolean);
 
-    //     console.log("id", ticketId);
-    //     const formData = {
-    //         ticket_id: ticketId
-    //     }
-
-    //     try {
-    //         // Make a POST request to the API endpoint with the ticket ID in the request body
-    //         const response = await axios.post(`http://localhost:3000/ticket/remove_ticket_data`, formData);
-    //         console.log('Ticket deleted successfully:', response.data);
-
-    //         // Reload the page after successful deletion
-    //         window.location.reload();
-
-    //     } catch (error) {
-    //         console.error('Error deleting ticket:', error);
-    //         // Handle errors
-    //     }
-    // };
-
-    // const handleDeleteTicket = async (ticketId: string) => {
-    //     console.log("id",ticketId);
-    //     const formData ={
-    //         ticket_id: ticketId
-    //     }
-
-    //     try {
-    //         // Make a POST request to the API endpoint with the ticket ID in the request body
-    //         const response = await axios.post(`http://localhost:3000/ticket/remove_ticket_data`,formData);
-    //         console.log('Ticket deleted successfully:', response.data);
-    //         // Optionally, you can perform additional actions upon successful deletion, such as updating the UI.
-    //         // For example, you can fetch the updated list of tickets.
-
-    //     } catch (error) {
-    //         console.error('Error deleting ticket:', error);
-    //         // Handle errors
-    //     }
-    // };
-
-
-    // const handleTicketView = async (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    //     event.preventDefault();
-    //     try {
-    //         GetTicket.getTicketBookData().then((res: any) => {
-    //             console.log('GetTicket.getTicketBookData', res);
-    //             setRecords(res.data);
-
-    //         }).catch((e: any) => {
-    //             console.log('Err', e);
-
-    //         })
-    //     } catch (error) {
-
-    //     }
-    // }
-
-
-
-    // const handlePrintClick = (row: User) => {
-    //     handlePrint(row); // Call the imported handlePrint function
-    // };
-
-
-
+        setColumns(newColumns);
+    }, [visibleColumns]);
 
     const handleFirePrintClick = async (febking_id: string) => {
-        try {         
-            const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);    
-             console.log("Fetched details:", getTDetail.data[0]);          
-            //  handleFirePrint( getTDetail.data[0]);
-        handleFireDataPrint( getTDetail.data[0]);
-            } catch (error) {
+        try {
+            const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);
+            handleFireDataPrint(getTDetail.data[0]);
+        } catch (error) {
             console.error("Error fetching ticket data:", error);
-            // Optionally show a user-friendly error message
         }
     };
 
     const handleFireShareClick = async (febking_id: string) => {
-        try {         
-            const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);    
-             console.log("Fetched details:", getTDetail.data[0]);          
-
-             FirePdf( getTDetail.data[0]);
-            } catch (error) {
+        try {
+            const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);
+            FirePdf(getTDetail.data[0]);
+        } catch (error) {
             console.error("Error fetching ticket data:", error);
-            // Optionally show a user-friendly error message
         }
     };
 
-
-
-
-
-
-
-
-
-
-
-    const columns = [
-        {
-            name: "Name",
-            selector: (row: User) => row.client_firstName,
-            sortable: true,
-            style: {
-                minWidth: '50px',
-                whiteSpace: 'nowrap  !important'
-
+    const handleColumnVisibilityChange = (column: string, isVisible: boolean) => {
+        setVisibleColumns(prevColumns => {
+            if (isVisible) {
+                return [...prevColumns, column];
+            } else {
+                return prevColumns.filter(col => col !== column);
             }
-
-        },
-        {
-            name: "Address",
-            selector: (row: User) => row.client_address,
-            sortable: true
-        },
-        {
-            name: "Mobile No",
-            selector: (row: User) => row.client_mobileNo,
-            sortable: true
-        },
-        {
-            name: "Actual Total",
-            selector: (row: User) => row.febking_final_amount,
-            sortable: true
-        },
-        // {
-        //     name: "Amount",
-        //     selector: (row: User) => row.final_total_amount,
-        //     sortable: true,
-
-        // },
-        // {
-        //     name: "Print Amount",
-        //     selector: (row: User) => row.print_final_total_amount,
-        //     sortable: true,
-
-        // },
-        // {
-        //     name: "Added By",
-        //     selector: (row: User) => row.added_by_name,
-        //     sortable: true,
-
-        // },
-
-        {
-            name: "Action",
-            style: {
-                minWidth: '100px', // Set width for "Action" column
-            },
-            cell: (row: User) => (
-                <div className='designbtn'>
-                    <button className="btn btn-sm btn-success" style={{ color: '#ffffff' }} onClick={() => handleFireShareClick(row.febking_id)}>Share</button>&nbsp;&nbsp;
-                    <button className="btn btn-sm btn-info" style={{ color: '#ffffff' }}  onClick={() => handleFirePrintClick(row.febking_id)} >Print</button>&nbsp;&nbsp;
-                    <Link href={`Fire-List/FireView?id=${row.febking_id}`}    className="btn btn-sm btn-warning" style={{ color: '#ffffff' }}>
-
-                        <FontAwesomeIcon icon={faEye} />
-                    </Link>&nbsp;
-                    <Link href={`Fire-List/Edit?id=${row.febking_id}`} className="btn btn-sm btn-primary">
-
-                        <FontAwesomeIcon icon={faPencilSquare} />
-                    </Link>
-
-                    <Link href={""}  className="btn btn-sm btn-danger" style={{ cursor: 'pointer', color: '#ffffff' }}>
-                        <FontAwesomeIcon icon={faTrash} />
-
-                    </Link>
-                </div>
-
-            )
-
-        }
-
-    ];
-
-
-
-    const generatePDF = () => {
-        const input = document.getElementById('pdf-content') as HTMLElement;
-        html2canvas(input).then((canvas) => {
-            const imgData = canvas.toDataURL('image/png');
-            const pdf = new jsPDF();
-            const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save('ticket_list.pdf');
         });
     };
 
+    const handleFireListGeneratePDF = () => {
+        exportToFireListPDF(records);
+    };
 
-    // const handleFilter = (event: React.ChangeEvent<HTMLInputElement>): void => {
-    //     const searchTerm = event.target.value.toLowerCase();
-    //     const newData = records.filter((row: User) => {
-    //         return (
-    //             row.tkt_no.toLowerCase().includes(searchTerm) ||
-    //             row.name.toLowerCase().includes(searchTerm) ||
-    //             row.final_total_amount.toLowerCase().includes(searchTerm) ||
-    //             row.from_state_name.toLowerCase().includes(searchTerm) ||
-    //             row.to_state_name.toLowerCase().includes(searchTerm) ||
-    //             row.from_city_name.toLowerCase().includes(searchTerm) ||
-    //             row.to_city_name.toLowerCase().includes(searchTerm) ||
-    //             row.bdate.toLowerCase().includes(searchTerm) ||
-    //             row.jdate.toLowerCase().includes(searchTerm) ||
-    //             row.added_by_name.toLowerCase().includes(searchTerm)
-    //         );
-    //     });
-    //     setRecords(newData);
-    // };
+    const handleFireExcelExport = () => {
+        exportToFireExcel(records);
+    };
+
+
+    const handleCopy = (): void => {
+        if (columns.length === 0) return;
+
+        const header = columns.map(col => col.name).join(',') + '\n';
+        const rows = records.map(record =>
+            columns.map(col => {
+                const cell = col.selector ? col.selector(record) : '';
+                return typeof cell === 'string' ? cell : '';
+            }).join(',')
+        ).join('\n');
+
+        const csvContent = header + rows;
+
+        navigator.clipboard.writeText(csvContent)
+            .then(() => {
+                console.log('Data copied to clipboard');
+                alert('Data copied to clipboard');
+            })
+            .catch(err => {
+                console.error('Error copying data:', err);
+            });
+    };
+
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [originalRecords, setOriginalRecords] = useState<User[]>([]); // Holds original data
 
 
     const handleFilter = (event: React.ChangeEvent<HTMLInputElement>): void => {
         const searchTerm = event.target.value.toLowerCase();
-        const newData = records.filter((row: User) =>
+        setSearchTerm(searchTerm);
+
+        const newData = originalRecords.filter((row: User) =>
             Object.values(row).some(value =>
                 typeof value === 'string' && value.toLowerCase().includes(searchTerm)
             )
         );
+
         setRecords(newData);
     };
 
+    const [entriesPerPage, setEntriesPerPage] = useState<number>(10); 
 
-    // const handleAction = (row: User) => {
-    //     // Implement your action logic here
-    //     console.log("Performing action for row:", row);
-    // };
+    const handleEntriesPerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+        setEntriesPerPage(parseInt(event.target.value, 10));
+    };
+
+
+
+
+
     return (
         <>
             <Header />
             <div className="container-fluid mt-3">
                 <div className="card mb-3" style={{ width: 'auto' }}>
                     <div className="card-header">
-                        <h4>Fire Extinguisher  List</h4>
+                        <h4>Fire Extinguisher List</h4>
                     </div>
                     <div className="table-options">
-
-
-
+                        {/* <div className="entries-selector">
+                            <label htmlFor="entries">Show </label>
+                            <select id="entries" value={entriesPerPage} onChange={handleEntriesPerPageChange}>
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                            </select>
+                            <span> entries</span>
+                        </div> */}
+                        <div className="action-buttons">
+                            <button className="pdf-button" onClick={handleFireListGeneratePDF}>PDF</button>
+                            <button className="excel-button" onClick={handleFireExcelExport}>Excel</button>
+                            <button className="copy-button" onClick={handleCopy}>Copy</button>
+                            <button className="copy-button" onClick={() => document.getElementById('column-visibility-menu')?.classList.toggle('show')}>
+                                Column visibility
+                            </button>
+                        </div>
+                        <div id="column-visibility-menu" className="column-visibility-menu"  style={{marginLeft:"17%" , marginTop:"23%"}}>
+                            {["Invoice No", "Name", "State/City", "Address", "Mobile No", "Actual Total", "Added By", "Action"].map(option => (
+                                <div key={option}>
+                                    <input
+                                        type="checkbox"
+                                        id={option}
+                                        checked={visibleColumns.includes(option)}
+                                        onChange={(e) => handleColumnVisibilityChange(option, e.target.checked)}
+                                    />
+                                    <label htmlFor={option}>{option}</label>
+                                </div>
+                            ))}
+                        </div>
+                        <div className='search'>
+                            <label>Search&nbsp;</label>
+                            <input
+                                type="text"
+                                placeholder="Search..."
+                                onChange={handleFilter}
+                                className="search-input"
+                                value={searchTerm}
+                            />
+                        </div>
                     </div>
-
                     <div id="pdf-content" className='table table-striped new-table'>
                         <DataTable
                             columns={columns}
                             data={records}
                             customStyles={customStyle}
                             pagination
-                            paginationPerPage={5}
-                            paginationRowsPerPageOptions={[5, 10, 20, 50]}
+                            paginationPerPage={10}
+                            paginationRowsPerPageOptions={[10, 20, 50]}
                         />
                     </div>
-
                 </div>
             </div>
         </>
     );
-}
+};
 
 export default FireExtinguisherList;

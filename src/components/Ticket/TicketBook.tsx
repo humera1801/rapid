@@ -30,7 +30,12 @@ type FormData = {
     rep_time: string; dep_time: string; bus_name: string; bus_no: string;
     boarding: string; payment_method: string; final_total_amount: number; ticket_actual_total: number;
     print_final_total_amount: number; paid_amount: number; remaining_amount: number; print_paid_amount: number;
-    print_remaining_amount: number; remarks: string; user_id: any; received: 'Get'
+    print_remaining_amount: number; remarks: string; user_id: any; received: 'Get'; whatsapp_no: any;
+    passengers_proof_type: string;
+    reciver_proof_type: string;
+    passengers_proof_details: string;
+    reciver_proof_detail: string; rep_date: string;
+    transection_id: String;
 
 };
 
@@ -81,18 +86,7 @@ function TicketBook() {
     //     }, []);
 
 
-
-
-
-
-
-
     const storedData = localStorage.getItem('userData');
-
-
-
-
-
 
 
     const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<FormData>({
@@ -106,7 +100,7 @@ function TicketBook() {
             ex_total_print_rate: 0, sI_no: '', st_no: '', rep_time: '', dep_time: '',
             print_remaining_amount: 0, bus_no: '', boarding: '', payment_method: '', final_total_amount: 0,
             ticket_actual_total: 0, paid_amount: 0, remaining_amount: 0, bus_name: '', print_final_total_amount: 0,
-            print_paid_amount: 0, remarks: '', ticket_no: '', received: 'Get', user_id: storedData
+            print_paid_amount: 0, remarks: '', ticket_no: '', received: 'Get', user_id: storedData, transection_id: "",
 
         },
     });
@@ -182,8 +176,6 @@ function TicketBook() {
 
     );
 
-
-
     const calculateSlPrintRate = (slRate: number) => {
         // Modify this calculation based on your requirement
         return slRate;
@@ -196,7 +188,6 @@ function TicketBook() {
             setValue('slr_print_rate', printslRate);
         }
     }, [watch('slr_rate')]);
-
 
 
     const calculateExPrintRate = (exRate: number) => {
@@ -283,8 +274,6 @@ function TicketBook() {
         }
     };
 
-
-
     const handleCustomCity = async (e: React.ChangeEvent<HTMLSelectElement>, isFrom: boolean) => {
         const cityId = e.target.value;
         if (isFrom && cityId === 'tkt_from_other') {
@@ -353,7 +342,7 @@ function TicketBook() {
             console.log('Created ticket data:', ticketData);
             router.push("/ticket_list")
 
-            
+
             if (ticketData.ticket_token != "") {
                 const ticketToken = ticketData.ticket_token;
                 try {
@@ -407,7 +396,7 @@ function TicketBook() {
 
 
     async function submitFormData(formData: FormData) {
-        const response = await fetch('http://localhost:3000/ticket/create_ticket_data', {
+        const response = await fetch('http://192.168.0.100:3001/ticket/create_ticket_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -459,21 +448,74 @@ function TicketBook() {
     };
 
 
+    const [WmobileNoValue, setWMobileNoValue] = useState<string>('');
+    const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setWMobileNoValue(value);
+            setValue("whatsapp_no", value); // Update form value
+        }
+    };
+
+
     // ------------------------------radio button selection------------------------------------------------------------------
-    const [selectedOption, setSelectedOption] = useState<string | null>('option1');
+
+    const [selectedOption, setSelectedOption] = useState<string | null>();
     const handleOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setSelectedOption(event.target.value);
-
-
-
-
+        setSelectedOption(event.target.value)
     };
 
 
 
 
+    const aadhaarPattern = /^\d{12}$/;
+    const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9A-Z]{1}$/;
 
 
+
+    // const depTime = watch('dep_time');
+    // const jdate = watch('jdate', currentDate);
+
+
+    // useEffect(() => {
+    //     if (depTime && depTime > '00:00') {
+    //         const nextDay = new Date();
+    //         nextDay.setDate(nextDay.getDate() + 1);
+    //         const nextDayDate = nextDay.toISOString().split('T')[0];
+    //         if (jdate <= currentDate) {
+    //             setValue('jdate', nextDayDate);
+    //         }
+    //     }
+    // }, [depTime, jdate, currentDate, setValue]);
+
+
+
+    const journeyDate = watch('jdate');
+    const departureTime = watch('dep_time');
+
+    useEffect(() => {
+        if (journeyDate && departureTime) {
+            const [depHours, depMinutes] = departureTime.split(':').map(Number);
+            const departureDateTime = new Date(`${journeyDate}T${departureTime}`);
+
+            const reportingDateTime = new Date(departureDateTime.getTime() - 30 * 60 * 1000);
+
+            const reportingDate = reportingDateTime.toISOString().split('T')[0];
+            const reportingTime = reportingDateTime.toTimeString().split(' ')[0].slice(0, 5);
+
+            setValue('rep_date', reportingDate);
+            setValue('rep_time', reportingTime);
+        }
+    }, [journeyDate, departureTime, setValue]);
+
+
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+
+    // Handler for payment method change
+    const handlePaymentMethodChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
+        setSelectedPaymentMethod(event.target.value);
+    };
     //--------------------------------------------------------------------------------------------------------------------------
     return (
         <>
@@ -601,16 +643,23 @@ function TicketBook() {
 
                                 </div>
 
-                                <div className="col-lg-3">
+                                <div className="col-lg-6">
                                     <label className="form-label" htmlFor="bdate">Booking date</label>
                                     <input  {...register('bdate')} className="form-control form-control-sm" type="date" id="bdate" placeholder="Enter Booking date" defaultValue={currentDate} min={currentDate} />
                                 </div>
 
-                                <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="jdate">Journey date</label>
-                                    <input  {...register('jdate')} className="form-control form-control-sm" type="date" id="jdate" placeholder="Enter J.date" defaultValue={currentDate} min={currentDate} />
-
-                                </div>
+                                {/* <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="jdate">Journey Date</label>
+                                    <input
+                                        {...register('jdate')}
+                                        className="form-control form-control-sm"
+                                        type="date"
+                                        id="jdate"
+                                        placeholder="Enter J.date"
+                                        defaultValue={currentDate}
+                                        min={currentDate}
+                                    />
+                                </div> */}
 
                             </div>
                             {/* Third-Row */}
@@ -651,13 +700,14 @@ function TicketBook() {
                             </div>
                             {/* Fifth-Row */}
                             <div className="row mb-3">
-                                <div className="col-lg-6">
+                                <div className="col-lg-4">
                                     <label className="form-label" htmlFor="name">Company Name</label>
                                     <input {...register('cmp_name')} className="form-control form-control-sm" type="text" id="cmp_name" placeholder="Enter Company Name" />
                                 </div>
 
-                                <div className="col-lg-6">
-                                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">Company Mobile No</label>
+
+                                <div className="col-lg-4">
+                                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">Company Mobile No </label>
                                     <input type="number"
                                         {...register("cmp_mobile", {
                                             required: true,
@@ -670,21 +720,129 @@ function TicketBook() {
                                     {errors?.cmp_mobile?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
 
                                 </div>
+
+
+                                <div className="col-lg-4">
+                                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">What's-up No</label>
+                                    <input
+                                        type="text"
+                                        {...register("whatsapp_no", {
+                                            required: true,
+                                            minLength: 10,
+                                            maxLength: 10,
+                                            pattern: /^[0-9]+$/
+                                        })}
+                                        value={WmobileNoValue}
+                                        onChange={handleWMobileNoChange}
+                                        className={`form-control form-control-sm ${errors.whatsapp_no ? 'is-invalid' : ''}`}
+                                        id="whatsapp_no"
+
+                                        placeholder="Enter Mobile No"
+                                    />
+                                    {errors?.whatsapp_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+
+                                </div>
+
                             </div>
+
+
+                            {/* id-proof details */}
+                            <div className="row mb-3">
+                                <div className="col-lg-6">
+                                    <label className="form-label" htmlFor="send_mob">Select Sender ID Proof Type</label>&nbsp;
+                                    {/* {errors.passengers_proof_type?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>} */}
+                                    <br />
+                                    <div className="d-flex gap-2">
+                                        <input
+                                            {...register('passengers_proof_type', { required: true })}
+                                            type="radio"
+                                            checked={selectedOption === 'Aadhar_no'}
+                                            onChange={handleOptionChange}
+                                            value="Aadhar_no"
+                                        /> Aadhar
+                                        <input
+                                            {...register('passengers_proof_type')}
+                                            type="radio"
+                                            checked={selectedOption === 'Pan_no'}
+                                            onChange={handleOptionChange}
+                                            value="Pan_no"
+                                        /> PAN
+                                        <input
+                                            {...register('passengers_proof_type')}
+                                            type="radio"
+                                            checked={selectedOption === 'Gst_no'}
+                                            onChange={handleOptionChange}
+                                            value="Gst_no"
+                                        /> GST
+                                        <input
+                                            {...register('passengers_proof_type')}
+                                            type="radio"
+                                            checked={selectedOption === 'Other'}
+                                            onChange={handleOptionChange}
+                                            value="Other"
+                                        /> Other
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            {/* --------------*/}
+                            <div className="row mb-3">
+                                <div className="col-lg-6">
+                                    <label className="form-label" htmlFor="send_mob">Sender Adhar No./PAN No./GST No.</label>
+                                    <input
+                                        {...register('passengers_proof_details', {
+                                            required: selectedOption === 'Aadhar_no' ? 'Aadhaar number is required' :
+                                                selectedOption === 'Pan_no' ? 'PAN number is required' :
+                                                    selectedOption === 'Gst_no' ? 'GST number is required' : false,
+                                                      
+                                            pattern: {
+                                                value: selectedOption === 'Aadhar_no' ? aadhaarPattern : selectedOption === 'Pan_no' ? panPattern : gstPattern,
+
+
+                                                message: selectedOption === 'Aadhar_no' ? 'Invalid Aadhaar number format' : selectedOption === 'Pan_no' ? 'Invalid PAN number format' :  selectedOption === 'Gst_no' ? 'Invalid GST number format ': ''
+
+                                            }
+                                        })}
+                                        className="form-control form-control-sm"
+                                        type="text"
+                                        name="passengers_proof_details"
+                                        placeholder="Enter Sender ID Proof Detail"
+                                    />
+                                    {errors.passengers_proof_details && <span className='error'>{errors.passengers_proof_details.message}</span>}
+                                </div>
+                            </div>
+
+
+
+
+
+
                             {/* Select-seat */}
 
                             <div className="row mb-3">
-                                <div className="col-lg-6 col-sm-6">
+                                <div className="col-lg-6 col-sm-12 mb-2">
                                     <label className="form-label">Booking Type</label><br />
-                                    <input type="radio" {...register('booking_type')} value="seater" /> Seater
-                                    <input type="radio" {...register('booking_type')} value="sleeper" /> Sleeper
-                                    <input type="radio" {...register('booking_type')} value="both" /> Both
+                                    <div className="d-flex gap-2">
+                                        <div>
+                                            <input type="radio" {...register('booking_type')} value="seater" /> Seater
+                                        </div>
+                                        <div>
+                                            <input type="radio" {...register('booking_type')} value="sleeper" /> Sleeper
+                                        </div>
+                                        <div>
+                                            <input type="radio" {...register('booking_type')} value="both" /> Both
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="col-lg-6 col-sm-6">
+                                <div className="col-lg-6 col-sm-12 mb-2">
                                     <label className="form-label">Is Extra?</label><br />
                                     <input type="checkbox" {...register('is_extra')} /> Yes
                                 </div>
                             </div>
+
 
                             {bookingType !== 'seater' && (
                                 <div id="sleeper_show">
@@ -750,7 +908,7 @@ function TicketBook() {
                                             <label className="form-label">St No.</label>
                                             <input {...register('st_no',
                                                 {
-                                                    required:true
+                                                    required: true
                                                 }
                                             )} className="form-control form-control-sm" placeholder='Enter St No.' type="text" />
                                             {errors.st_no?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
@@ -788,7 +946,42 @@ function TicketBook() {
                             )}
 
                             <div className="row mb-3">
-                                <div className="col-lg-6">
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="jdate">Journey Date</label>
+                                    <input
+                                        {...register('jdate')}
+                                        className="form-control form-control-sm"
+                                        type="date"
+                                        id="jdate"
+                                        placeholder="Enter J.date"
+                                        defaultValue={currentDate}
+                                        min={currentDate}
+                                    />
+                                </div>
+
+                                <div className="col-lg-3">
+                                    <label className="form-label">Departure Time</label>
+                                    <input
+                                        {...register('dep_time', { required: true })}
+                                        className="form-control form-control-sm"
+                                        type="time"
+                                    />
+                                    {errors.dep_time?.type === "required" && (
+                                        <span id="show_mobile_err" className="error">This field is required.</span>
+                                    )}
+                                </div>
+
+
+                                <div className="col-lg-3">
+                                    <label className="form-label">Reporting Date</label>
+                                    <input {...register('rep_date', {
+                                        required: true,
+                                    })} className="form-control form-control-sm" type="date" />
+                                    {errors.rep_time?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
+                                </div>
+                                <div className="col-lg-3">
                                     <label className="form-label">Reporting Time</label>
                                     <input {...register('rep_time', {
                                         required: true,
@@ -796,18 +989,10 @@ function TicketBook() {
                                     {errors.rep_time?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
 
                                 </div>
-                                <div className="col-lg-6">
-                                    <label className="form-label">Departure Time</label>
-                                    <input {...register('dep_time', {
-                                        required: true,
-                                    })} className="form-control form-control-sm" type="time" />
-                                    {errors.dep_time?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
-
-                                </div>
                             </div>
 
                             <div className="row mb-3">
-                                <div className="col-lg-6">
+                                <div className="col-lg-4">
                                     <label className="form-label">Bus Name</label>
                                     <input {...register('bus_name', {
                                         required: true,
@@ -815,7 +1000,7 @@ function TicketBook() {
                                     {errors.bus_name?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
 
                                 </div>
-                                <div className="col-lg-6">
+                                <div className="col-lg-4">
                                     <label className="form-label">Bus No.</label>
                                     <input {...register('bus_no', {
                                         required: true,
@@ -823,10 +1008,10 @@ function TicketBook() {
                                     {errors.bus_no?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
 
                                 </div>
-                            </div>
+                          
 
-                            <div className="row mb-3">
-                                <div className="col-lg-6">
+                           
+                                <div className="col-lg-4">
                                     <label className="form-label">Boarding</label>
                                     <input {...register('boarding', {
                                         required: true
@@ -834,13 +1019,18 @@ function TicketBook() {
                                     {errors.boarding?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
 
                                 </div>
-                            </div>
+                                </div>
 
                             <div className="row mb-3">
                                 <div className="col-lg-3">
                                     <label className="form-label">Payment Method</label>
-                                    <select {...register('payment_method')} className="form-control">
-                                        <option value="">--Select-</option>
+                                    <select
+                                        {...register('payment_method')}
+                                        value={selectedPaymentMethod}
+                                        onChange={handlePaymentMethodChange}
+                                        className="form-control"
+                                    >
+                                        <option value="">--Select--</option>
                                         <option value="cash">Cash</option>
                                         <option value="transfer">Transfer</option>
                                         <option value="pending">Pending</option>
@@ -849,6 +1039,19 @@ function TicketBook() {
                                         <option value="paytm">Paytm</option>
                                         <option value="credit">Credit</option>
                                     </select>
+                                    {/* Conditionally render the transaction ID input field */}
+                                    {(selectedPaymentMethod === 'gpay' || selectedPaymentMethod === 'phonepay' || selectedPaymentMethod === 'paytm') && (
+                                        <div className="mt-2">
+                                            <label className="form-label">Transaction ID</label>
+                                            <input
+                                                {...register('transection_id')}
+                                                type="text"
+                                                className="form-control"
+                                                placeholder="Enter transaction ID"
+                                            // Use appropriate handler or register here if using form libraries
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="col-lg-3">
                                     <label className="form-label">Actual Total</label>

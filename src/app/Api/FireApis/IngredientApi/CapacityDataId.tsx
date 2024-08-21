@@ -9,7 +9,7 @@ import { baseURL } from '../BrandApi/DeleteBrand';
 export default {
     async getcapacityId(id: string): Promise<any> {
         try {
-          const response: AxiosResponse = await axios.post(baseURL + '/ingredient/get_fire_ingredient_detail', {
+          const response: AxiosResponse = await axios.post(baseURL + '/capacity/get_fire_extingusher_capacity_data', {
             feit_id: id,
           }, {
             headers: {

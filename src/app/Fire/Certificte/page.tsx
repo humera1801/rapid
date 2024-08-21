@@ -6,10 +6,12 @@ import React from 'react'
 const page = () => {
   return (
     <>
-    
-  <Header/>
-  <Certificate/>
 
+
+      <Header />
+      <div className="container">
+        <Certificate />
+      </div>
     </>
   )
 }

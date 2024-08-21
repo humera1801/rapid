@@ -1,61 +1,174 @@
-
 /* components/Navbar.module.css */
 
- 
-  
+
+
+.custom-nav-dropdown .dropdown-menu {
+  background-color: #ffffff;
+  border: 1px solid #ced4da;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  padding: 0;
+  margin-top: 0.25rem;
+}
 
 
 
-    
-  
-  
-  .a1 {
-    text-decoration: none;
-  }
-  .header2 {
-    border-bottom: 1px solid rgba(131, 131, 131, 0.10);
-  
-    
-  }
-  .navbar{
-    padding: 15px;
-  }
-  .logo1 {
-    width: 8%;
-  }
-  .logohead1 {
-    height: 50%;
-    width: 100%;
-    margin-right: 5px;
-  }
-  .ul1 {
-    width: 100%;
-    display: flex ;
-    justify-content: end;
-  
-  }
-  .ul1 li  {
-    color: #4d4d4d;
-    
+.custom-nav-dropdown .dropdown-menu .custom-dropdown-item:hover {
+  background-color: #e9ecef;
 
-  }
-  
-  .banner{
-    color: #d0684d !important;
+}
 
+
+.custom-nav-dropdown .dropdown-menu .custom-nav-link {
+  color: #212529;
+  text-decoration: none;
+}
+
+.custom-nav-dropdown .dropdown-menu {
+  min-width: 180px;
+}
+
+@media (min-width: 992px) {
+  .custom-nav-dropdown .dropdown-menu {}
+}
+
+
+/* Ingredian-fire */
+
+.header-label {
+  font-size: 30px;
+  font-weight: 500;
+}
+
+/* Modal Styles */
+.modal-title {
+  font-size: 1.5rem;
+}
+
+/* Responsive table */
+.table-responsive {
+  overflow-x: auto;
+}
+
+/* Custom media queries for extra responsiveness */
+@media (max-width: 767.98px) {
+  .header-label {
+    font-size: 24px;
   }
 
-.new{
+  .table thead th {
+    font-size: 12px;
+  }
+
+  .table tbody td {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .header-label {
+    font-size: 20px;
+  }
+
+  .btn {
+    font-size: 12px;
+  }
+
+  .table thead th {
+    font-size: 10px;
+  }
+
+  .table tbody td {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 375px) {
+  .header-label {
+    font-size: 20px;
+  }
+
+  .table thead th {
+    font-size: 10px;
+  }
+
+  .table tbody td {
+    font-size: 10px;
+  }
+
+  .btn {
+    font-size: 10px;
+  }
+
+  /* Reduce padding and margin for compact devices */
+  .btn {
+    padding: 5px 10px;
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+  }
+
+  .table {
+    font-size: 12px;
+  }
+}
+
+/* ------------------------------- */
+.a1 {
+  text-decoration: none;
+}
+
+.header2 {
+  border-bottom: 1px solid rgba(131, 131, 131, 0.10);
+
+
+}
+
+.navbar {
+  padding: 15px;
+}
+
+.logo1 {
+  width: 8%;
+}
+
+.logohead1 {
+  height: 50%;
+  width: 100%;
+  margin-right: 5px;
+}
+
+.ul1 {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+
+}
+
+.ul1 li {
+  color: #4d4d4d;
+
+
+}
+
+.banner {
+  color: #d0684d !important;
+
+}
+
+.new {
   margin-top: 15px;
 
 }
 
-.data{
+.data {
   display: flex;
   justify-content: end;
-   
+
 }
-.error{
+
+.error {
   font-size: 13px;
   color: #f72611;
 }
@@ -66,63 +179,217 @@ input::-webkit-inner-spin-button {
   margin: 0;
 }
 
-.panel-heading{
+.panel-heading {
   border-bottom: 1px solid;
 }
 
-.mod{
+.mod {
   display: block !important;
- 
+
 }
 
 @media (max-width: 510px) {
   .line {
-      flex-wrap: wrap; /* Ensure items wrap on smaller screens */
+    flex-wrap: wrap;
+    /* Ensure items wrap on smaller screens */
   }
 
   .additional-fields {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      align-items: center; /* Adjust as per your design */
-      justify-content: space-between; /* Adjust spacing between elements */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    /* Adjust as per your design */
+    justify-content: space-between;
+    /* Adjust spacing between elements */
   }
 
   .button-container {
-      margin-top: 10px; /* Adjust spacing between elements */
+    margin-top: 10px;
+    /* Adjust spacing between elements */
   }
 }
-/* @media (min-width: 992px) and (max-width: 1176px) {
-  .row {
-      flex-wrap: wrap;
-  }
 
-  .col-lg-12.col-sm-12 {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-  }
 
-  .col-lg-12.col-sm-12 > div {
-      width: calc(100% / 6 - 15px);
-  }
-
-  .new {
-      margin-top: 10px; 
-  }
-} */
 
 
 @media (max-width: 1372px) {
   .line .new {
-      width: 100%; /* Make the button take full width */
-      margin-top: 10px; /* Adjust spacing */
+    width: 100%;
+    margin-top: 10px;
   }
 }
 
 @media (max-width: 992px) {
   .line .new {
-      width: 100%; /* Make the button take full width */
-      margin-top: 10px; /* Adjust spacing */
+    width: 100%;
+    margin-top: 10px;
+  }
+}
+
+
+/* -------VIew image Fire-------- */
+
+
+.image-gallery1 {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.parcel-image1 {
+  max-width: 120px;
+  max-height: 100px;
+  margin: 5px;
+  border: 1px solid #ddd;
+
+}
+
+.parcel-image:hover {
+  transform: scale(1.05);
+}
+
+.modal-parcel {
+  display: block;
+  position: fixed;
+  z-index: 1;
+  padding-top: 100px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0, 0, 0, 0.9);
+}
+
+.modal-content-parcel {
+  margin: auto;
+  display: block;
+  width: 900px;
+  max-width: 40%;
+  max-height: auto;
+  animation: zoom 0.6s;
+}
+
+#caption {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+  text-align: center;
+  color: #ccc;
+  padding: 10px 0;
+  height: 150px;
+}
+
+.close {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.close:hover,
+.close:focus {
+  color: #bbb;
+  text-decoration: none;
+}
+
+@keyframes zoom {
+  from {
+    transform: scale(0);
+  }
+
+  to {
+    transform: scale(1);
+  }
+}
+
+@media only screen and (max-width: 700px) {
+  .modal-content {
+    width: 100%;
+  }
+}
+
+
+/* ------Edit Fire image upload------- */
+
+
+
+.image-gallery {
+  position: relative;
+}
+
+.image-container {
+  position: relative;
+  display: inline-block;
+}
+
+.parcel-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100px;
+  margin: 5px;
+  border: 1px solid #ddd;
+
+}
+
+.remove-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.remove-button:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+
+
+
+
+
+
+
+ /* ---------------------------data table css-------------------------- */
+
+
+
+
+ .action-buttons {
+  display: flex;
+  gap: 5px; 
+  align-items: center;
+}
+
+.action-buttons button,
+.action-buttons a {
+  white-space: nowrap; 
+  overflow: hidden; 
+  margin: 0; 
+}
+
+/* Responsive table styles */
+@media (max-width: 768px) {
+  .react-data-table-component {
+      font-size: 14px; /* Reduce font size for smaller screens */
+  }
+
+  .action-buttons {
+      gap: 2px; /* Reduce gap on smaller screens */
   }
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import YourFormComponent from '@/components/Client';
 import Header from '@/components/Dashboard/Header'
-import FireData from '@/components/Fire/FireDataForm'
+import YourComponent from '@/components/data';
+import FireData from '@/components/Fire/FireBooking';
 import React from 'react'
 
 const page = () => {
@@ -16,19 +16,9 @@ const page = () => {
    <br/>
 
    
-{/* 
-   <div className="container-fluid">
-<FireData/>
-</div> */}
 
-<FireData/>
+    <FireData/>
 
-
-{/* <div className="comtainer">
-<YourFormComponent/>
-
-</div> */}
-    
     </>
   )
 }

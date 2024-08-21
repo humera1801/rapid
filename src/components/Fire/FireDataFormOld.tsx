@@ -8,6 +8,7 @@ import GetIngredientList from '@/app/Api/FireApis/IngredientApi/GetIngredientLis
 import { faMinusCircle, faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import GetServiceList from '@/app/Api/FireApis/ServiceApi/GetServiceList';
+import Select from 'react-select';
 
 import { useRouter } from 'next/navigation';
 import GetClientList from '@/app/Api/FireApis/FireExtinghsherList/GetClientList';
@@ -16,6 +17,7 @@ import { debounce } from 'lodash';
 import "../../../public/css/style.css"
 import axios from 'axios';
 import { generateInvoicePDF } from './Invoice/Pdf.js';
+import GetEmployeeList from '@/app/Api/FireApis/GetEmployeeList';
 
 interface extinguishingAgent {
     value: string;
@@ -44,7 +46,10 @@ export interface FormData {
     invNo: string;
     certificateNo: string;
     poNo: string;
-
+    discount: any;
+    discount_amount: any;
+    whatsup_no: any;
+    employee: any;
     product_data: {
         qty: any;
         rate: any;
@@ -79,10 +84,16 @@ interface Brand {
 
 interface Service {
     selected: boolean | undefined;
-    fest_id: string,
+    fest_id: any,
     fest_name: string,
     fest_created_by: any
 
+}
+
+
+interface employee {
+    e_id: string,
+    e_name: string
 }
 
 interface ClientData {
@@ -143,7 +154,7 @@ const FireData = () => {
     useEffect(() => {
         fetchData();
         fetchIngredientData();
-
+        fetchemployeeData();
         fetchservice();
     }, []);
 
@@ -172,7 +183,7 @@ const FireData = () => {
 
     //---------------------------------------------------get ingredient data---------------------------------------------------------------
     const [ingredients, setIngredients] = useState<ingredient[]>([]);
-    const [capacity, setCapacity] = useState(null);
+    // const [capacity, setCapacity] = useState(null);
 
     const fetchIngredientData = async () => {
         try {
@@ -181,6 +192,38 @@ const FireData = () => {
         } catch (error) {
             console.error('Error fetching ingredients:', error);
         }
+    };
+
+    //------------------------------------------------get employee List---------------------------------------------------------------
+
+
+    const [employee, setemployee] = useState<employee[]>([]);
+    // const [capacity, setCapacity] = useState(null);
+
+    const fetchemployeeData = async () => {
+        try {
+            const response = await GetEmployeeList.getemployee();
+            setemployee(response);
+            console.log("service", response)
+        } catch (error) {
+            console.error('Error fetching ingredients:', error);
+        }
+    };
+
+
+
+    //--------------------------react multiple select-----------------------------------------------
+    const [selectedEmployees, setSelectedEmployees] = useState<Array<{ value: string; label: string }>>([]);
+
+
+    const options = employee.map(employees => ({
+        value: employees.e_id,
+        label: employees.e_name
+    }));
+
+
+    const handleChange = (selectedOptions: any) => {
+        setSelectedEmployees(selectedOptions || []);
     };
 
 
@@ -331,6 +374,7 @@ const FireData = () => {
 
     const calculateActualTotal = () => {
         const productdata = watch('product_data');
+        const discountPercentage = parseFloat(watch('discount')) || 0;
 
         if (productdata.length > 0) {
             const newTotalAmount = productdata.reduce((sum, parcel) => sum + parseFloat(parcel.totalAmount), 0);
@@ -342,16 +386,22 @@ const FireData = () => {
             const newTotalCGST = productdata.reduce((sum, parcel) => sum + parseFloat(parcel.febd_cgst_amount), 0);
             setValue('febking_total_cgst', newTotalCGST.toFixed(2)); // Set febking_total_cgst
 
-            // Calculate febking_final_amount
-            const finalAmount = newTotalAmount + newTotalSGST + newTotalCGST;
+            // Calculate discount amount
+            const discountAmount = (newTotalAmount * discountPercentage) / 100;
+            setValue('discount_amount', discountAmount.toFixed(2)); // Set discount_amount
+
+            // Calculate final amount
+            const finalAmount = newTotalAmount - discountAmount + newTotalSGST + newTotalCGST;
             setValue('febking_final_amount', finalAmount.toFixed(2)); // Set febking_final_amount
         } else {
             setValue('febking_total_amount', '0.00');
             setValue('febking_total_sgst', '0.00');
             setValue('febking_total_cgst', '0.00');
+            setValue('discount_amount', '0.00');
             setValue('febking_final_amount', '0.00');
         }
     };
+
 
 
     const handleQtyChange = (index: number, qty: number) => {
@@ -374,7 +424,6 @@ const FireData = () => {
 
         calculateActualTotal();
     };
-
 
     const handleRateChange = (index: number, rate: number) => {
         setValue(`product_data.${index}.rate`, rate);
@@ -443,13 +492,27 @@ const FireData = () => {
 
     const onSubmit = async (formData: FormData) => {
         try {
+            // Extract selected service IDs from form data
+            const selectedServices = services
+                .filter(service => service.selected) // Filter selected services
+                .map(service => service.fest_id) // Get service IDs
+                .join(','); // Join into a comma-separated string
+
+            // Extract selected employee IDs from the form data
+            const employeeIds = selectedEmployees
+                .map(employee => employee.value) // Map to get the employee values
+                .join(','); // Join into a comma-separated string
+
+            // Add the comma-separated service IDs and employee IDs to formData
+            formData.fest_id = selectedServices;
+            formData.employee = employeeIds;
+
             if (isAddingNewClient) {
                 await submitNewClientFormData(formData);
                 console.log('Form data submitted successfully for new client.');
 
                 setIsAddingNewClient(false); // Reset to normal client selection mode
             } else if (selectedClientId) {
-
                 formData.client_id = selectedClientId;
                 await submitFormData(formData, selectedClientId);
 
@@ -463,12 +526,42 @@ const FireData = () => {
     };
 
 
+
+    // const onSubmit = async (formData: FormData) => {
+    //     try {
+    //         // Extract selected service IDs from form data
+    //         const selectedServices = services
+    //             .filter(service => service.selected) // Filter selected services
+    //             .map(service => service.fest_id) // Get service IDs
+    //             .join(','); // Join into a comma-separated string
+
+    //         // Add the comma-separated service IDs to formData
+    //         formData.fest_id = selectedServices;
+
+    //         if (isAddingNewClient) {
+    //             await submitNewClientFormData(formData);
+    //             console.log('Form data submitted successfully for new client.');
+
+    //             setIsAddingNewClient(false); // Reset to normal client selection mode
+    //         } else if (selectedClientId) {
+    //             formData.client_id = selectedClientId;
+    //             await submitFormData(formData, selectedClientId);
+
+    //             console.log('Form data submitted successfully with selected client id:', selectedClientId);
+    //         } else {
+    //             console.log('Please select a client or add a new client before submitting.');
+    //         }
+    //     } catch (error) {
+    //         console.error('Error submitting form data:', error);
+    //     }
+    // };
+
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
-                generateInvoicePDF(res.data.data[0]);
+            const response = await axios.post('http://192.168.0.100:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
+                generateInvoicePDF(res.data.data);
                 router.push("/Fire/Fire-List")
-                console.log("res", res.data.data[0]);
+                console.log("res", res.data.data);
 
             });
             console.log('Form data submitted successfully with client id:', clientId);
@@ -482,9 +575,9 @@ const FireData = () => {
 
     const submitNewClientFormData = async (formData: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
+            const response = await axios.post('http://192.168.0.100:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
                 ;
-                generateInvoicePDF(res.data.data[0]);
+                // generateInvoicePDF(res.data.data[0]);
                 router.push("/Fire/Fire-List")
                 console.log('Form data submitted successfully for new client.', res.data.data[0]);
                 console.log('Server response:', res.data.data[0]);
@@ -493,7 +586,7 @@ const FireData = () => {
             console.error('Error submitting form data:', error);
         }
     };
-
+    //----------------------------------------------------------------------------------------------------------------
     // const submitFormData = async (formData: FormData, clientId: number) => {
     //     try {
     //         console.log('Submitting form data:', formData, 'with client id:', clientId);
@@ -522,6 +615,60 @@ const FireData = () => {
 
     // };
 
+
+
+
+    // const onSubmit = (data: any) => {
+    //     // Extract selected service IDs
+    //     const selectedServices = services
+    //         .filter(service => service.selected)
+    //         .map(service => service.fest_id)
+    //         .join(',');
+
+
+    //     const employeeIds = selectedEmployees.map(employee => employee.value).join(',');
+
+
+    //     const formData = {
+    //         ...data,
+    //         fest_id: selectedServices,
+    //         employee: employeeIds
+    //     };
+
+
+
+    //     console.log('Form Data:', formData);
+
+
+    // };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     //-------------------------------------------------------validation ------------------------------------------------------------------
     const [mobileNoValue, setMobileNoValue] = useState<string>('');
 
@@ -535,18 +682,49 @@ const FireData = () => {
         }
     };
 
-    const handleServiceSelection = (index: number) => {
-        const updatedServices = services.map((service, i) => ({
-            ...service,
-            selected: i === index // Toggle selected state
-        }));
-        setServices(updatedServices);
-        setValue('fest_id', updatedServices[index].fest_id); // Set selected service ID to form value
+
+    const [WmobileNoValue, setWMobileNoValue] = useState<string>('');
+
+
+
+    const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setWMobileNoValue(value);
+            setValue("whatsup_no", value); // Update form value
+        }
+    };
+
+    //------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+    // const handleServiceSelection = (index: number) => {
+    //     const updatedServices = services.map((service, i) => ({
+    //         ...service,
+    //         selected: i === index // Toggle selected state
+    //     }));
+    //     setServices(updatedServices);
+    //     setValue('fest_id', updatedServices[index].fest_id); // Set selected service ID to form value
+    // };
+    //----------------------------Service select-----------------------------------------------
+
+    const handleServiceSelection = (serviceId: number) => {
+        setServices((prevServices) =>
+            prevServices.map(service =>
+                service.fest_id === serviceId
+                    ? { ...service, selected: !service.selected } // Toggle selection
+                    : service
+            )
+        );
     };
 
 
-
-
+    //--------------------------------------------------------------------------------------------------
 
 
     return (
@@ -562,7 +740,7 @@ const FireData = () => {
 
 
 
-                            <div className="mb-3 form-check d-flex flex-wrap">
+                            {/* <div className="mb-3 form-check d-flex flex-wrap">
                                 {services && services.length > 0 && services.map((service, index) => (
                                     <div key={index} className="form-check mb-2" style={{ marginRight: '20px' }}>
                                         <input
@@ -589,9 +767,45 @@ const FireData = () => {
 
                                 ))}
 
+                            </div> */}
+
+                            <div className="row mb-3">
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="employee">Select Employees:</label>
+                                    <Select
+                                        className="form-control-sm"
+                                        id="employee"
+                                        {...register("employee")}
+                                        isMulti
+                                        options={options}
+                                        value={selectedEmployees}
+                                        onChange={handleChange}
+                                        placeholder="--Select--"
+
+                                    />
+                                </div>
+
+
+
+
+
+                                <div className="col-lg-6  form-check d-flex " style={{ marginTop: "35px" }}>
+                                    {services && services.length > 0 && services.map((service, index) => (
+                                        <div key={index} className="form-check mb-2" style={{ marginRight: '20px' }}>
+                                            <input
+                                                type="checkbox"
+                                                // {...register("fest_id", { required: true })} // Use the array name for checkbox values
+                                                value={service.fest_id}
+                                                checked={service.selected}
+                                                onChange={() => handleServiceSelection(service.fest_id)} // Pass fest_id directly
+                                                className="form-check-input"
+                                            />
+                                            <label htmlFor={`service-${index}`} className="form-check-label ml-2">{service.fest_name}</label>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-
-
 
                             {formError && <p className="text-danger">{formError}</p>}
 
@@ -794,6 +1008,34 @@ const FireData = () => {
                                         />
 
                                     </div>
+                                    <div className="col-lg-2 col-sm-4 ">
+                                        <label className="form-label">Discount(%)</label>
+                                        <input
+                                            className="form-control form-control-sm qty_cnt"
+                                            {...register('discount')}
+                                            type="text"
+                                            onChange={(e) => {
+                                                setValue('discount', e.target.value); // Update discount percentage
+                                                calculateActualTotal(); // Recalculate totals based on new discount
+                                            }} // Ensure to recalculate when discount changes
+
+                                            placeholder='Enter Discount'
+
+                                        />
+
+                                    </div>
+                                    <div className="col-lg-2 col-sm-4 ">
+                                        <label className="form-label">Discount Amount</label>
+                                        <input
+                                            className="form-control form-control-sm qty_cnt"
+                                            {...register('discount_amount')}
+                                            type="text"
+
+                                            placeholder='Enter Discount'
+
+                                        />
+
+                                    </div>
                                     <div className="col-lg-2 col-sm-2">
                                         <label className="form-label">Total SGST</label>
                                         <input
@@ -837,6 +1079,32 @@ const FireData = () => {
                                 </div>
                             </div>
 
+                            <div className="row mb-3">
+                                <div className="col-lg-8 col-sm-8" style={{ display: "flex", gap: "15px" }}>
+                                    <div className="col-lg-4">
+                                        <label className="form-label" htmlFor="what's_up">What'up No</label>
+                                        <input
+                                            type="text"
+                                            {...register("whatsup_no", {
+                                                required: true,
+                                                minLength: 10,
+                                                maxLength: 10,
+                                                pattern: /^[0-9]+$/
+                                            })}
+                                            value={WmobileNoValue}
+                                            onChange={handleWMobileNoChange}
+                                            className={`form-control form-control-sm ${errors.whatsup_no ? 'is-invalid' : ''}`}
+                                            id="whatsup_no"
+
+                                            placeholder="Enter Mobile No"
+                                        />
+                                        {errors?.whatsup_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.whatsup_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.whatsup_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+                                    </div>
+
+                                </div>
+                            </div>
 
                             <div className="row mt-4">
                                 <div className="col-md-12">

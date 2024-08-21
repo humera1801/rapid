@@ -1,5 +1,5 @@
 import Header from '@/components/Dashboard/Header'
-import EditFormData from '@/components/Fire/EditFireData'
+import EditFormData from '@/components/Fire/EditFireBooking'
 import React from 'react'
 
 const page = () => {
@@ -7,8 +7,9 @@ const page = () => {
     <>
 
 <Header/>
-<EditFormData/>
+ 
 
+ <EditFormData/>
 
     </>
   )
