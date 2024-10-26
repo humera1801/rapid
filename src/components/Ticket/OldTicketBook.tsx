@@ -61,29 +61,6 @@ function TicketBook() {
 
 
 
-    //     const [userData, setUserData] = useState<any[]>([]);
-
-    //     const [error, setError] = useState<string | null>(null);
-
-    //     const fetchUserData = async (userId: string) => {
-    //       try {
-    //         const data = await UserProfile.getUserData(userId);
-    //         setUserData(data); // Assuming data is an array of user objects
-
-
-    // console.log("user_id", data);
-
-    //       } catch (error) {
-    //         setError('Error fetching user data. Please try again.');
-    //         console.error('Error in fetchUserData:', error);
-    //       }
-    //     };
-
-    //     // Example usage: Fetch user data on component mount
-    //     useEffect(() => {
-    //       const userId = '14'; // Replace with actual user ID
-    //       fetchUserData(userId);
-    //     }, []);
 
 
     const storedData = localStorage.getItem('userData');
@@ -264,12 +241,12 @@ function TicketBook() {
         if (isFrom) {
             setSelectedFromStateId(stateId);
             if (stateId) {
-                fetchCities(stateId, true); // Fetch cities for "From" state
+                fetchCities(stateId, true); 
             }
         } else {
             setSelectedToStateId(stateId);
             if (stateId) {
-                fetchCities(stateId, false); // Fetch cities for "To" state
+                fetchCities(stateId, false); 
             }
         }
     };
@@ -378,7 +355,7 @@ function TicketBook() {
 
     async function addNewCity(stateId: string, cityName: string) {
         const requestBody = { city_name: cityName, state_id: stateId };
-        const response = await fetch('http://localhost:3000/ticket/add_new_city_from_state', {
+        const response = await fetch('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -396,7 +373,7 @@ function TicketBook() {
 
 
     async function submitFormData(formData: FormData) {
-        const response = await fetch('http://192.168.0.100:3001/ticket/create_ticket_data', {
+        const response = await fetch('http://192.168.0.105:3001/ticket/create_ticket_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -710,7 +687,7 @@ function TicketBook() {
                                     <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">Company Mobile No </label>
                                     <input type="number"
                                         {...register("cmp_mobile", {
-                                            required: true,
+                                       
                                             minLength: 10,
 
 
@@ -723,7 +700,7 @@ function TicketBook() {
 
 
                                 <div className="col-lg-4">
-                                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">What's-up No</label>
+                                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">whatsapp No</label>
                                     <input
                                         type="text"
                                         {...register("whatsapp_no", {
@@ -1012,7 +989,7 @@ function TicketBook() {
 
                            
                                 <div className="col-lg-4">
-                                    <label className="form-label">Boarding</label>
+                                    <label className="form-label">Boarding Point</label>
                                     <input {...register('boarding', {
                                         required: true
                                     })} placeholder='Enter Boarding' className="form-control form-control-sm" type="text" />
@@ -1101,7 +1078,7 @@ function TicketBook() {
                             {/* <----------> */}
                             <div className="row">
                                 <div className="text-center">
-                                    <input className="btn btn-primary" type="submit" id="save_ticket" name="save_form" />
+                                    <input className="btn btn-success btn-sm"  type="submit" id="save_ticket" name="save_form" />
                                 </div>
                             </div>
                         </form>

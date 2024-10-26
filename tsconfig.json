@@ -21,6 +21,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/ticket_list/movies.js", "src/components/Fire/Invoice/Pdf.js", "src/components/Fire/certificate/genrate-pdf.js", "src/app/ticket_list/Ticket_data/Ticketpdf.ts", "src/app/ticket_list/Ticket_data/pdfGenerator.js", "src/components/Fire/Fire-List/FirePdf.js", "src/components/Fire/Fire-List/printFireUtills.ts", "src/app/ticket_list/Ticket_data/printUtils.ts", "src/components/PdfExporter.js", "src/components/PdfExport.js", "src/app/ticket_list/handleticketPdF.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/ticket_list/movies.js", "src/components/Fire/Invoice/Pdf.js", "src/components/Fire/certificate/genrate-pdf.js", "src/app/ticket_list/Ticket_data/Ticketpdf.ts", "src/app/ticket_list/Ticket_data/pdfGenerator.js", "src/components/Fire/Fire-List/FirePdf.js", "src/components/Fire/Fire-List/printFireUtills.ts", "src/app/ticket_list/Ticket_data/printUtils.ts", "src/components/PdfExporter.js", "src/components/PdfExport.js", "src/app/ticket_list/handleticketPdF.js", "src/app/Api/FireApis/ReceiverChallan", "src/pages/about.js", "src/components/HtmlToPdf.js"],
   "exclude": ["node_modules"]
 }

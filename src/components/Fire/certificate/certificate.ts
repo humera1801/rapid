@@ -7,14 +7,14 @@ export interface FormData {
     febking_entry_type: 1;
     febking_created_by: any;
     febking_final_amount: any;
-    fest_id: any;
+   
     febking_invoice_no: string;
     febking_total_amount: string;
-    firstName: string;
+    client_firstname: string;
     address: string;
     email: string;
     gstNo: string;
-    mobileNo: string;
+    client_mobileNo: string;
     vendorCode: string;
     client_id: any,
     invNo: string;
@@ -30,6 +30,7 @@ export interface FormData {
     client_state: string;
     client_pincode: string;
     Total_extingusher:string;
+
 }
 
 interface ProductData {
@@ -47,6 +48,9 @@ interface ProductData {
     febd_sgst_amount: any;
     febd_cgst_amount: any;
     feb_id: string;
+    fest_id:any;
+    fest_name:any;
+
 }
 
 const handleclientPrint = (formData: FormData) => {
@@ -70,8 +74,17 @@ const handleclientPrint = (formData: FormData) => {
     };
 
     
-      
+    const generateservice = () => {
+        let serviceInfo = '';
+        formData.product_data.forEach((product, index) => {
+            serviceInfo += `${product.fest_name}, `;
+        });
+        return serviceInfo.slice(0, -2); 
+    };
 
+    const serviceInfo = generateservice();
+
+    
 
     const printableContent = `
          <style>
@@ -190,7 +203,7 @@ const handleclientPrint = (formData: FormData) => {
         <div class="header">
             <div class="logo">
                 <img src="https://prolificdemo.com/dev_rapid_group/assets/theme/admin/logo/rapid_logo_black.png"
-                    alt="Rapid Fire Prevention Logo">
+                    alt="RAPID GROUP Logo">
             </div>
             <div class="address">
                 <div>8866396939, 9106077411</div>
@@ -205,11 +218,11 @@ const handleclientPrint = (formData: FormData) => {
 
         <h1>CERTIFICATE</h1>
 
-        <p>This is to Certify that <strong>${formData.firstName}</strong>,<strong>${formData.mobileNo}</strong>,<strong>${formData.address}</strong>,<strong>${formData.client_city}</strong>
+        <p>This is to Certify that <strong>${formData.client_firstname}</strong>,<strong>${formData.client_mobileNo}</strong>,<strong>${formData.address}</strong>,<strong>${formData.client_city}</strong>
         ,<strong>${formData.client_state}</strong>,<strong>${formData.client_pincode}</strong> is one of our clients and their
-            fire extinguishers are Supplied Refilled & Serviced by us. The Type, Capacity of extinguishers Supplied
+            fire extinguishers are Supplied <strong>${serviceInfo}</strong> by us. The Type, Capacity of extinguishers Supplied
      
-            Refilled & Serviced are as follows:</p>
+            <strong>${serviceInfo}</strong> are as follows:</p>
 <div style="min-height: 400px;">
         <table>
             <thead>
@@ -224,7 +237,7 @@ const handleclientPrint = (formData: FormData) => {
                             </tbody>
         </table>
 </div>
-        <p>TOTAL NO. OF EXTINGUISHERS SUPPLIED REFILLED & SERVICED: <strong>${formData.Total_extingusher}</strong></p>
+        <p>TOTAL NO. OF EXTINGUISHERS SUPPLIED <strong>${serviceInfo}</strong>: <strong>${formData.Total_extingusher}</strong></p>
 
         <p>Keep the extinguishers in proper place and properly serviced for better results at the time of emergency.
         </p>
@@ -237,8 +250,7 @@ const handleclientPrint = (formData: FormData) => {
                     Yours Faithfully,
                 </p>
                 <div class="yours">
-                    <div>(shravan Pillai)</div>
-                    <div>RAPID FIRE PREVENTION</div>
+                    <div>RAPID Group</div>
                 </div>
             </div>
 

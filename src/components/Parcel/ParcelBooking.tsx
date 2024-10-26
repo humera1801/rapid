@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { Card } from 'react-bootstrap'
 import { useForm, useFieldArray, SubmitHandler } from 'react-hook-form';
-import axios from 'axios';
+import { debounce } from 'lodash';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
@@ -15,18 +15,16 @@ import UserProfile from '@/app/Api/UserProfile';
 import { useRouter } from 'next/navigation';
 import EditParcelDataList from '@/app/Api/EditParcelDataList';
 import handleParcelPrint from '@/app/parcel_list/parcel_data/printpparcelUtils';
-
-
-
-
-
-
+import GetClientList from '@/app/Api/FireApis/FireExtinghsherList/GetClientList';
+import Footer from '../Dashboard/Footer';
+import axios from 'axios';
+import { handleparcelPDF } from "../../app/parcel_list/parcel_data/handleparcelPDF"
 type FormData = {
     is_delivery: boolean;
     particulars: string;
-    whatsapp_no: any;
+    receiver_whatsapp_no: any;
     parcel_imgs: any;
-    transection_id:any;
+    transection_id: any;
     receipt_no: string;
     booking_date: string;
     dispatch_date: string;
@@ -87,13 +85,47 @@ type FormData = {
         total_print_rate: number;
         QTYtotal: number;
     }[];
+    firstName: string;
+    address: string;
+    client_city: string;
+    client_state: string;
+    client_pincode: string;
+    email: string;
+    sender_whatsapp_no: any;
+    gstNo: string;
+    mobileNo: string;
+    vendorCode: string;
+    client_id: any;
+    client_id_proof: any;
+    is_client_send_or_rec: any;
 
 };
 
+interface ClientData {
+    client_id: number;
+    client_firstName: string;
+    client_address: string;
+    client_email: string;
+    client_gstNo: string;
+    client_mobileNo: string;
+    poNo: string;
+    vendorCode: string;
+    client_city: string;
+    client_state: string;
+    client_pincode: string;
+}
 
-// --add parcel---
-interface ParcelDetail {
 
+interface SenderDetails {
+    sender_name: string;
+    send_mob: string;
+    send_add: any
+}
+
+interface ReceiverDetails {
+    rec_name: string;
+    rec_mob: string;
+    rec_add: any;
 }
 
 // ---add bill---
@@ -136,7 +168,7 @@ const ParcelBook: React.FC = () => {
     const storedData = localStorage.getItem('userData');
 
 
-    const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>(
+    const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues, clearErrors } = useForm<FormData>(
         {
             defaultValues: {
                 is_delivery: false,
@@ -144,11 +176,8 @@ const ParcelBook: React.FC = () => {
                 is_demurrage: false,
                 receipt_no: '',
                 actual_total: '',
-                sender_name: '',
                 rec_name: '',
-                send_mob: '',
                 rec_mob: '',
-                send_add: '',
                 rec_add: '',
                 gst_amount: '',
                 print_gst_amount: '',
@@ -689,170 +718,9 @@ const ParcelBook: React.FC = () => {
     const [customFromCityName, setCustomFromCityName] = useState<string>('');
     const [customToCityName, setCustomToCityName] = useState<string>('');
 
-    const onSubmit: SubmitHandler<FormData> = async (formData: FormData) => {
-        console.log('form submitted', formData);
-
-        let newFromCityId = formData.book_from;
-        let newToCityId = formData.book_to;
-
-        if (formData.book_from === 'tkt_from_other' && selectedFromStateId) {
-            const fromCityResponse = await addNewCity(selectedFromStateId, customFromCityName);
-            newFromCityId = fromCityResponse.city_id.toString();
-        }
-
-        if (formData.book_to === 'tkt_to_other' && selectedToStateId) {
-            const toCityResponse = await addNewCity(selectedToStateId, customToCityName);
-            newToCityId = toCityResponse.city_id.toString();
-        }
-
-        formData.book_from = newFromCityId;
-        formData.book_to = newToCityId;
-
-        try {
-            const parcelDataResponse = await submitFormData(formData);
-            console.log("aaa", parcelDataResponse);
-
-            if (!parcelDataResponse.ok) {
-                throw new Error('Failed to create parcel data');
-            }
-
-            const parcelData = await parcelDataResponse.json();
-            console.log('Created parcel data:', parcelData.parcel_token);
-            console.log("datadata", parcelData);
-
-            if (parcelData.status == 1) {
-                console.log("formData0", formData);
-
-                if (formData.parcel_imgs.length > 0) {
-                    const data = new FormData();
-
-                    data.append("parcel_token", parcelData.parcel_token);
-
-                    for (const file of formData.parcel_imgs) {
-                        data.append("parcel_imgs", file);
-                    }
-
-                    console.log('FormData prepared:', data);
-
-                    try {
-                        const response = await fetch("http://192.168.0.100:3001/parcel/upload_parcel_image", {
-                            method: "POST",
-                            body: data,
-                        });
-
-                        const result = await response.json();
-                        console.log('API response:', result);
-
-                        if (result.status === "1") {
-                            console.log("Added successfully");
-
-                        } else {
-                            console.log("failed to upload");
-                        }
-                    } catch (error) {
-                        console.error("Error:", error);
-                        alert("Failed to add record");
-                    }
-                    if (parcelData.parcel_token != "") {
-                        const parcelToken = parcelData.parcel_token;
-                        try {
-                            const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
-
-
-                            console.log("get data", getTDetail.data[0]);
-                            handleParcelPrint(getTDetail.data[0]);
-                            router.push("/parcel_list")
-
-                        } catch (error) {
-
-                            console.error('Error fetching parcel data:', error);
-                        }
-
-                    };
-                } else {
-                    if (parcelData.parcel_token != "") {
-                        const parcelToken = parcelData.parcel_token;
-                        try {
-                            const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
-
-
-                            console.log("get data", getTDetail.data[0]);
-                            handleParcelPrint(getTDetail.data[0]);
-                            router.push("/parcel_list")
-
-                        } catch (error) {
-
-                            console.error('Error fetching parcel data:', error);
-                        }
-
-                    };
-                    console.log("No images to upload");
-                }
-
-
-            }
-
-
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    };
-
-    const router = useRouter();
-
-
-    async function addNewCity(stateId: string, cityName: string) {
-        const requestBody = { city_name: cityName, state_id: stateId };
-        const response = await fetch('http://192.168.0.100:3001/ticket/add_new_city_from_state', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to add city');
-        }
-
-        return await response.json();
-    }
-
-
-    async function submitFormData(formData: FormData) {
-
-        const response = await fetch('http://192.168.0.100:3001/parcel/create_parcel_data', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData),
-        });
-
-        return response;
-
-
-
-        // if(response.status == 1){
-
-        // }
-    }
 
     //-------------------------------------------------------------------------------------------------------------------------------
-    const [receipt_no, setReceiptNo] = useState();
-    useEffect(() => {
-        receiptNo.getRecieptNo()
-            .then((res) => {
-                console.log('receiptNo.getRecieptNo', res);
-                setReceiptNo(res.data);
-                setValue('receipt_no', res.data);
-            })
-            .catch((e) => {
-                console.log('Err', e);
-            });
-        fetchStates(true); // Fetch "From" states
-        fetchStates(false); // Fetch "To" states
-    }, []);
+
 
     //---------------------------------------------------phone validation------------------------------------------------------------
     const [phoneNumber, setPhoneNumber] = useState<string>('');
@@ -898,7 +766,6 @@ const ParcelBook: React.FC = () => {
 
 
 
-
     const aadhaarPattern = /^\d{12}$/;
     const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
     const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9A-Z]{1}$/;
@@ -909,31 +776,363 @@ const ParcelBook: React.FC = () => {
     const radiogstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9A-Z]{1}$/;
 
 
-
+    //---------------------------------------------------------------------------------------------------------------------
 
     const [WmobileNoValue, setWMobileNoValue] = useState<string>('');
     const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
         if (value.length <= 10) { // Restrict to 10 digits
             setWMobileNoValue(value);
-            setValue("whatsapp_no", value); // Update form value
+            setValue("receiver_whatsapp_no", value); // Update form value
         }
     };
 
 
-//--------------------------------------------------------------------------------------------------------
+    //--------------------------------------------------------------------------------------------------------
 
 
-const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
 
-// Handler for payment method change
-const handlePaymentMethodChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
-    setSelectedPaymentMethod(event.target.value);
-};
-
-
+    // Handler for payment method change
+    const handlePaymentMethodChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
+        setSelectedPaymentMethod(event.target.value);
+    };
 
 
+    //------------------------------Client details------------------------------------------------
+    const [mobileNoValue, setMobileNoValue] = useState<string>('');
+
+    const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setMobileNoValue(value);
+            setValue("mobileNo", value); // Update form value
+        }
+    };
+
+    const [SenderMobileValue, setSenderMobileValue] = useState<string>('');
+
+    const handleSenderMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setSenderMobileValue(value);
+            setValue("sender_whatsapp_no", value); // Update form value
+        }
+    };
+
+
+
+
+
+
+
+    //-------------------------------------------------------------------------------------------
+
+    const [clientData, setClientData] = useState<ClientData[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+    const [inputValue, setInputValue] = useState<string>('');
+    const [filteredClients, setFilteredClients] = useState<ClientData[]>([]);
+    const [isAddingNewClient, setIsAddingNewClient] = useState<boolean>(false);
+
+    const debounceApiCall = debounce((value: string) => {
+        if (value.trim() === '') {
+            setFilteredClients([]);
+            return;
+        }
+        fetchclientData(value);
+    }, 100);
+
+    const fetchclientData = async (value: string) => {
+        try {
+            const res = await GetClientList.getclientListData(value);
+            console.log('GetClientList.getclientListData', res);
+            setClientData(res);
+            setFilteredClients(res);
+        } catch (error) {
+
+            console.error('Error fetching client data:', error);
+        }
+    };
+
+    const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.toLowerCase();
+        setInputValue(value);
+
+        if (value.trim() === '') {
+            setFilteredClients([]);
+            return;
+        }
+        if (clientData.length === 0) {
+            await fetchclientData(value);
+        }
+
+        const filtered = clientData.filter(client =>
+            client.client_firstName.toLowerCase().includes(value)
+        );
+
+        setFilteredClients(filtered);
+        debounceApiCall(value);
+    };
+
+
+    const handleSelectClient = (clientId: number) => {
+        setSelectedClientId(clientId);
+        setInputValue(clientData.find(client => client.client_id === clientId)?.client_firstName || '');
+        setFilteredClients([]);
+
+        const selectedClient = clientData.find(client => client.client_id === clientId);
+        if (selectedClient) {
+            setValue("firstName", selectedClient.client_firstName);
+            setValue("address", selectedClient.client_address);
+            setValue("email", selectedClient.client_email);
+            setValue("client_city", selectedClient.client_city);
+            setValue("client_state", selectedClient.client_state);
+            setValue("client_pincode", selectedClient.client_pincode);
+            setValue("mobileNo", selectedClient.client_mobileNo);
+            setMobileNoValue(selectedClient.client_mobileNo); // Update mobileNoValue state
+        }
+
+        if (selectedClient) {
+            setClientDetails(selectedClient);
+        }
+
+        clearErrors([
+
+            "address",
+            "email",
+            "client_city",
+            "client_state",
+            "client_pincode",
+            "mobileNo",
+
+        ]);
+    };
+
+
+    const handleAddNewClient = () => {
+        setSelectedClientId(null);
+        setIsAddingNewClient(true);
+        setInputValue('');
+        setFilteredClients([]);
+        // Clear existing form values
+        setValue("firstName", '');
+        setValue("address", '');
+        setValue("email", '');
+
+        setValue("mobileNo", '');
+        setValue("client_city", '');
+        setValue("client_state", '');
+        setValue("client_pincode", '');
+        setMobileNoValue('');
+
+    };
+
+    //---------------------------------------------------------------------------------------------------------------
+
+    const [senderOption, setSenderOption] = useState<string>('');
+    const [clientDetails, setClientDetails] = useState<ClientData | null>(null);
+    const [senderDetails, setSenderDetails] = useState<SenderDetails>({
+        sender_name: '',
+        send_mob: '',
+        send_add: "",
+    });
+    const [receiverDetails, setReceiverDetails] = useState<ReceiverDetails>({
+        rec_name: '',
+        rec_mob: '',
+        rec_add: "",
+    });
+
+
+    const handlesenderOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedOption = e.target.value;
+        setSenderOption(selectedOption);
+
+        if (selectedOption === 'sender' && clientDetails) {
+            setSenderDetails({
+                sender_name: clientDetails.client_firstName,
+                send_mob: clientDetails.client_mobileNo,
+                send_add: clientDetails.client_address,
+            });
+            setReceiverDetails({
+                rec_name: '',
+                rec_mob: '',
+                rec_add: "",
+            });
+        } else if (selectedOption === 'receiver' && clientDetails) {
+            setReceiverDetails({
+                rec_name: clientDetails.client_firstName,
+                rec_mob: clientDetails.client_mobileNo,
+                rec_add: clientDetails.client_address,
+            });
+            setSenderDetails({
+                sender_name: '',
+                send_mob: '',
+                send_add: "",
+            });
+        }
+        else if (selectedOption === 'other_data') {
+            setSenderDetails({
+                sender_name: '',
+                send_mob: '',
+                send_add: "",
+            });
+            setReceiverDetails({
+                rec_name: '',
+                rec_mob: '',
+                rec_add: "",
+            });
+        };
+
+    }
+
+    //-------------------------------------Form submit -----------------------------------
+
+
+    const onSubmit: SubmitHandler<FormData> = async (formData: FormData) => {
+
+        if (senderOption === 'sender') {
+            formData.sender_name = senderDetails.sender_name;
+            formData.send_mob = senderDetails.send_mob;
+            formData.send_add = senderDetails.send_add;
+
+        } else if (senderOption === 'receiver') {
+            formData.rec_name = receiverDetails.rec_name;
+            formData.rec_mob = receiverDetails.rec_mob;
+            formData.rec_add = receiverDetails.rec_add;
+
+        }
+
+        let newFromCityId = formData.book_from;
+        let newToCityId = formData.book_to;
+
+        if (formData.book_from === 'tkt_from_other' && selectedFromStateId) {
+            const fromCityResponse = await addNewCity(selectedFromStateId, customFromCityName);
+            newFromCityId = fromCityResponse.city_id.toString();
+        }
+
+        if (formData.book_to === 'tkt_to_other' && selectedToStateId) {
+            const toCityResponse = await addNewCity(selectedToStateId, customToCityName);
+            newToCityId = toCityResponse.city_id.toString();
+        }
+
+        formData.book_from = newFromCityId;
+        formData.book_to = newToCityId;
+
+        try {
+
+            const finalData: FormData = {
+                ...formData,
+            };
+
+            let clientId: number | undefined;
+
+
+            if (isAddingNewClient) {
+                const response = await submitNewClientFormData(finalData);
+                console.log('Form data submitted successfully for new client.', finalData);
+                clientId = response.client_id;
+                console.log(clientId);
+
+                setIsAddingNewClient(false);
+            }
+            else if (selectedClientId) {
+                finalData.client_id = selectedClientId;
+                clientId = selectedClientId;
+                const parcelDataResponse = await submitFormData(finalData, clientId);
+                if (!parcelDataResponse.ok) {
+                    throw new Error('Failed to create parcel data');
+                }
+                const parcelData = await parcelDataResponse.json();
+                console.log("datadata", parcelData)
+
+                if (parcelData.status == 1) {
+                    console.log("formData0", formData);
+                    if (formData.parcel_imgs.length > 0) {
+                        const data = new FormData();
+                        data.append("parcel_token", parcelData.parcel_token);
+                        for (const file of formData.parcel_imgs) {
+                            data.append("parcel_imgs", file);
+                        }
+                        try {
+                            const response = await fetch("http://192.168.0.105:3001/parcel/upload_parcel_image", {
+                                method: "POST",
+                                body: data,
+                            });
+                            const result = await response.json();
+                            if (result.status === "1") {
+                                console.log("parcel images Added successfully");
+
+                            } else {
+                                console.log("failed to upload");
+                            }
+                        } catch (error) {
+                            console.error("Error:", error);
+
+                        }
+                        if (parcelData.parcel_token != "") {
+                            const parcelToken = parcelData.parcel_token;
+                            try {
+                                const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
+
+
+                                console.log("get data", getTDetail.data[0]);
+                                // handleParcelPrint(getTDetail.data[0]);
+                                // router.push("/parcel_list")
+
+                            } catch (error) {
+
+                                console.error('Error fetching parcel data:', error);
+                            }
+
+                        };
+                    } else {
+                        if (parcelData.parcel_token != "") {
+                            const parcelToken = parcelData.parcel_token;
+                            try {
+                                const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
+
+
+                                console.log("get data", getTDetail.data[0]);
+                                handleParcelPrint(getTDetail.data[0]);
+                                // handleparcelPDF(getTDetail.data[0])
+                                router.push("/parcel_list")
+
+                            } catch (error) {
+
+                                console.error('Error fetching parcel data:', error);
+                            }
+
+                        };
+                        console.log("No images to upload");
+                    }
+
+
+                }
+                console.log('Form data submitted successfully with selected client id:', clientId);
+            }
+            else {
+                console.log('Please select a client or add a new client before submitting.');
+                return;
+            }
+
+
+            if (formData.client_id_proof && formData.client_id_proof.length > 0) {
+                const file = formData.client_id_proof[0];
+
+                console.log("New image uploaded:", {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                });
+
+                if (clientId !== undefined) {
+                    await uploadClientProofId(file, clientId);
+                } else {
+                    console.error('Client ID is undefined; cannot upload image.');
+                }
+            } else {
+                console.log("No new image selected; skipping upload.");
+            }
 
 
 
@@ -943,19 +1142,95 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
 
 
 
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
+
+    const router = useRouter();
+
+
+    async function uploadClientProofId(file: File, clientId: number) {
+        const formData = new FormData();
+        formData.append("client_id_proof", file); // Append the single file
+        formData.append("client_id", clientId.toString());
+
+        try {
+            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+        } catch (error) {
+            console.error('Error uploading client proof ID:', error);
+        }
+    }
+
+    async function addNewCity(stateId: string, cityName: string) {
+        const requestBody = { city_name: cityName, state_id: stateId };
+        const response = await fetch('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to add city');
+        }
+
+        return await response.json();
+    }
+
+
+    async function submitFormData(formData: FormData, clientId: number | undefined) {
+
+        const response = await fetch('http://192.168.0.105:3001/parcel/create_parcel_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        });
+
+        return response;
 
 
 
 
+    }
+
+    async function submitNewClientFormData(formData: FormData) {
+        try {
+            const response = await axios.post('http://192.168.0.105:3001/parcel/create_parcel_data', formData);
+            console.log('Form data submitted successfully for new client.', response.data);
+            return response.data; // Ensure this returns the data with client_id
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.error('Axios Error Details:', {
+                    message: error.message,
+                    code: error.code,
+                    config: error.config,
+                    request: error.request,
+                    response: error.response
+                });
+            } else {
+                console.error('Unexpected Error:', error);
+            }
+        }
+    }
+
+    // //-------------------------------------------------------------------------------------------------------------------
+
+
+    // const onSubmit: SubmitHandler<FormData> = async (formData: FormData) => {
 
 
 
-
-
-
-
-
-
+    //     console.log('form submitted', formData);
+    // };
 
 
 
@@ -998,10 +1273,12 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
     return (
         <>
 
-            <div className="container-fluid">
+            <div className="container" style={{ fontSize: "12px" }}>
+                <h4> Parcel Booking</h4>
                 <br />
-                <Card>
-                    <Card.Header><h3> Parcel Booking</h3></Card.Header>
+
+                <Card className='cardbox'>
+
                     <Card.Body>
                         <form onSubmit={handleSubmit(onSubmit)}>
                             {/* First-Row */}
@@ -1010,22 +1287,7 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                     <label className="form-label " htmlFor="receipt_no">Receipt No.</label>
                                     <input {...register("receipt_no")} className="form-control form-control-sm" value={receipt_no} id="receipt_no" type="text" />
                                 </div> */}
-                                <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="to">Booking date</label>
-                                    <input {...register('booking_date',
-                                        {
-                                            required: true
-                                        }
-                                    )} className="form-control form-control-sm" type="date" id="booking_date" placeholder="Booking date" defaultValue={currentDate} min={currentDate} />
 
-                                </div>
-                                <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="to">Disptach date</label>
-                                    <input {...register('dispatch_date', {
-                                        required: true
-                                    })} className="form-control form-control-sm" type="date" id="dispatch_date" placeholder="Disptach date" defaultValue={currentDate} min={currentDate} />
-
-                                </div>
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="from">From State</label>
                                     <select
@@ -1078,10 +1340,6 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                         </div>
                                     )}
                                 </div>
-                            </div>
-
-                            {/* second-Row */}
-                            <div className='row mb-3'>
 
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="to">To State</label>
@@ -1134,74 +1392,29 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                         </div>
                                     )}
                                 </div>
-                                <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="sender_name">Sender Name</label>
-                                    <input {...register('sender_name', {
-                                        required: true,
-                                    })} className="form-control form-control-sm" type="text" id="sender_name" placeholder="Sender Name" />
-                                    {errors.sender_name?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
-
-                                </div>
-                                <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="rec_name">Receiver Name</label>
-                                    <input {...register('rec_name', {
-                                        required: true,
-                                    })} className="form-control form-control-sm" type="text" id="rec_name" placeholder="Rec. Name" />
-                                    {errors.rec_name?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
-
-                                </div>
                             </div>
-                            {/* Third-Row */}
-                            {/* <div className="row mb-3">
-                                <div className="col-lg-6">
-                                    <label className="form-label" htmlFor="sender_name">Sender Name</label>
-                                    <input {...register('sender_name', {
-                                        required: true,
-                                    })} className="form-control form-control-sm" type="text" id="sender_name" placeholder="Sender Name" />
+
+                            {/* second-Row */}
+                            <div className='row mb-3'>
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="to">Booking date</label>
+                                    <input {...register('booking_date',
+                                        {
+                                            required: true
+                                        }
+                                    )} className="form-control form-control-sm" type="date" id="booking_date" placeholder="Booking date" defaultValue={currentDate} min={currentDate} />
+
                                 </div>
-                                <div className="col-lg-6">
-                                    <label className="form-label" htmlFor="rec_name">Receiver Name</label>
-                                    <input {...register('rec_name', {
-                                        required: true,
-                                    })} className="form-control form-control-sm" type="text" id="rec_name" placeholder="Rec. Name" />
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="to">Disptach date</label>
+                                    <input {...register('dispatch_date', {
+                                        required: true
+                                    })} className="form-control form-control-sm" type="date" id="dispatch_date" placeholder="Disptach date" defaultValue={currentDate} min={currentDate} />
+
                                 </div>
-                            </div> */}
-                            {/* Fourth-Row */}
-                            <div className="row mb-3">
-                                <div className="col-lg-4">
-                                    <label className="form-label" htmlFor="send_mob">Sender Mobile No.</label>
-                                    <input type="number"
-                                        {...register("send_mob", {
-                                            required: true,
-                                            minLength: 10,
-
-
-                                        })} value={senderNo}
-                                        onChange={handleCmpPhoneChange} className="form-control form-control-sm" name="send_mob" id="send_mob" placeholder="Enter Company Mobile No" />
-                                    {errors.send_mob?.type === "required" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
-                                    {errors?.send_mob?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}                                    <span id="send_mobile_err" ></span>
-                                </div>
-                                <div className="col-lg-4">
-                                    <label className="form-label" htmlFor="rec_mob">Receiver Mobile No.</label>
-                                    <input type="number"
-                                        {...register("rec_mob", {
-                                            required: true,
-                                            minLength: 10,
-
-
-                                        })}
-                                        className="form-control form-control-sm" value={phoneNumber}
-                                        onChange={handlePhoneChange} name="rec_mob" id="rec_mob" placeholder="Enter Mobile No" />
-                                    {errors.rec_mob?.type === "required" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
-                                    {errors?.rec_mob?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
-
-                                    <span id="rec_mobile_err" ></span>
-                                </div>
-
-
-
-                                <div className="col-lg-4">
-                                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">What's-up No</label>
+                                {/* <div className="col-lg-3">
+                                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">Whatsapp No</label>
                                     <input
                                         type="text"
                                         {...register("whatsapp_no", {
@@ -1221,14 +1434,424 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                     {errors?.whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
                                     {errors?.whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
 
+                                </div> */}
+
+                            </div>
+                            {/* third Row */}
+
+
+                            <div className="row mt-4">
+                                <div className="col-md-12">
+                                    <h6>Client Details:</h6>                                </div>
+                                <hr />
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-lg-3 col-sm-3">
+                                    <label className="form-label" htmlFor="clientId">Select Client:</label>
+                                    <div className="">
+                                        {isAddingNewClient ? (
+                                            <input
+                                                {...register("firstName", { required: true })}
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder="Enter Client Name"
+                                            />
+                                        ) : (
+                                            <>
+                                                <input
+                                                    {...register("firstName", { required: true })}
+                                                    type="text"
+                                                    className="form-control form-control-sm"
+                                                    id="clientId"
+                                                    value={inputValue}
+                                                    onInput={() => {
+                                                        if (errors.firstName) {
+                                                            clearErrors("firstName");
+                                                        }
+                                                    }}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Enter Client Name"
+                                                />
+                                                {errors?.firstName?.type === "required" && <span className="error">This field is required</span>}
+
+                                                {(inputValue.length > 0 || selectedClientId !== null) && (
+                                                    <div className="list-group autocomplete-items">
+                                                        {inputValue.length > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                className="list-group-item list-group-item-action text-primary"
+                                                                onClick={handleAddNewClient}
+                                                            >
+                                                                Add New Client
+                                                            </button>
+                                                        )}
+
+                                                        {filteredClients.map(client => (
+                                                            <button
+                                                                key={client.client_id}
+                                                                type="button"
+                                                                className="list-group-item list-group-item-action"
+                                                                onClick={() => handleSelectClient(client.client_id)}
+                                                            >
+                                                                {client.client_firstName}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="address">Address</label>
+                                    <textarea
+                                        {...register("address", { required: true })}
+                                        className="form-control form-control-sm"
+                                        id="address"
+                                        placeholder="Enter Address"
+                                    />
+                                    {errors?.address?.type === "required" && <span className="error">This field is required</span>}
+
+                                </div>
+
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="state">State</label>
+                                    <input
+                                        {...register("client_state", { required: true })}
+                                        className="form-control form-control-sm"
+                                        id="state"
+                                        placeholder="Enter state"
+                                    />
+                                    {errors?.client_state?.type === "required" && <span className="error">This field is required</span>}
+
+                                </div>
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="city">city</label>
+                                    <input
+                                        {...register("client_city", { required: true })}
+                                        className="form-control form-control-sm"
+                                        id="city"
+                                        placeholder="Enter city"
+                                    />
+                                    {errors?.client_city?.type === "required" && <span className="error">This field is required</span>}
+
+                                </div>
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="pincode">Pin-Code:</label>
+                                    <input
+                                        {...register("client_pincode", {
+                                            required: true,
+                                            maxLength: 6,
+                                            minLength: 6
+
+                                        })}
+                                        className="form-control form-control-sm"
+                                        id="pincode"
+                                        placeholder="Enter pincode"
+                                    />
+                                    {errors?.client_pincode?.type === "required" && <span className="error">This field is required</span>}
+                                    {errors?.client_pincode?.type === "minLength" && <span className="error">Enter valid Pin-code number. </span>}
+                                    {errors?.client_pincode?.type === "maxLength" && <span className="error">Enter valid Pin-code number .</span>}
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="email">Email-id</label>
+                                    <input
+                                        {...register("email", { required: true })}
+                                        type="email"
+                                        className="form-control form-control-sm"
+                                        placeholder="Enter your email"
+                                    />
+                                    {errors?.email?.type === "required" && <span className="error">This field is required</span>}
+                                    {/* {errors?.gstNo?.type === "pattern" && <span className="error">Enetr GST valid Number</span>} */}
+
+                                </div>
+
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="client_mobileNo">Mobile No</label>
+                                    <input
+                                        type="text"
+                                        {...register("mobileNo", {
+                                            required: true,
+                                            minLength: 10,
+                                            maxLength: 10,
+                                            pattern: /^[0-9]+$/
+                                        })}
+                                        value={mobileNoValue}
+                                        onChange={handleMobileNoChange}
+                                        className={`form-control form-control-sm ${errors.mobileNo ? 'is-invalid' : ''}`}
+                                        id="mobileNo"
+
+                                        placeholder="Enter Mobile No"
+                                    />
+                                    {errors?.mobileNo?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.mobileNo?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.mobileNo?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+                                </div>
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="particulars">Image Upload</label>
+                                    <input className="form-control form-control-sm" type="file" {...register("client_id_proof")} />
+                                    {/* {imageName && <span style={{ marginTop: "10px" }} className="mb-2">{imageName}</span>} Display selected image name */}
+                                    {/* {imageName && (
+                                        <div className="col-lg-12 mt-2">
+                                            <img src={imageName} alt="Client ID Proof" style={{ width: '100px', height: '100px' }} />
+                                        </div>
+                                    )} */}
                                 </div>
 
                             </div>
+                            <div className="row mb-3">
+                                <div className="col-lg-6">
+                                    <label className="form-label" htmlFor="send_mob">Is Sender Or Receiver?</label>&nbsp;
+                                    <br />
+                                    <div className="d-flex gap-2">
+                                        <input
+                                            {...register('is_client_send_or_rec', { required: true })}
+                                            type="radio"
+                                            checked={senderOption === 'sender'}
+                                            onChange={handlesenderOptionChange}
+                                            id="sender"
+                                            value="sender"
+                                        /> Sender
+                                        <input
+                                            {...register('is_client_send_or_rec')}
+                                            type="radio"
+                                            checked={senderOption === 'receiver'}
+                                            onChange={handlesenderOptionChange}
+                                            value="receiver"
+                                        /> Receiver
+                                        <input
+                                            {...register('is_client_send_or_rec')}
+                                            type="radio"
+                                            checked={senderOption === 'other_data'}
+                                            onChange={handlesenderOptionChange}
+                                            value="other_data"
+                                        /> Other
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Fourth-Row */}
+                            <div className="row mt-4">
+                                <div className="col-md-6">
+                                    <h5>Sender Details:</h5>
+                                </div>
+                                <div className="col-md-6">
+                                    <h5>Reciever Details:</h5>
+                                </div>
+                                <hr />
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="sender_name">Sender Name</label>
+                                    <input
+                                        {...register('sender_name', { required: true })}
+                                        className="form-control form-control-sm"
+                                        type="text"
+                                        id="sender_name"
+                                        placeholder="Sender Name"
+                                        onInput={() => {
+                                            if (errors.sender_name) {
+                                                clearErrors("sender_name");
+                                            }
+                                        }}
+                                        value={senderDetails.sender_name}
+                                        onChange={(e) => setSenderDetails({ ...senderDetails, sender_name: e.target.value })}
+                                    />
+                                    {errors.sender_name?.type === "required" && (
+                                        <span id="show_mobile_err" className="error">This field is required.</span>
+                                    )}
+                                </div>
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="send_mob">Sender Mobile No.</label>
+                                    <input
+                                        type="text"
+                                        {...register("send_mob", { required: true,minLength: 10 })}
+                                        className="form-control form-control-sm"
+                                        name="send_mob"
+                                        id="send_mob"
+                                        onInput={() => {
+                                            if (errors.send_mob) {
+                                                clearErrors("send_mob");
+                                            }
+                                        }}
+                                        maxLength={10}
+                                        placeholder="Enter Sender Mobile No"
+                                        value={senderDetails.send_mob}
+                                        onChange={(e) => setSenderDetails({ ...senderDetails, send_mob: e.target.value })}
+                                    />
+                                    {errors.send_mob?.type === "required" && (
+                                        <span id="show_mobile_err" className="error">This field is required.</span>
+                                    )}
+                                      {errors.send_mob?.type === "minLength" && (
+                                        <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>
+                                    )}
+                                </div>
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="rec_name">Receiver Name</label>
+                                    <input
+                                        {...register('rec_name', { required: true })}
+                                        className="form-control form-control-sm"
+                                        type="text"
+                                        onInput={() => {
+                                            if (errors.rec_name) {
+                                                clearErrors("rec_name");
+                                            }
+                                        }}
+                                        id="rec_name"
+                                        placeholder="Receiver Name"
+                                        value={receiverDetails.rec_name}
+                                        onChange={(e) => setReceiverDetails({ ...receiverDetails, rec_name: e.target.value })}
+                                    />
+                                    {errors.rec_name?.type === "required" && (
+                                        <span id="show_mobile_err" className="error">This field is required.</span>
+                                    )}
+                                </div>
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="rec_mob">Receiver Mobile No.</label>
+                                    <input
+                                        type="text"
+                                        {...register("rec_mob", { required:true ,minLength: 10 })}
+                                        className="form-control form-control-sm"
+                                        name="rec_mob"
+                                        id="rec_mob"
+                                        onInput={() => {
+                                            if (errors.rec_mob) {
+                                                clearErrors("rec_mob");
+                                            }
+                                        }}
+                                        maxLength={10}
+                                        placeholder="Enter Receiver Mobile No"
+                                        value={receiverDetails.rec_mob}
+                                        onChange={(e) => setReceiverDetails({ ...receiverDetails, rec_mob: e.target.value })}
+                                    />
+                                    {errors.rec_mob?.type === "required" && (
+                                        <span id="show_mobile_err" className="error">This field is required.</span>
+                                    )}
+                                      {errors.rec_mob?.type === "required" && (
+                                        <span id="show_mobile_err" className="error">This field is required.</span>
+                                    )}
+                                </div>
+                            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                            {/* --------------*/}
+                            <div className="row mb-3">
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="send_add">Sender Address</label>
+                                    <textarea
+                                        {...register('send_add')}
+                                        className="form-control form-control-sm"
+                                        id="send_add"
+                                        placeholder="Sender address"
+                                        value={senderDetails.send_add}
+                                        onChange={(e) => setSenderDetails({ ...senderDetails, send_add: e.target.value })}
+                                    />
+                                </div>
+                                <div className="col-lg-3">
+                                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">Sender Whatsapp No</label>
+                                    <input
+                                        type="text"
+                                        {...register("sender_whatsapp_no", {
+                                            required: true,
+                                            minLength: 10,
+                                            maxLength: 10,
+                                            pattern: /^[0-9]+$/
+                                        })}
+                                        onInput={() => {
+                                            if (errors.sender_whatsapp_no) {
+                                                clearErrors("sender_whatsapp_no");
+                                            }
+                                        }}
+                                        value={SenderMobileValue}
+                                        onChange={handleSenderMobileChange}
+                                        className={`form-control form-control-sm ${errors.sender_whatsapp_no ? 'is-invalid' : ''}`}
+                                        id="sender_whatsapp_no"
+
+                                        placeholder="Enter Mobile No"
+                                    />
+                                    {errors?.sender_whatsapp_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.sender_whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.sender_whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+
+                                </div>
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="rec_add">Receiver Address</label>
+                                    <textarea
+                                        {...register('rec_add')}
+                                        className="form-control form-control-sm"
+                                        id="rec_add"
+                                        placeholder="receiver address"
+                                        value={receiverDetails.rec_add}
+                                        onChange={(e) => setReceiverDetails({ ...receiverDetails, rec_add: e.target.value })}
+                                    />
+                                </div>
+                                <div className="col-lg-3">
+                                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">Receiver Whatsapp No</label>
+                                    <input
+                                        type="text"
+                                        {...register("receiver_whatsapp_no", {
+                                            required: true,
+                                            minLength: 10,
+                                            maxLength: 10,
+                                            pattern: /^[0-9]+$/
+                                        })}
+                                        value={WmobileNoValue}
+                                        onInput={() => {
+                                            if (errors.receiver_whatsapp_no) {
+                                                clearErrors("receiver_whatsapp_no");
+                                            }
+                                        }}
+                                        onChange={handleWMobileNoChange}
+                                        className={`form-control form-control-sm ${errors.receiver_whatsapp_no ? 'is-invalid' : ''}`}
+                                        id="receiver_whatsapp_no"
+
+                                        placeholder="Enter Mobile No"
+                                    />
+                                    {errors?.receiver_whatsapp_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.receiver_whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.receiver_whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+
+                                </div>
+                            </div>
+
+
+
 
                             {/* Fifth-Row */}
                             <div className="row mb-3">
                                 <div className="col-lg-6">
-                                    <label className="form-label" htmlFor="send_mob">Select Sender ID Proof Type</label>&nbsp;
+                                    <label className="form-label" htmlFor="sender_proof_type">Select Sender ID Proof Type</label>&nbsp;
                                     <br />
                                     <div className="d-flex gap-2">
 
@@ -1236,6 +1859,11 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                             {...register('sender_proof_type', { required: true })}
                                             type="radio"
                                             checked={selectedOption === 'Aadhar_no'}
+                                            onInput={() => {
+                                                if (errors.sender_proof_type) {
+                                                    clearErrors("sender_proof_type");
+                                                }
+                                            }}
                                             onChange={handleOptionChange}
                                             value="Aadhar_no"
                                         /> Aadhar
@@ -1243,6 +1871,11 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                             {...register('sender_proof_type')}
                                             type="radio"
                                             checked={selectedOption === 'Pan_no'}
+                                            onInput={() => {
+                                                if (errors.sender_proof_type) {
+                                                    clearErrors("sender_proof_type");
+                                                }
+                                            }}
                                             onChange={handleOptionChange}
                                             value="Pan_no"
                                         /> PAN
@@ -1250,6 +1883,11 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                             {...register('sender_proof_type')}
                                             type="radio"
                                             checked={selectedOption === 'Gst_no'}
+                                            onInput={() => {
+                                                if (errors.sender_proof_type) {
+                                                    clearErrors("sender_proof_type");
+                                                }
+                                            }}
                                             onChange={handleOptionChange}
                                             value="Gst_no"
                                         /> GST
@@ -1257,10 +1895,18 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                             {...register('sender_proof_type')}
                                             type="radio"
                                             checked={selectedOption === 'Other'}
+                                            onInput={() => {
+                                                if (errors.sender_proof_type) {
+                                                    clearErrors("sender_proof_type");
+                                                }
+                                            }}
                                             onChange={handleOptionChange}
                                             value="Other"
                                         /> Other
                                     </div>
+                                    {errors.sender_proof_type && (
+                                        <span id="show_mobile_err" className="error">This field is required.</span>
+                                    )}
                                 </div>
                                 <div className="col-lg-6">
                                     <label className="form-label" htmlFor="rec_mob">Select Receiver ID Proof Type</label>&nbsp;
@@ -1271,12 +1917,22 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                             {...register('reciver_proof_type', { required: true })}
                                             type="radio"
                                             checked={idoption === 'Aadhar_no'}
+                                            onInput={() => {
+                                                if (errors.reciver_proof_type) {
+                                                    clearErrors("reciver_proof_type");
+                                                }
+                                            }}
                                             onChange={handleOptionIdChange}
                                             value="Aadhar_no"
                                         /> Aadhar
                                         <input
                                             {...register('reciver_proof_type')}
                                             type="radio"
+                                            onInput={() => {
+                                                if (errors.reciver_proof_type) {
+                                                    clearErrors("reciver_proof_type");
+                                                }
+                                            }}
                                             checked={idoption === 'Pan_no'}
                                             onChange={handleOptionIdChange}
                                             value="Pan_no"
@@ -1284,6 +1940,11 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                         <input
                                             {...register('reciver_proof_type')}
                                             type="radio"
+                                            onInput={() => {
+                                                if (errors.reciver_proof_type) {
+                                                    clearErrors("reciver_proof_type");
+                                                }
+                                            }}
                                             checked={idoption === 'Gst_no'}
                                             onChange={handleOptionIdChange}
                                             value="Gst_no"
@@ -1291,17 +1952,25 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                         <input
                                             {...register('reciver_proof_type')}
                                             type="radio"
+                                            onInput={() => {
+                                                if (errors.reciver_proof_type) {
+                                                    clearErrors("reciver_proof_type");
+                                                }
+                                            }}
                                             checked={idoption === 'Other'}
                                             onChange={handleOptionIdChange}
                                             value="Other"
                                         /> Other
                                     </div>
+                                    {errors.reciver_proof_type && (
+                                        <span id="show_mobile_err" className="error">This field is required.</span>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="row mb-3">
                                 <div className="col-lg-6">
-                                    <label className="form-label" htmlFor="send_mob">Sender Adhar No./PAN No./GST No.</label>
+                                    <label className="form-label" htmlFor="sender_proof_detail">Sender Adhar No./PAN No./GST No.</label>
                                     <input
                                         {...register('sender_proof_detail', {
                                             required: selectedOption === 'Aadhar_no' ? 'Aadhaar number is required' :
@@ -1350,20 +2019,16 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                             </div>
 
 
-                            {/* --------------*/}
-                            <div className="row mb-3">
-                                <div className="col-lg-6">
-                                    <label className="form-label" htmlFor="send_add">Sender Address</label>
-                                    <textarea {...register('send_add')} className="form-control form-control-sm" name="send_add" id="send_add" placeholder="Address"></textarea>
+
+
+
+                            <div className="row mt-4">
+                                <div className="col-md-12">
+                                    <h5>Parcel Detail</h5>
+
                                 </div>
-                                <div className="col-lg-6">
-                                    <label className="form-label" htmlFor="ex_rate">Receiver Address</label>
-                                    <textarea {...register('rec_add')} className="form-control form-control-sm" name="rec_add" id="rec_add" placeholder="Address"></textarea>
-                                </div>
+                                <hr />
                             </div>
-
-
-
 
                             {/* parcel-data */}
                             {fields.map((field, index) => (
@@ -1378,6 +2043,8 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                             <option value="bag">Bag</option>
                                             <option value="drum">Drum</option>
                                             <option value="other">Other</option>
+                                            <option value="other">Vehicle</option>
+
                                         </select>
                                     </div>
                                     <div className="col-lg-1">
@@ -1765,13 +2432,13 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                             </div>
                             <div className="row mb-3">
 
-                                <div className="col-lg-3">
+                                {/* <div className="col-lg-3">
                                     <label className="form-label" htmlFor="total">Payment Method</label>
 
-                                    <select {...register('payment_method')} 
+                                    <select {...register('payment_method')}
                                         value={selectedPaymentMethod}
                                         onChange={handlePaymentMethodChange}
-                                    className="form-control" name="payment_method" id="payment_method">
+                                        className="form-control" name="payment_method" id="payment_method">
                                         <option value="">--Select-</option>
                                         <option value="cash">Cash</option>
                                         <option value="transfer">Transfer</option>
@@ -1781,7 +2448,6 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                         <option value="paytm">Paytm</option>
                                         <option value="credit">Credit</option>
                                     </select>
-                                    {/* Conditionally render the transaction ID input field */}
                                     {(selectedPaymentMethod === 'gpay' || selectedPaymentMethod === 'phonepay' || selectedPaymentMethod === 'paytm') && (
                                         <div className="mt-2">
                                             <label className="form-label">Transaction ID</label>
@@ -1790,12 +2456,11 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                                 type="text"
                                                 className="form-control"
                                                 placeholder="Enter transaction ID"
-                                            // Use appropriate handler or register here if using form libraries
                                             />
                                         </div>
                                     )}
 
-                                </div>
+                                </div> */}
                                 <div className="col-lg-2">
                                     <label className="form-label" htmlFor="total">Actual Final Total</label>
                                     <input
@@ -1853,7 +2518,33 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
                                     {errors?.is_demurrage?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
 
                                 </div>
+                                <div className="col-md-7">
 
+                                    {is_demurrage && <div className="row mb-3">
+
+                                        <div className="col-md-3">
+                                            <label className="form-label">Demurrage Charges</label>
+                                            <input  {...register('demurrage_charges')}
+
+                                                type="number" id="demurrage_charges" className="form-control" defaultValue="10" />
+                                        </div>
+
+                                        <div className="col-md-3">
+                                            <label className="form-label">Demurrage Days</label>
+                                            <input  {...register('demurrage_days')} type="number" id="demurrage_days" className="form-control" placeholder="Enter days" />
+                                        </div>
+                                        <div className="col-md-3">
+                                            <label className="form-label">Total Demurrage Charges</label>
+                                            <input   {...register('total_demurrage_charges')} type="text" id="total_demurrage_charge" className="form-control-plaintext" />
+                                        </div>
+                                    </div>}
+                                </div>
+                            </div>
+
+
+
+
+                            <div className="row mb-3">
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="receive">Actual Payable Amount</label>
                                     <input {...register('actual_payable_amount')}
@@ -1872,56 +2563,9 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
 
                             </div>
 
-                            {is_demurrage && <div className="row mb-3">
-
-                                <div className="col-md-3">
-                                    <label className="form-label">Demurrage Charges</label>
-                                    <input  {...register('demurrage_charges')}
-
-                                        type="number" id="demurrage_charges" className="form-control" defaultValue="10" />
-                                </div>
-
-                                <div className="col-md-3">
-                                    <label className="form-label">Demurrage Days</label>
-                                    <input  {...register('demurrage_days')} type="number" id="demurrage_days" className="form-control" placeholder="Enter days" />
-                                </div>
-                                <div className="col-md-3">
-                                    <label className="form-label">Total Demurrage Charges</label>
-                                    <input   {...register('total_demurrage_charges')} type="text" id="total_demurrage_charge" className="form-control-plaintext" />
-                                </div>
-                            </div>}
-
-
-                            <div className="row mb-3">
-                                <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="receive">Actual Paid Amount</label>
-                                    <input  {...register('actual_paid_amount')} onChange={(e) => handlePaidAmountChange(parseFloat(e.target.value), 'actual')}
-
-                                        className="form-control form-control-sm" type="number" id="parcel_receive" placeholder="Enter Received" />
-                                </div>
-                                <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="receive">Print Paid Amount</label>
-                                    <input  {...register('print_paid_amount')} onChange={(e) => handlePaidAmountChange(parseFloat(e.target.value), 'print')} className="form-control form-control-sm" type="number" id="print_parcel_receive" placeholder="Enter Received" />
-                                </div>
-                                <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="balance">Actual Balance Amount</label>
-                                    <input  {...register('actual_bal_amount')} className="form-control-plaintext" type="number" id="parcel_balance_show" readOnly placeholder="Enter Balance" />
-
-                                    <input className="form-control-plaintext" type="hidden" id="parcel_balance" placeholder="Enter Balance" />
-
-                                </div>
-                                <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="balance">Print Balance Amount</label>
-                                    <input {...register('print_bal_amount')} className="form-control-plaintext" type="number" readOnly id="print_parcel_balance_show" placeholder="Enter Balance" />
-
-                                    <input className="form-control-plaintext" value="20" type="hidden" id="print_parcel_balance" placeholder="Enter Balance" />
-
-                                </div>
-                            </div>
-
                             <div className="row">
                                 <div className="text-center">
-                                    <input className="btn btn-primary" type="submit" id="save_form" name="save_form" />
+                                    <input className="btn btn-success btn-sm" type="submit" id="save_ticket" name="save_form" />
                                 </div>
                             </div>
                         </form>
@@ -1935,11 +2579,9 @@ const handlePaymentMethodChange = (event: { target: { value: React.SetStateActio
 
 
             </div >
-            <br />
-            <br />
-            <br />
 
 
+            <Footer />
         </>
     )
 }

@@ -80,9 +80,9 @@ const Capacity: React.FC<CapacityProps> = ({ show, onHide, feitId, capacityData 
                 capacity: formData.Capacity
             };
 
-            const response = await axios.post('http://192.168.0.100:3001/capacity/add_fire_extingusher_capacity_data', dataToSubmit);
+            const response = await axios.post('http://192.168.0.105:3001/capacity/add_fire_extingusher_capacity_data', dataToSubmit);
             console.log('Data submitted successfully:', response.data);
-            reset(); // Reset the form fields to default values
+            reset(); 
             window.location.reload();
             onHide(); // Close the modal after successful submission
         } catch (error) {

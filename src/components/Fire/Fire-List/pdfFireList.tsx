@@ -7,7 +7,7 @@ interface User {
   febking_created_by: any;
   fest_id: any;
   created_by_name:any;
-  febking_final_amount: string;
+  q_final_amount: string;
   client_firstName: string;
   client_address: string;
   client_gstNo: any;
@@ -86,7 +86,7 @@ export const exportToFireListPDF = (data: User[]) => {
     client_state: row.client_state,
     client_pincode: row.client_pincode,
     mobileNo: row.mobileNo,
-    febking_final_amount: row.febking_final_amount,
+    febking_final_amount: row.q_final_amount,
 
     // Add more fields as needed
   }));

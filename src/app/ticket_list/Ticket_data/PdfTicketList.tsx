@@ -16,6 +16,8 @@ interface User {
   final_total_amount: number;
   print_final_total_amount: number;
   added_by_name: string;
+  client_mobileNo:any;
+  client_firstName:any;
 }
 
 // Define the shape of the data used by autoTable
@@ -34,28 +36,28 @@ export const exportToPDF = (data: User[]) => {
   // Define table columns with headers and data keys
   const columns = [
     { header: 'Receipt No', dataKey: 'tkt_no' },
-    { header: 'Customer Name', dataKey: 'name' },
+    { header: 'Customer Name', dataKey: 'client_firstName' },
     { header: 'From', dataKey: 'from' },
     { header: 'To', dataKey: 'to' },
     { header: 'Booking Date', dataKey: 'bdate' },
     { header: 'Journey Date', dataKey: 'jdate' },
     { header: 'Amount', dataKey: 'final_total_amount' },
     { header: 'Print Amount', dataKey: 'print_final_total_amount' },
-    { header: 'Mobile No', dataKey: 'mobile_no' },  // Corrected key
+    { header: 'Mobile No', dataKey: 'client_mobileNo' },  // Corrected key
     { header: 'Added By', dataKey: 'added_by_name' },
   ];
 
   // Format data for PDF
   const formattedData: TableRow[] = data.map(row => ({
     tkt_no: row.tkt_no,
-    name: row.name,
+    client_firstName: row.client_firstName,
     from: `${row.from_state_name}, ${row.from_city_name}`,
     to: `${row.to_state_name}, ${row.to_city_name}`,
     bdate: row.bdate,
     jdate: row.jdate,
     final_total_amount: row.final_total_amount,
     print_final_total_amount: row.print_final_total_amount,
-    mobile_no: row.mobile,  // Added mobile_no to formatted data
+    client_mobileNo: row.client_mobileNo,  // Added mobile_no to formatted data
     added_by_name: row.added_by_name,
   }));
 

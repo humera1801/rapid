@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import Link from 'next/link';
+import "../../public/css/style.css"
 
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -28,7 +29,7 @@ const Page: React.FC = () => {
       const { email, password, device_id, device_type, fcm_token } = formData;
   
       const response = await axios.post<{ status: number; message: string; data: any }>(
-        'http://localhost:3000/auth/user_login',
+        'http://192.168.0.105:3001/auth/user_login',
         {
           email,
           password,
@@ -50,16 +51,14 @@ const Page: React.FC = () => {
         localStorage.setItem('userData', JSON.stringify(response.data.data));
         // const userId = localStorage.getItem('userData');
   
-        // Log localStorage contents to check
         console.log('localStorage:', localStorage.userData);
         const storedData = localStorage.getItem('userData');
         console.log("datdata",storedData);
         
         
   
-        // Redirect to Home page or wherever needed
-        // Replace with your router logic
-        router.push('/Home/Ticket');
+     
+        router.push('/Home');
       } else {
         setError('Error logging in. Please try again.');
       }
@@ -74,23 +73,27 @@ const Page: React.FC = () => {
 
   return (
     
-    <div className="container">
+    <div className="container-fluid first-page-con" >
       <section className="section register min-vh-100 d-flex flex-column align-items-center justify-content-center py-4">
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
-              <div className="d-flex justify-content-center py-4">
-                <a href="index.html" className="logo d-flex align-items-center w-auto">
-                  <img src="" alt="" />
-                </a>
-              </div>
-              <div className="card mb-3">
+            
+              
+                  {/* <img src="\img\logo_page-0001-removebg-preview.png" alt="" height={"80%"} width={"100%"}  /> */}
+               
+               <h1 style={{color:"#51781f",fontSize:"50px",fontWeight:"800"}}>RAPID GROUP</h1>
+          
+              <div className="mb-3" style={{width:"100%"}}>
                 <div className="card-body">
-                  <div className="pt-4 pb-2">
+                  <div className="pt-2 pb-2"  style={{background:"#d05a36",color:"white"}}>
                     <h5 className="card-title text-center pb-0 fs-4">Admin Login</h5>
                   </div>
-                  <form className="row g-3" onSubmit={handleSubmit(onSubmit)}>
-                    <div className="col-12">
+                 <div style={{background:"rgba(132, 132, 132, 0.46)",padding:"4%"}}>
+                 
+                 <form className="row" onSubmit={handleSubmit(onSubmit)}>
+                 <div style={{background:"white",padding:"2%"}}>
+                    <div className="col-12 mt-2">
                       <label htmlFor="yourUsername" className="form-label">Username</label>
                       <input
                         type="text"
@@ -100,7 +103,7 @@ const Page: React.FC = () => {
                       />
                       {errors.email && <div className="invalid-feedback">{errors.email.message}</div>}
                     </div>
-                    <div className="col-12">
+                    <div className="col-12 mt-3">
                       <label htmlFor="yourPassword" className="form-label">Password</label>
                       <input
                         type="password"
@@ -110,8 +113,9 @@ const Page: React.FC = () => {
                       />
                       {errors.password && <div className="invalid-feedback">{errors.password.message}</div>}
                     </div>
-                    <div className="col-12">
-                      <button type="submit" className="btn btn-primary w-100">LOGIN</button>
+                    </div>
+                    <div className="col-12 mt-3" style={{padding:"0px"}}>
+                      <button type="submit" className="btn btn-primary w-100" style={{background:"#51781f",border:"0px",borderRadius:"0px",padding:"2.5% 2%",fontWeight:"500"}}>LOGIN</button>
                     </div>
                     {error && (
                       <div className="col-12 text-danger mt-2">
@@ -119,6 +123,8 @@ const Page: React.FC = () => {
                       </div>
                     )}
                   </form>
+                
+                 </div>
                 </div>
               </div>
             </div>

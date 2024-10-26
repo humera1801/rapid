@@ -4,17 +4,18 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import DataTable, { TableColumn } from 'react-data-table-component';
 import "../ticket_list/custom.css";
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
-import GetTicket from '../Api/GetTicket';
+import "../../components/Dashboard/nav.css"
+import "../../../public/css/style.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEye, faPencilSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFilter, faPencilSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import Header from '@/components/Dashboard/Header';
 import { exportToExcel } from './Ticket_data/exportToexcel';
 import { exportToPDF } from './Ticket_data/PdfTicketList';
 import handlePrint from './Ticket_data/printUtils';
 import { handleticketPDF } from './handleticketPdF';
+import ticketdate from '../Api/FireApis/DataFilter/ticketdate';
+import getUserProfile from '../Api/UserProfile';
 
 export interface User {
     id: string;
@@ -44,6 +45,8 @@ export interface User {
     remarks: string;
     slr: number;
     st: number;
+    client_firstName: any;
+    client_mobileNo: any;
     ex: number;
     cmp_name: string;
     ex_rate: number;
@@ -52,6 +55,10 @@ export interface User {
     paid_amount: number;
     remaining_amount: number;
     mobile: string;
+    st_print_rate:any;
+    slr_print_rate:any;
+    ex_print_rate:any; 
+    dep_time:any;
 }
 
 const customStyle = {
@@ -135,21 +142,174 @@ const Page: React.FC = () => {
         "Receipt No", "Customer Name", "From", "To", "Booking Date", "Journey Date",
         "Amount", "Print Amount", "Mobile-no", "Added By", "Action"
     ]);
+    const [userName, setUserName] = useState('');
+    const [userRoles, setUserRoles] = useState<string[]>([]);
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await GetTicket.getTicketBookData();
-                console.log('GetTicket.getTicketBookData', res);
-                setOriginalRecords(res.data);
-
-                setRecords(res.data);
-            } catch (error) {
-                console.log('Err', error);
-            }
-        };
-        fetchData();
+        const storedData = localStorage.getItem('userData');
+        if (storedData) {
+            const e_id = parseInt(storedData, 10);
+            getUserProfile(e_id)
+                .then((userData) => {
+                    setUserName(userData.e_name);
+                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                })
+                .then((roleResponse) => {
+                    const rolesData = roleResponse.data.data;
+                    if (rolesData && rolesData.length > 0) {
+                        setUserRoles(rolesData[0].e_task);
+                        console.log("role", rolesData[0].e_task);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Failed to fetch user profile or roles:', error);
+                });
+        }
     }, []);
+
+
+
+
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+    const [filterDate, setFilterDate] = useState<any>(null);
+
+    const handleClick = async () => {
+        if (startDate && endDate) {
+            await handlefilterdate(startDate, endDate);
+        } else {
+            alert('Please select both start and end dates.');
+        }
+    };
+
+
+
+
+
+    const getDateRange = () => {
+        const today = new Date();
+        const lastMonth = new Date();
+        lastMonth.setMonth(today.getMonth() - 1);
+
+        const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
+        return {
+            startDate: formatDate(lastMonth),
+            endDate: formatDate(today)
+        };
+    };
+
+    useEffect(() => {
+        const today = new Date();
+        const lastMonth = new Date();
+        lastMonth.setMonth(today.getMonth() - 1);
+        lastMonth.setDate(1);
+        const formatDate = (date: Date) => date.toISOString().split('T')[0];
+        setStartDate(formatDate(lastMonth));
+        setEndDate(formatDate(today));
+        fetchAllData();
+    }, []);
+
+
+
+
+    const fetchAllData = async () => {
+
+        const { startDate, endDate } = getDateRange();
+
+        try {
+            const data = await ticketdate.getticketFilterdate(startDate, endDate);
+            console.log(data.data);
+
+            setRecords(data.data);
+            setOriginalRecords(data.data)
+
+        } catch (error) {
+            console.error('Error fetching all data:', error);
+        }
+    };
+
+
+
+    const handlefilterdate = async (startdate: string, enddate: string) => {
+        try {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            if (start > end) {
+                alert('End date must be greater than start date');
+
+                return;
+            }
+
+
+            const response = await ticketdate.getticketFilterdate(startDate, endDate);
+            setRecords(response.data);
+        } catch (error) {
+        }
+    };
+
+
+
+
+    const handleClearFilter = async () => {
+        setStartDate('');
+        setEndDate('');
+
+        try {
+            const data = await ticketdate.getticketFilterdate();
+            setRecords(data.data);
+            console.log('All data fetched:', data.data);
+        } catch (error) {
+            console.error('Error fetching all data:', error);
+        }
+    };
+
+
+    const getTodayDate = (): string => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+
+    const handleTodayList = async () => {
+        const today = getTodayDate();
+
+        try {
+            const data = await ticketdate.getticketFilterdate(today);
+            setRecords(data.data);
+            console.log('Filtered data for today:', data.data);
+        } catch (error) {
+            console.error('Error fetching filtered data for today:', error);
+        }
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     const handleDeleteTicket = async (ticketId: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         e.preventDefault();
@@ -158,7 +318,7 @@ const Page: React.FC = () => {
             ticket_id: ticketId
         }
         try {
-            const response = await axios.post(`http://localhost:3000/ticket/remove_ticket_data`, formData);
+            const response = await axios.post(`http://192.168.0.105:3001/ticket/remove_ticket_data`, formData);
             console.log('Ticket deleted successfully:', response.data);
             window.location.reload();
         } catch (error) {
@@ -224,7 +384,7 @@ const Page: React.FC = () => {
         },
         {
             name: "Customer Name",
-            selector: (row: User) => row.name,
+            selector: (row: User) => row.client_firstName,
             sortable: true,
 
             omit: !visibleColumns.includes("Customer Name")
@@ -267,7 +427,7 @@ const Page: React.FC = () => {
         },
         {
             name: "Mobile-no",
-            selector: (row: User) => row.mobile,
+            selector: (row: User) => row.client_mobileNo,
             sortable: true,
             omit: !visibleColumns.includes("Mobile-no"),
         },
@@ -285,18 +445,24 @@ const Page: React.FC = () => {
                 flex: '1 1 0',
             },
             cell: (row: User) => (
-                <div className='action-buttons'>
-                    <button className="btn btn-sm btn-success" onClick={() => handleShare(row)}>Share</button>
-                    <button className="btn btn-sm btn-info" onClick={() => handlePrintClick(row)}>Print</button>
-                    <Link href={`ticket_list/Ticket_data?token=${row.token}`} className="btn btn-sm btn-warning">
-                        <FontAwesomeIcon icon={faEye} />
-                    </Link>
-                    <Link href={`ticket_list/Edit?token=${row.token}`} className="btn btn-sm btn-primary">
-                        <FontAwesomeIcon icon={faPencilSquare} />
-                    </Link>
-                    <button onClick={(e) => handleDeleteTicket(row.id, e)} className="btn btn-sm btn-danger">
-                        <FontAwesomeIcon icon={faTrash} />
-                    </button>
+                <div className='action-buttons' >
+                    <button className="btn btn-sm btn-success"  style={{ color: '#ffffff' , fontSize:"10px" }}  onClick={() => handleShare(row)}>Share</button>
+                    <button className="btn btn-sm btn-info"  style={{ color: '#ffffff' , fontSize:"10px" }}  onClick={() => handlePrintClick(row)}>Print</button>
+                    {userRoles.includes('ticketBooking_view') && (
+                        <Link href={`ticket_list/Ticket_data?token=${row.token}`} className="btn btn-sm btn-warning">
+                            <FontAwesomeIcon icon={faEye} />
+                        </Link>
+                    )}
+                    {userRoles.includes('ticketBooking_update') && (
+                        <Link href={`ticket_list/Edit?token=${row.token}`} className="btn btn-sm btn-primary">
+                            <FontAwesomeIcon icon={faPencilSquare} />
+                        </Link>
+                    )}
+                    {userRoles.includes('ticketBooking_delete') && (
+                      <button  style={{ width:"25px" , padding:"5px" , cursor: 'pointer', color: '#ffffff'} } onClick={(e) => handleDeleteTicket(row.id, e)}  className="btn btn-sm btn-danger">
+                            <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                    )}
                 </div>
             ),
             omit: !visibleColumns.includes("Action")
@@ -307,7 +473,7 @@ const Page: React.FC = () => {
 
 
     const [searchTerm, setSearchTerm] = useState<string>('');
-    const [originalRecords, setOriginalRecords] = useState<User[]>([]); // Holds original data
+    const [originalRecords, setOriginalRecords] = useState<User[]>([]); 
 
 
     const handleFilter = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -331,11 +497,35 @@ const Page: React.FC = () => {
 
     return (
         <>
-            <Header />
+            <Header  />
             <div className="container-fluid mt-3">
                 <div className="card mb-3" style={{ width: 'auto' }}>
-                    <div className="card-header">
-                        <h4>Ticket Booking List</h4>
+                    <div className="card-header d-flex justify-content-between align-items-center">
+                        <h4 className="mb-0">Ticket Booking List</h4>
+                        <div className="d-flex align-items-center gap-3">
+                            <div className="d-flex align-items-center gap-2">
+                                <div className="d-flex flex-column">
+                                    <label htmlFor="start-date" className="form-label mb-0 sdate">Start Date:</label>
+                                    <input style={{ fontSize: "12px" }} type="date" id="start-date" name="start-date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)} className="form-control" />
+                                </div>
+                                <div className="d-flex flex-column ms-3">
+                                    <label htmlFor="end-date" className="form-label mb-0 edate">End Date:</label>
+                                    <input style={{ fontSize: "12px" }} type="date" id="end-date" name="end-date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)} className="form-control" />
+                                </div>
+                            </div>
+                            <div className="d-flex align-items-center gap-2" style={{ marginTop: "22px" }}>
+                                <button style={{ fontSize: "12px" }} onClick={handleClick} className="btn btn-primary btn-sm" >
+                                    <FontAwesomeIcon icon={faFilter} />
+
+                                </button>
+                                <button style={{ fontSize: "12px" }} className="btn btn-success btn-sm" onClick={handleTodayList} >Today List</button>
+                                <button style={{ fontSize: "12px" }} onClick={handleClearFilter} className="btn btn-danger btn-sm" >Clear Filter</button>
+                            </div>
+                        </div>
                     </div>
                     <div className="table-options">
                         {/* <div className="entries-selector">
@@ -356,7 +546,7 @@ const Page: React.FC = () => {
                                 Column visibility
                             </button>
                         </div>
-                        <div id="column-visibility-menu" className="column-visibility-menu" style={{marginLeft:"15%" , marginTop:"28%"}}>
+                        <div id="column-visibility-menu" className="column-visibility-menu" style={{ marginLeft: "15%", marginTop: "28%" }}>
                             {columnsOptions.map(option => (
                                 <div key={option}>
                                     <input

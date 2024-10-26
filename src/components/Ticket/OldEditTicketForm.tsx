@@ -1,6 +1,3 @@
-
-
-
 "use client";
 import React, { useState, ChangeEvent, useEffect } from 'react'
 import axios from 'axios';
@@ -8,7 +5,6 @@ import Card from 'react-bootstrap/Card';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import CityList from '@/app/Api/CityList';
 import StateList from '@/app/Api/StateList';
-import ticketNo from '@/app/Api/ticketNo';
 
 import { useRouter } from 'next/navigation';
 
@@ -35,6 +31,7 @@ type FormData = {
   booking_type: 'seater' | 'sleeper' | 'both';
   is_duplicate: boolean;
   is_extra: boolean;
+  rep_date: any
   slr: number;
   slr_rate: number;
   slr_total_amount: number;
@@ -79,9 +76,6 @@ type FormData = {
 
 
 };
-
-
-
 interface City {
   name: string;
   id: number;
@@ -140,20 +134,10 @@ function EditForm() {
     }
   };
 
-  // const handleFieldChange = (fieldName: string, value: string) => {
-  //   // Update ticketData state with the new value for the specified field
-  //   const updatedTicketData = { ...ticketData, [fieldName]: value };
-  //   setTicketData(updatedTicketData);
+  
 
-  //   // If the field being updated is related to the state, fetch cities accordingly
-  //   if (fieldName === 'from_state') {
-  //     setSelectedFromStateId(value);
-  //     fetchCities(value, true);
-  //   } else if (fieldName === 'to_state') {
-  //     setSelectedToStateId(value);
-  //     fetchCities(value, true);
-  //   }
-  // };
+
+
   const handleFieldChange = (fieldName: string, value: string) => {
     // Update ticketData state with the new value for the specified field
     const updatedTicketData = { ...ticketData, [fieldName]: value };
@@ -226,6 +210,8 @@ function EditForm() {
     updatedTicketData['remaining_amount'] = remaining_amount;
     updatedTicketData['print_remaining_amount'] = print_remaining_amount;
 
+
+   
     setTicketData(updatedTicketData);
   };
 
@@ -263,8 +249,11 @@ function EditForm() {
       ex_total_print_rate: 0,
       sI_no: '',
       st_no: '',
-      rep_time: '',
+    
+      jdate: '',
       dep_time: '',
+      rep_date: '',
+      rep_time: '',
       print_remaining_amount: 0,
       bus_no: '',
       boarding: '',
@@ -295,6 +284,8 @@ function EditForm() {
   setValue("ticket_no", ticketData.tkt_no)
   setValue("bdate", ticketData.bdate)
   setValue("jdate", ticketData.jdate)
+  setValue("rep_date", ticketData.rep_date)
+
   setValue("name", ticketData.name)
   setValue("mobile_no", ticketData.mobile)
   setValue("cmp_mobile", ticketData.cmp_mobile)
@@ -354,7 +345,7 @@ function EditForm() {
 
 
 
-  const currentDate = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
+  const currentDate = new Date().toISOString().split('T')[0]; 
 
   //------------------------------------------calculation data----------------------------------------------------
 
@@ -432,20 +423,16 @@ function EditForm() {
 
   const onSubmit: SubmitHandler<FormData> = async (formData: any) => {
     try {
-      // Initialize state and city names
       let fromStateName = '';
       let toStateName = '';
       let fromCityName = '';
       let toCityName = '';
 
-      // Initialize tkt_no variable
       const tkt_no = formData.ticket_no;
 
-      // Convert state.id to a string
       const selectedFromStateIdStr = String(selectedFromStateId);
       const selectedToStateIdStr = String(selectedToStateId);
 
-      // Fetch state names directly from the `fromStates` and `toStates` arrays
       const fromState = fromStates.find(state => String(state.id) === selectedFromStateIdStr);
       const toState = toStates.find(state => String(state.id) === selectedToStateIdStr);
 
@@ -456,7 +443,6 @@ function EditForm() {
         toStateName = toState.name;
       }
 
-      // Fetch city names directly from the `fromCities` and `toCities` arrays
       const fromCity = fromCities.find(city => String(city.id) === formData.travel_from);
       const toCity = toCities.find(city => String(city.id) === formData.travel_to);
 
@@ -467,26 +453,24 @@ function EditForm() {
         toCityName = toCity.city_name;
       }
 
-      // Custom city handling if applicable
       if (showCustomCityInput && customCity) {
-        const response = await axios.post('http://localhost:3000/ticket/add_new_city_from_state', {
+        const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
           city_name: customCity,
           state_id: selectedFromStateIdStr,
         });
-        formData.travel_from = response.data.city_id; // Assuming API returns city_id
+        formData.travel_from = response.data.city_id; 
         fromCityName = customCity;
       }
 
       if (showCustomToCityInput && customToCity) {
-        const response = await axios.post('http://localhost:3000/ticket/add_new_city_from_state', {
+        const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
           city_name: customToCity,
           state_id: selectedToStateIdStr,
         });
-        formData.travel_to = response.data.city_id; // Assuming API returns city_id
+        formData.travel_to = response.data.city_id; 
         toCityName = customToCity;
       }
 
-      // Populate formData with state and city names
       formData.from_state = selectedFromStateIdStr;
       formData.to_state = selectedToStateIdStr;
       formData.from_state_name = fromStateName;
@@ -494,17 +478,14 @@ function EditForm() {
       formData.from_city_name = fromCityName;
       formData.to_city_name = toCityName;
 
-      // Set tkt_no in formData (if needed to include it)
       formData.tkt_no = tkt_no;
 
-      // Submit the final form data
-      const response = await axios.post('http://192.168.0.100:3001/ticket/update_ticket_detail_data', formData);
+      const response = await axios.post('http://192.168.0.105:3001/ticket/update_ticket_detail_data', formData);
       console.log('Form submitted successfully:', response.data);
       handleUpdatePrint(formData);
       router.push('/ticket_list');
     } catch (error) {
       console.error('Error submitting form:', error);
-      // Handle errors
     }
   };
 
@@ -521,31 +502,13 @@ function EditForm() {
   };
 
 
-  // const onSubmit: SubmitHandler<FormData> = async (formData: any) => {
-  //   console.log(formData);
-
-  //   try {
-  //     // Make a POST request to the API endpoint with the ticket ID in the URL
-  //     const response = await axios.post(`http://localhost:3000/ticket/update_ticket_detail_data`, formData);
-  //     console.log('Form submitted successfully:', response.data);
-  //     router.push('/ticket_list');
-  //   } catch (error) {
-  //     console.error('Error submitting form:', error);
-  //     // Handle errors
-  //   }
-  // };
-
-  // const onSubmit: SubmitHandler<FormData> = (data) => {
-  //     console.log(data)
-  // }
-
-
+ 
 
   //----------------------------------------------phonevalidation----------------------------------------------------------------------------------------------------------
 
 
   const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value.replace(/\D/g, '').slice(0, 10); // Only allow digits and limit to 10 characters
+    const value = event.target.value.replace(/\D/g, '').slice(0, 10); 
 
     setTicketData({ ...ticketData, mobile: value });
 
@@ -553,7 +516,7 @@ function EditForm() {
   };
 
   const handleCmpPhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value.replace(/\D/g, '').slice(0, 10); // Only allow digits and limit to 10 characters
+    const value = event.target.value.replace(/\D/g, '').slice(0, 10); 
 
     setTicketData({ ...ticketData, cmp_mobile: value });
   };
@@ -577,6 +540,11 @@ function EditForm() {
   const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
   const gstPattern = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9A-Z]{1}$/;
 
+
+
+
+
+
   //--------------------------------------------------------------------------------------------------------------------------------
   return (
     <>
@@ -587,10 +555,10 @@ function EditForm() {
         <Card>
 
 
-          <Card.Header><div  style={{ display: "flex", justifyContent: "space-between" }}>
+          <Card.Header><div style={{ display: "flex", justifyContent: "space-between" }}>
             <h4>Update Booking Detail</h4>
             <div>
-             
+
 
               <Link href="/ticket_list" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</Link>
 
@@ -632,19 +600,17 @@ function EditForm() {
                         const value = e.target.value;
                         if (ticketData) {
                           if (value === "tkt_from_other") {
-                            // Show input field for new city
                             setTicketData({ ...ticketData, travel_from: '' });
-                            setShowCustomCityInput(true); // State to toggle input field
+                            setShowCustomCityInput(true); 
                           } else {
                             setTicketData({ ...ticketData, travel_from: value });
-                            setShowCustomCityInput(false); // Hide input field if not "Add new City"
+                            setShowCustomCityInput(false); 
                           }
                         }
                       }}
                       className="form-control form-control-sm set_option_clr"
                     >
                       <option value="">Select</option>
-                      {/* Populate options for cities */}
                       {fromCities.map((city) => (
                         <option key={city.id} value={city.id}>
                           {city.city_name}
@@ -653,7 +619,6 @@ function EditForm() {
                       <option style={{ background: '#4682B4', color: "#F5FFFA" }} value="tkt_from_other">Add new City</option>
                     </select>
 
-                    {/* Render input field for new city if selected */}
                     {showCustomCityInput && (
                       <input
                         type="text"
@@ -693,19 +658,17 @@ function EditForm() {
                         const value = e.target.value;
                         if (ticketData) {
                           if (value === "tkt_to_other") {
-                            // Show input field for new city
                             setTicketData({ ...ticketData, travel_to: '' });
-                            setShowCustomToCityInput(true); // State to toggle input field
+                            setShowCustomToCityInput(true); 
                           } else {
                             setTicketData({ ...ticketData, travel_to: value });
-                            setShowCustomToCityInput(false); // Hide input field if not "Add new City"
+                            setShowCustomToCityInput(false); 
                           }
                         }
                       }}
                       className="form-control form-control-sm set_option_clr"
                     >
                       <option value="">Select</option>
-                      {/* Populate options for cities */}
                       {toCities.map((city) => (
                         <option key={city.id} value={city.id}>
                           {city.city_name}
@@ -714,7 +677,6 @@ function EditForm() {
                       <option style={{ background: '#4682B4', color: "#F5FFFA" }} value="tkt_to_other">Add new City</option>
                     </select>
 
-                    {/* Render input field for new city if selected */}
                     {showCustomToCityInput && (
                       <input
                         type="text"
@@ -739,15 +701,12 @@ function EditForm() {
                     </select>
 
                   </div>
-                  <div className="col-lg-3">
+                  <div className="col-lg-6">
                     <label className="form-label" htmlFor="bdate">Booking date</label>
                     <input  {...register('bdate')} value={ticketData.bdate} onChange={(e) => handleFieldChange('bdate', e.target.value)} className="form-control form-control-sm" type="date" id="bdate" placeholder="Enter Booking date" />
                   </div>
 
-                  <div className="col-lg-3">
-                    <label className="form-label" htmlFor="jdate">Journey date</label>
-                    <input  {...register('jdate')} value={ticketData.jdate} onChange={(e) => handleFieldChange('jdate', e.target.value)} className="form-control form-control-sm" type="date" id="jdate" placeholder="Enter J.date" />
-                  </div>
+                 
 
                 </div>
 
@@ -796,7 +755,7 @@ function EditForm() {
                   </div>
 
                   <div className="col-lg-4">
-                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">What's-up No</label>
+                    <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">Whatsapp No</label>
                     <input
                       type="text"
                       {...register("whatsapp_no", {
@@ -924,7 +883,7 @@ function EditForm() {
                     <input
                       type="radio"
                       {...register('booking_type')}
-                      value="sleeper" // Set the value attribute to "sleeper"
+                      value="sleeper" 
                       checked={ticketData.booking_type === "sleeper"}
                       onChange={() => {
                         handleFieldChange('booking_type', "sleeper")
@@ -934,7 +893,7 @@ function EditForm() {
                     <input
                       type="radio"
                       {...register('booking_type')}
-                      value="both" // Set the value attribute to "both"
+                      value="both" 
                       checked={ticketData.booking_type === "both"}
                       onChange={() => {
                         handleFieldChange('booking_type', "both")
@@ -946,8 +905,8 @@ function EditForm() {
                     <label className="form-label">Is Extra?</label><br />
                     <input
                       type="checkbox"
-                      checked={ticketData.is_extra === "1"} // Check if ticketData.is_extra is "1"
-                      onChange={(e) => handleFieldChange('is_extra', e.target.checked ? "1" : "0")} // Handle checkbox change event
+                      checked={ticketData.is_extra === "1"}
+                      onChange={(e) => handleFieldChange('is_extra', e.target.checked ? "1" : "0")} 
                     /> Yes
                     {/* <input type="checkbox" {...register('is_extra')} value={ticketData.is_extra}/> Yes */}
                   </div>
@@ -1041,19 +1000,65 @@ function EditForm() {
                 )}
 
 
-
-
-
                 <div className="row mb-3">
-                  <div className="col-lg-6">
-                    <label className="form-label">Reporting Time</label>
-                    <input {...register('rep_time')} value={ticketData.rep_time} onChange={(e) => handleFieldChange('rep_time', e.target.value)} className="form-control form-control-sm" type="time" />
+                  <div className="col-lg-3">
+                    <label className="form-label" htmlFor="jdate">Journey Date</label>
+                    <input
+                      {...register('jdate')}
+                      className="form-control form-control-sm"
+                      type="date"
+                      id="jdate"
+                      value={ticketData.jdate}
+                      onChange={(e) => handleFieldChange('jdate', e.target.value)}
+                      placeholder="Enter J.date"
+                    />
                   </div>
-                  <div className="col-lg-6">
+
+                  <div className="col-lg-3">
                     <label className="form-label">Departure Time</label>
-                    <input {...register('dep_time')} value={ticketData.dep_time} onChange={(e) => handleFieldChange('dep_time', e.target.value)} className="form-control form-control-sm" type="time" required />
+                    <input
+                      {...register('dep_time')}
+                      className="form-control form-control-sm"
+                      type="time"
+                      value={ticketData.dep_time}
+                      onChange={(e) => handleFieldChange('dep_time', e.target.value)}
+                    />
+                    {errors.dep_time?.type === "required" && (
+                      <span id="show_mobile_err" className="error">This field is required.</span>
+                    )}
+                  </div>
+
+                  <div className="col-lg-3">
+                    <label className="form-label">Reporting Date</label>
+                    <input
+                      {...register('rep_date')}
+                      value={ticketData.rep_date}
+                      onChange={(e) => handleFieldChange('rep_date', e.target.value)}
+                      className="form-control form-control-sm"
+                      type="date"
+                    />
+                    {errors.rep_date?.type === "required" && (
+                      <span id="show_mobile_err" className="error">This field is required.</span>
+                    )}
+                  </div>
+
+                  <div className="col-lg-3">
+                    <label className="form-label">Reporting Time</label>
+                    <input
+                      {...register('rep_time')}
+                      value={ticketData.rep_time}
+                      onChange={(e) => handleFieldChange('rep_time', e.target.value)}
+                      className="form-control form-control-sm"
+                      type="time"
+                    />
+                    {errors.rep_time?.type === "required" && (
+                      <span id="show_mobile_err" className="error">This field is required.</span>
+                    )}
                   </div>
                 </div>
+
+
+
 
                 <div className="row mb-3">
                   <div className="col-lg-6">
@@ -1150,7 +1155,7 @@ function EditForm() {
                 {/* <----------> */}
                 <div className="row">
                   <div className="text-center">
-                    <button className="btn btn-primary" type="submit" id="save_ticket" name="save_form" >
+                    <button className="btn btn-success btn-sm"  type="submit" id="save_ticket" name="save_form" >
                       Update
                     </button>
                   </div>

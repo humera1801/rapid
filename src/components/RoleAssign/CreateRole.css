@@ -1,0 +1,27 @@
+
+
+
+
+.role-input {
+    border-radius: 5px;
+    padding: 10px;
+    border: 2px solid #ccc;
+}
+
+.role-checkbox {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+}
+
+
+.role-checkbox1 {
+    align-items: center;
+    margin: 10px 0;
+    margin-left: 25px;
+}
+
+.role-error {
+    color: red;
+    font-size: 0.875em;
+}

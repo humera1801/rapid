@@ -17,6 +17,9 @@ import Link from 'next/link';
 import GetCertificateData from '@/app/Api/FireApis/GetCertificateData';
 import { generateclientPDF } from './certificate/genrate-pdf';
 import handleclientPrint from './certificate/certificate';
+import CabbookingList from '@/app/Api/CabBooking/CabbookingList';
+import { Button } from 'react-bootstrap';
+import FirePaymentModel from './FirePaymentModel';
 
 
 export interface FormData {
@@ -28,10 +31,10 @@ export interface FormData {
     febking_final_amount: any;
     fest_id: any;
     febking_total_amount: string;
-    firstName: string;
-    address: string;
-    email: string;
-    gstNo: string;
+    client_firstName: string;
+    client_address: string;
+    client_email: string;
+    client_gstNo: string;
     mobileNo: string;
     client_city: string;
     client_state: string;
@@ -44,6 +47,7 @@ export interface FormData {
     product_data: ProductData[];
     discount: any;
     discount_amount: any;
+    client_mobileNo: any
     whatsup_no: any;
 }
 
@@ -129,7 +133,7 @@ interface ClientData {
     client_firstName: string;
     client_address: string;
     client_email: string;
-    client_gstNo: string;
+    gstNo: string;
     client_mobileNo: string;
     client_city: string;
     client_state: string;
@@ -140,11 +144,11 @@ interface ClientData {
 
 interface Client {
     client_id: any,
-    firstName: string;
-    address: string;
-    email: string;
-    gstNo: string;
-    mobileNo: string;
+    client_firstName: string;
+    client_address: string;
+    client_email: string;
+    client_gstNo: string;
+    client_mobileNo: string;
     vendorCode: string;
     poNo: string;
     client_city: string;
@@ -169,13 +173,13 @@ const ViewFire = () => {
 
     const [formData, setFormData] = useState<Client>({
         client_id: "",
-        firstName: '',
-        address: '',
-        email: '',
-        gstNo: '',
+        client_firstName: '',
+        client_address: '',
+        client_email: '',
+        client_gstNo: '',
         vendorCode: '',
         poNo: '',
-        mobileNo: '',
+        client_mobileNo: '',
         client_city: "",
         client_state: "",
         client_pincode: "",
@@ -194,9 +198,9 @@ const ViewFire = () => {
 
         const fetchData = async () => {
             try {
-                const febking_id = new URLSearchParams(window.location.search).get("id");
-                if (febking_id) {
-                    const response = await getFireBookingId.GetFireBookingId(febking_id);
+                const q_quotation_no = new URLSearchParams(window.location.search).get("id");
+                if (q_quotation_no) {
+                    const response = await getFireBookingId.GetFireBookingId(q_quotation_no);
                     setFireData(response.data[0]);
 
                     if (response.data && response.data.length > 0) {
@@ -205,13 +209,13 @@ const ViewFire = () => {
                         // Set form data based on fetched client details
                         setFormData({
                             client_id: response.data[0].client_id,
-                            firstName: response.data[0].firstName,
-                            address: response.data[0].address,
-                            email: response.data[0].email,
-                            gstNo: response.data[0].gstNo,
+                            client_firstName: response.data[0].client_firstName,
+                            client_address: response.data[0].client_address,
+                            client_email: response.data[0].client_email,
+                            client_gstNo: response.data[0].client_gstNo,
                             vendorCode: response.data[0].vendorCode,
                             poNo: response.data[0].poNo,
-                            mobileNo: response.data[0].mobileNo,
+                            client_mobileNo: response.data[0].client_mobileNo,
                             client_city: response.data[0].client_city,
                             client_state: response.data[0].client_state,
                             client_pincode: response.data[0].client_pincode,
@@ -219,21 +223,26 @@ const ViewFire = () => {
 
 
                         });
-                        setInputValue(response.data[0].firstName);
+                        setInputValue(response.data[0].client_firstName);
 
                         setValue("febking_id", response.data[0].febking_id);
-                        setValue("firstName", response.data[0].firstName);
-                        setValue("address", response.data[0].address);
-                        setValue("email", response.data[0].email);
-                        setValue("gstNo", response.data[0].gstNo);
-                        setValue("discount", response.data[0].discount);
-                        setValue("discount_amount", response.data[0].discount_amount || '');
-                        setValue("vendorCode", response.data[0].vendorCode);
-                        setValue("poNo", response.data[0].poNo);
-                        setValue("mobileNo", response.data[0].mobileNo);
-                        setMobileNoValue(response.data[0].mobileNo);
-                        setValue("whatsup_no", response.data[0].whatsup_no || ''); // Set whatsup_no in form
+                        setValue("client_id", response.data[0].client_id)
+                        setValue("client_firstName", response.data[0].client_firstName);
+                        setValue("client_address", response.data[0].client_client_address);
 
+                        setValue("client_email", response.data[0].client_client_email);
+                        setValue("client_gstNo", response.data[0].client_gstNo);
+                        setValue("vendorCode", response.data[0].vendorCode);
+
+                        setValue("poNo", response.data[0].poNo);
+                        setValue("mobileNo", response.data[0].client_mobileNo);
+                        setValue("discount", response.data[0].q_discount);
+                        setValue("discount_amount", response.data[0].q_discount_amount || '');
+                        setValue("client_city", response.data[0].client_city);
+                        setValue("client_state", response.data[0].client_state);
+                        setValue("client_pincode", response.data[0].client_pincode);
+                        setMobileNoValue(response.data[0].client_mobileNo);
+                        setValue("whatsup_no", response.data[0].whatsapp_no || '');
                     }
 
 
@@ -318,9 +327,9 @@ const ViewFire = () => {
     }, []);
 
 
-    const getTicketDetail = async (febking_id: string) => {
+    const getTicketDetail = async (q_quotation_no: string) => {
         try {
-            const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);
+            const getTDetail = await getFireBookingId.GetFireBookingId(q_quotation_no);
             setFireData(getTDetail.data[0]);
             setError("");
             console.log("Fire details", getTDetail.data[0]);
@@ -348,12 +357,12 @@ const ViewFire = () => {
             febking_total_cgst: '0.00',
             febking_final_amount: '0.00',
             client_id: "",
-            firstName: '',
+            client_firstName: '',
             discount: "",
             discount_amount: "",
-            address: '',
-            email: '',
-            gstNo: '',
+            client_address: '',
+            client_email: '',
+            client_gstNo: '',
             vendorCode: '',
             poNo: '',
             mobileNo: '',
@@ -484,30 +493,11 @@ const ViewFire = () => {
     }, [fireData, setValue]);
 
 
-
-    //-----------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
-
     //----------------------------------  ADD or Remove produtct data ---------------------------------------------------------
     const { fields, append, remove } = useFieldArray({
         control,
         name: 'product_data',
     });
-
-
-
-
-
-
-
-    //-------------------------------------------------------------------------------------------------------------------------
-
-
 
     //-----------------------------------------------get Client list -----------------------------------------------------------------
     const [mobileNoValue, setMobileNoValue] = useState<string>('');
@@ -531,21 +521,33 @@ const ViewFire = () => {
         }
     };
 
-    //--------------------------------------------------------------------------------------------------------------------------------------- 
-    // const [certificate, setcertificate] = useState<FormData[]>([]);
-    const router = useRouter();
-    const handlecertificate = async (id: number) => {
+    //-------------------------------------------------------------------------------------------------------------------------
 
+
+
+    const [paymentModel, setpaymentModel] = useState(false);
+    const [PaymentId, setPaymentId] = useState<number | null>(null);
+    const [Paymentdata, setPaymentdata] = useState<any[]>([]);
+
+
+    const handleFirePayment = async (q_quotation_no: number) => {
         try {
-            const response = await GetCertificateData.GetCertificateId(id.toString());
+            const response = await getFireBookingId.GetFireBookingId(q_quotation_no.toString());
 
-            // generateclientPDF(response.data[0]);
-            console.log("data", response.data[0]);
-            // handleclientPrint(response.data[0]);
+
+            console.log(">>>>>>", response.data[0].q_quotation_no);
+
+            setPaymentId(response.data[0].q_quotation_no);
+            setPaymentdata(response.data[0]);
+            setpaymentModel(true);
+
+
+
 
 
         } catch (error) {
-            console.error('Error fetching here:', error);
+            console.error('Error handling journey start:', error);
+            alert('Error occurred while handling payment journey.');
         }
     };
 
@@ -556,30 +558,39 @@ const ViewFire = () => {
 
 
 
-
-
-
-
-
-
-
     return (
-        <div className="container-fluid">
-            <div className="card mb-3">
-                <div className="card-header d-flex justify-content-between align-items-center">
-                    <h3>Update Fire Extinguisher</h3>
-                    <div>
-                        <Link href={`../Certificte?id=${fireData.febking_id}`} className="btn btn-sm btn-primary me-2">
-                            Create Certificate
-                        </Link>
-                        <Link href="/Fire/Fire-List" className="btn btn-sm btn-success">
-                            Back
-                        </Link>
-                    </div>
+        <div className="container" style={{ fontSize: "12px" }}>
+            <br />
+            <div className=" d-flex justify-content-between align-items-center">
+                <h4>View Fire Extinguisher Data</h4>
+                <div>
+
+
+                    <Link href={`../Certificte?id=${fireData.q_quotation_no}`} style={{ float: "right", marginRight: "8px", fontSize: "12px" }} className="btn btn-sm btn-primary me-2">
+                        Create Certificate
+                    </Link>
+
+                    <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "7px", fontSize: "12px" }} onClick={() => handleFirePayment(fireData.q_quotation_no)}>Payment</Button>
+
+
+                    <Link href="/Fire/Fire-List" style={{ float: "right", marginRight: "8px", fontSize: "12px" }} className="btn btn-sm btn-primary">
+                        Back
+                    </Link>
+
                 </div>
 
+                <FirePaymentModel
+                    show={paymentModel}
+                    handleClose={() => setpaymentModel(false)}
+                    paymentinitialData={Paymentdata}
+                    PaymentId={PaymentId} />
+            </div>
+            <br />
+            <div className="card mb-3 cardbox">
+
+
                 {fireData && (
-                    <div className="card-body">
+                    <div className="card-body" style={{ fontSize: "12px" }}>
                         <div className="row mb-3">
                             <div className="col-lg-6 col-md-12">
                                 <label>Invoice No:</label> <span>{fireData.febking_invoice_no}</span>
@@ -588,7 +599,7 @@ const ViewFire = () => {
 
                         <div className="row mb-3">
                             <div className="col-lg-6 col-md-12">
-                                <label className="form-label">Select Employees:</label> <span>{fireData.employee_names}</span>
+                                <label className="form-label"> Employees:</label> <span>{fireData.employee_name}</span>
                             </div>
                         </div>
 
@@ -642,63 +653,129 @@ const ViewFire = () => {
                         </div>
 
                         <div className="text-end mb-3">
-                            <h5>Final Amount: {fireData.febking_final_amount}</h5>
+                            <h5>Final Amount: {fireData.q_final_amount}</h5>
                         </div>
 
                         <div className="row mb-3">
                             <div className="col-lg-6 col-md-12">
-                                <label className="set_label">Discount:</label> <span>{fireData.febking_discount}</span>
+                                <label className="set_label">Discount:</label> <span>{fireData.q_discount}</span>
                             </div>
                             <div className="col-lg-6 col-md-12">
-                                <label className="set_label">Discount Amount:</label> <span>{fireData.febking_discount_amount}</span>
+                                <label className="set_label">Discount Amount:</label> <span>{fireData.q_discount_amount}</span>
                             </div>
                         </div>
+
+
 
                         <div className="row mb-3">
-                            <div className="col-lg-6 col-md-12">
-                                <label className="set_label">What's-up No:</label> <span>{fireData.whatsup_no}</span>
-                            </div>
-                        </div>
-
-                        <div className="row mb-4">
                             <div className="col-md-12">
                                 <h4>Client Details:</h4>
                                 <hr />
                             </div>
                         </div>
 
-                        <div className="row">
-                            <div className="col-lg-4 col-md-6 mb-3">
-                                <label className="form-label">Client Name:</label> <span>{formData.firstName}</span>
+                        <div className="row mb-3">
+                            <div className="col-lg-3 col-md-6 mb-3">
+                                <label className="form-label">Client Name:</label> <span>{formData.client_firstName}</span>
                             </div>
-                            <div className="col-lg-4 col-md-6 mb-3">
-                                <label className="form-label">Address:</label> <span>{formData.address}</span>
+                            <div className="col-lg-3 col-md-6 mb-3">
+                                <label className="form-label">client_address:</label> <span>{formData.client_address}</span>
                             </div>
-                            <div className="col-lg-4 col-md-6 mb-3">
+                            <div className="col-lg-3 col-md-6 mb-3">
                                 <label className="form-label">City:</label> <span>{formData.client_city}</span>
                             </div>
-                            <div className="col-lg-4 col-md-6 mb-3">
+                            <div className="col-lg-3 col-md-6 mb-3">
                                 <label className="form-label">State:</label> <span>{formData.client_state}</span>
                             </div>
-                            <div className="col-lg-4 col-md-6 mb-3">
+                            <div className="col-lg-3 col-md-6 mb-3">
                                 <label className="form-label">Pin-code:</label> <span>{formData.client_pincode}</span>
                             </div>
-                            <div className="col-lg-4 col-md-6 mb-3">
-                                <label className="form-label">Email-id:</label> <span>{formData.email}</span>
+                            <div className="col-lg-3 col-md-6 mb-3">
+                                <label className="form-label">client_email-id:</label> <span>{formData.client_email}</span>
                             </div>
-                            <div className="col-lg-4 col-md-6 mb-3">
-                                <label className="form-label">Gst-no:</label> <span>{formData.gstNo}</span>
+                            <div className="col-lg-3 col-md-6 mb-3">
+                                <label className="form-label">Gst-no:</label> <span>{formData.client_gstNo}</span>
                             </div>
-                            <div className="col-lg-4 col-md-6 mb-3">
+                            <div className="col-lg-3 col-md-6 mb-3">
                                 <label className="form-label">Vendor code:</label> <span>{formData.vendorCode}</span>
                             </div>
-                            <div className="col-lg-4 col-md-6 mb-3">
-                                <label className="form-label">P.o.No.:</label> <span>{formData.poNo}</span>
+
+                            <div className="col-lg-3 col-md-6 mb-3">
+                                <label className="form-label">Mobile No:</label> <span>{formData.client_mobileNo}</span>
                             </div>
-                            <div className="col-lg-4 col-md-6 mb-3">
-                                <label className="form-label">Mobile No:</label> <span>{formData.mobileNo}</span>
+                            <div className="col-lg-6 col-md-12">
+                                <label className="set_label">Whatsapp No:</label> <span>{fireData.whatsapp_no}</span>
                             </div>
                         </div>
+                        <div className="row mb-3">
+                            {fireData.payment_status && (
+                                <div className="col-lg-3 col-sm-6">
+                                    <label style={{ fontWeight: "bold" }} className="form-label">Payment Status : </label>
+                                    <span
+                                        style={{
+                                            fontWeight: "bold",
+                                            color: fireData.payment_status === "paid" ? "green" : "red"
+                                        }}
+                                    >
+                                        {fireData.payment_status}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {fireData.payment_details && fireData.payment_details.length > 0 && fireData.payment_details[0].id && (
+                            <>
+                                <div className="row mt-4">
+                                    <div className="col-md-6">
+                                        <h5>Payment Details:</h5>
+                                    </div>
+
+                                    <hr />
+                                </div>
+
+
+
+                                {fireData.payment_details.map((paymentDetail: any, index: any) => (
+                                    <div className="row mb-3" key={index}>
+                                        {paymentDetail.payment_method && (
+                                            <div className="col-lg-3 col-sm-6">
+                                                <label className="form-label">Payment Method:</label>
+                                                <span> {paymentDetail.payment_method}</span>
+                                            </div>
+                                        )}
+                                        {paymentDetail.payment_details && (
+                                            <div className="col-lg-3 col-sm-6">
+                                                <label className="form-label">Payment Details:</label>
+                                                <span> {paymentDetail.payment_details}</span>
+                                            </div>
+                                        )}
+                                        {paymentDetail.total_amount && (
+                                            <div className="col-lg-3">
+                                                <label className="form-label">Total  Amount:</label>
+                                                <span> {paymentDetail.total_amount}</span>
+                                            </div>
+                                        )}
+
+
+
+                                        {paymentDetail.actual_amount && (
+                                            <div className="col-lg-3">
+                                                <label className="form-label">Actual  Amount:</label>
+                                                <span> {paymentDetail.actual_amount}</span>
+                                            </div>
+                                        )}
+                                        {paymentDetail.paid_amount && (
+                                            <div className="col-lg-3">
+                                                <label className="form-label">Total Paid Amount:</label>
+                                                <span> {paymentDetail.paid_amount}</span>
+                                            </div>
+                                        )}
+
+                                    </div>
+                                ))}
+                            </>
+                        )}
+
                     </div>
                 )}
             </div>

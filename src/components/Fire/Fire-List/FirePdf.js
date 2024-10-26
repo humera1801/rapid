@@ -1,14 +1,11 @@
-import jsPDF from 'jspdf';
 import { toWords } from 'number-to-words';
+import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 export const FirePdf = async (formData, bankDetails) => {
     try {
-        const pageWidth = 210;
-        const margin = 5;
-
-
-
+        const pageWidth = 210; 
+        const margin = 10; 
 
         const groupedData = Object.entries(formData.service_data).reduce((acc, [key, products]) => {
             products.forEach(product => {
@@ -42,25 +39,21 @@ export const FirePdf = async (formData, bankDetails) => {
             `).join('')}
         `).join('');
 
+        // Create HTML content
         const html = `
             <html>
             <head>
                 <style>
-                    @media print {
-                        .no-print {
-                            display: none;
-                        }
-                    }
                     body {
                         font-family: Arial, sans-serif;
-                        
+                        margin: ${margin}mm;
                     }
                     .header {
                         display: flex;
                         align-items: center;
                         justify-content: space-between;
                         text-align: right;
-                        font-size: 18px;
+                        font-size: 14px;
                         margin-bottom: 5px;
                     }
                     .logo {
@@ -118,11 +111,13 @@ export const FirePdf = async (formData, bankDetails) => {
                 <div class="address">G/12, Swastik Chambers, Nr. Makarpura Bus Depot, Makarpura Road, Vadodara-390 010.</div>
                 <hr>
                 <h2 style="text-align: center;">Tax Invoice</h2>
-                <table>
-                    <tr><td rowspan=8 class="top-align">To, ${formData.firstName}<br>${formData.address}<br>${formData.client_city} - ${formData.client_state}<br>${formData.client_pincode}</td><td>Invoice No:</td><td>${formData.febking_invoice_no}</td></tr>
-                    <tr><td>Date:</td><td>${new Date().toLocaleDateString()}</td></tr>
-                    <tr><td>Order Date:</td><td>${formData.febking_created_at}</td></tr>
-                    <tr><td>Order No:</td><td>${formData.poNo}</td></tr>
+             <table>
+                    <tr><td rowspan=8 class="top-align">To, ${formData.client_firstName}<br>${formData.client_address}<br>${formData.client_city} - ${formData.client_state}<br>${formData.client_pincode}<br>Gst-No:${formData.gst_no}</td><td>Invoice No:</td><td>${formData.febking_invoice_no}</td></tr>
+                    <tr><td>Order No:</td><td>${formData.fedc_order_no}</td></tr>
+                    <tr><td>PonNo Date:</td><td>${formData.po_no_date}</td></tr>
+
+                    <tr><td>Receiver Challan Date:</td><td>${formData.ferc_date}</td></tr>
+                    <tr><td>Delivery Challan Date:</td><td>${formData.fedc_date}</td></tr>
                     <tr><td>Vendor Code:</td><td>${formData.vendorCode}</td></tr>
                     <tr><td>Contact Person:</td><td>${formData.firstName}</td></tr>
                     <tr><td>Contact No:</td><td>${formData.mobileNo}</td></tr>
@@ -149,14 +144,14 @@ export const FirePdf = async (formData, bankDetails) => {
                         <tr><td colspan="4">OUR GST NO: ${formData.bank_details.gst_no || 'N/A'}</td></tr>
                         <tr><td colspan="4">Our Bank Name: ${formData.bank_details.bnk_name} , Branch: ${formData.bank_details.bnk_branch}</td></tr>
                         <tr><td colspan="4">Account No: ${formData.bank_details.bnk_acc_no} , IFSC Code: ${formData.bank_details.bnk_ifsc_code}</td></tr>
-                        <tr><td colspan="4">${toWords(formData.febking_final_amount)} Only</td></tr>
+                        <tr><td colspan="4">${toWords(formData.q_final_amount)} Only</td></tr>
                         <tr>
                             <td colspan="3"></td>
-                            <td colspan="4" style="text-align: right;">Grand Total: ${formData.febking_final_amount}</td>
+                            <td colspan="4" style="text-align: right;">Grand Total: ${formData.q_final_amount}</td>
                         </tr>
                         <tr>
                             <td colspan="3" style="text-align: left;">Thank You<br>Prevention Is Better Than Cure</td>
-                            <td colspan="3" style="text-align: right;">For Rapid Fire Prevention<br><br><br>Proprietor</td>
+                            <td colspan="3" style="text-align: right;">RAPID GROUP<br><br><br>Proprietor</td>
                         </tr>
                     </table>
                 </div>
@@ -180,28 +175,31 @@ export const FirePdf = async (formData, bankDetails) => {
 
         const pdf = new jsPDF('p', 'mm', 'a4');
         const imgData = canvas.toDataURL('image/png');
-        pdf.addImage(imgData, 'PNG', margin, 8, 0, pageWidth, canvas.height * pageWidth / canvas.width);
 
+        const imgWidth = pageWidth - 2 * margin;
+        const imgHeight = canvas.height * imgWidth / canvas.width;
 
-        //------------------------------------------------
-        // for pdf download 
+        pdf.addImage(imgData, 'PNG', margin, 8, imgWidth, imgHeight);
 
+        //------Dowload pdf here-------------
 
-        // pdf.save('invoice.pdf');
-        //------------------------------------------
+              pdf.save('invoice.pdf');
+
+        //---------------------------------------
+
         const pdfBlob = pdf.output('blob');
 
         const pdfUrl = URL.createObjectURL(pdfBlob);
 
         const message = `Here is your invoice: ${pdfUrl}`;
-        const whatsappUrl = `https://wa.me/${formData.whatsup_no}?text=${encodeURIComponent(message)}`;
+        const whatsappUrl = `https://wa.me/${formData.whatsapp_no}?text=${encodeURIComponent(message)}`;
 
         window.open(whatsappUrl, '_blank');
 
-        // Optional: Revoke the object URL after use
         URL.revokeObjectURL(pdfUrl);
 
+
     } catch (error) {
-        console.error('Error generating PDF or sharing via WhatsApp:', error);
+        console.error('Error generating PDF:', error);
     }
 };

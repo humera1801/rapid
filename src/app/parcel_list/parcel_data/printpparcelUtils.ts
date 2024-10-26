@@ -172,8 +172,8 @@ console.log("invoice Amount",invoiceNos);
                         <tr>
                             <th colspan="2" width="30%" style="text-align: left;">SENDER</th>
                             <th colspan="2" width="30%" style="text-align: left;">RECEIVER</th>
-                            <td><b>Mode Of Payment</b></td>
-                            <td>${row.payment_method}</td>
+                            <th colspan="2"></th>
+                           
                         </tr>
                         <tr>
                             <td colspan="2" rowspan="5">

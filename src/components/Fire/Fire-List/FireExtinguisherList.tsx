@@ -9,6 +9,9 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faPencilSquare, faPlaneCircleCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
+
+
 import Link from 'next/link';
 import Header from '@/components/Dashboard/Header';
 import getListFireData from '@/app/Api/FireApis/FireExtinghsherList/getListFireData';
@@ -18,14 +21,17 @@ import { handleFireDataPrint } from "./printFireUtills.js";
 import "../../../../public/css/style.css";
 import { exportToFireListPDF } from './pdfFireList';
 import { exportToFireExcel } from './FireExcel';
+import date from '@/app/Api/FireApis/DataFilter/date';
+import getUserProfile from '@/app/Api/UserProfile';
 
 export interface User {
+    q_quotation_no:any;
     febking_id: any;
     client_email: any;
     febking_created_by: any;
     client_gstNo: any;
     fest_id: any;
-    febking_final_amount: string;
+    q_final_amount: string;
     client_firstName: string;
     client_address: string;
     email: string;
@@ -67,6 +73,19 @@ export interface User {
     }[];
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 const customStyle = {
     headRow: {
         style: {
@@ -92,26 +111,191 @@ const customStyle = {
 const FireExtinguisherList: React.FC = () => {
     const [records, setRecords] = useState<User[]>([]);
     const [columns, setColumns] = useState<any[]>([]);
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [originalRecords, setOriginalRecords] = useState<User[]>([]); // Holds original data
     const [visibleColumns, setVisibleColumns] = useState<string[]>([
         "Invoice No", "Name", "State/City", "Address", "Mobile No", "Actual Total", "Added By", "Action"
     ]);
 
+    const [userName, setUserName] = useState('');
+    const [userRoles, setUserRoles] = useState<string[]>([]);
+
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await getListFireData.getFireListData();
-
-
-                setOriginalRecords(res);
-
-
-                 setRecords(res);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-        };
-        fetchData();
+        const storedData = localStorage.getItem('userData');
+        if (storedData) {
+            const e_id = parseInt(storedData, 10);
+            getUserProfile(e_id)
+                .then((userData) => {
+                    setUserName(userData.e_name);
+                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                })
+                .then((roleResponse) => {
+                    const rolesData = roleResponse.data.data;
+                    if (rolesData && rolesData.length > 0) {
+                        setUserRoles(rolesData[0].e_task);
+                        console.log("role", rolesData[0].e_task);
+                    }
+                })
+                .catch((error) => {
+                    console.error('Failed to fetch user profile or roles:', error);
+                });
+        }
     }, []);
+
+
+
+
+
+    
+
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+
+    const handleClick = async () => {
+        if (startDate && endDate) {
+            await handlefilterdate(startDate, endDate);
+        } else {
+            alert('Please select both start and end dates.');
+        }
+    };
+
+
+
+    const getDateRange = () => {
+        const today = new Date();
+        const lastMonth = new Date();
+        const TillDate = new Date(today);
+
+        lastMonth.setMonth(today.getMonth() - 1);
+
+        TillDate.setDate(today.getDate() + 1);
+
+        const formatDate = (date: Date) => date.toISOString().split('T')[0];
+
+        return {
+            startDate: formatDate(lastMonth),
+            endDate: formatDate(TillDate),
+        };
+    };
+
+
+
+
+    useEffect(() => {
+        const today = new Date();
+        const lastMonth = new Date();
+        lastMonth.setMonth(today.getMonth() - 1);
+        lastMonth.setDate(1); 
+        const formatDate = (date: Date) => date.toISOString().split('T')[0];
+        setStartDate(formatDate(lastMonth));
+        setEndDate(formatDate(today)); 
+        fetchAllData();
+    }, []);
+
+
+
+
+
+
+
+
+
+
+
+    const fetchAllData = async () => {
+        const { startDate, endDate } = getDateRange();
+
+        try {
+            const data = await date.getFilterdate(startDate, endDate);
+            console.log(data.data);
+
+            setRecords(data.data);
+            setOriginalRecords(data.data)
+
+        } catch (error) {
+            console.error('Error fetching all data:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchAllData();
+    }, []);
+
+
+
+    const handlefilterdate = async (startdate: string, enddate: string) => {
+        try {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            if (start > end) {
+                alert('End date must be greater than start date');
+                return;
+            }
+
+            if (start.getTime() === end.getTime()) {
+                alert('Start date and end date cannot be the same');
+                return;
+            }
+
+            const response = await date.getFilterdate(startDate, endDate);
+            setRecords(response.data);
+        } catch (error) {
+        }
+    };
+
+
+
+
+    const handleClearFilter = async () => {
+        setStartDate('');
+        setEndDate('');
+
+        try {
+            const data = await date.getFilterdate();
+            setRecords(data.data);
+            console.log('All data fetched:', data.data);
+        } catch (error) {
+            console.error('Error fetching all data:', error);
+        }
+    };
+
+
+    const getTodayDate = (): string => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+
+    const handleTodayList = async () => {
+        const today = getTodayDate();
+
+        try {
+            const data = await date.getFilterdate(today);
+            setRecords(data.data);
+            console.log('Filtered data for today:', data.data);
+        } catch (error) {
+            console.error('Error fetching filtered data for today:', error);
+        }
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     useEffect(() => {
         const newColumns = [
@@ -146,7 +330,7 @@ const FireExtinguisherList: React.FC = () => {
             },
             visibleColumns.includes('Actual Total') && {
                 name: "Actual Total",
-                selector: (row: User) => row.febking_final_amount,
+                selector: (row: User) => row.q_final_amount,
                 sortable: true,
             },
             visibleColumns.includes('Added By') && {
@@ -158,37 +342,45 @@ const FireExtinguisherList: React.FC = () => {
                 name: "Action",
                 cell: (row: User) => (
                     <div className='action-buttons'>
-                        <button className="btn btn-sm btn-success" style={{ color: '#ffffff' }} onClick={() => handleFireShareClick(row.febking_id)}>Share</button>
-                        <button className="btn btn-sm btn-info" style={{ color: '#ffffff' }} onClick={() => handleFirePrintClick(row.febking_id)}>Print</button>
-                        <Link href={`Fire-List/FireView?id=${row.febking_id}`} className="btn btn-sm btn-warning" style={{ color: '#ffffff' }}>
-                            <FontAwesomeIcon icon={faEye} />
-                        </Link>
-                        <Link href={`Fire-List/Edit?id=${row.febking_id}`} className="btn btn-sm btn-primary">
-                            <FontAwesomeIcon icon={faPencilSquare} />
-                        </Link>
-                        <Link href={""} className="btn btn-sm btn-danger" style={{ cursor: 'pointer', color: '#ffffff' }}>
-                            <FontAwesomeIcon icon={faTrash} />
-                        </Link>
+                        <button className="btn btn-sm btn-success" style={{ color: '#ffffff' , fontSize:"10px" }} onClick={() => handleFireShareClick(row.q_quotation_no)}>Share</button>
+                        <button className="btn btn-sm btn-info" style={{ color: '#ffffff' , fontSize:"10px"}} onClick={() => handleFirePrintClick(row.q_quotation_no)}>Print</button>
+                        {userRoles.includes('fireExtinguisherBooking_view') && (
+                            <Link href={`Fire-List/FireView?id=${row.q_quotation_no}`} className="btn btn-sm btn-warning" >
+                                <FontAwesomeIcon icon={faEye} />
+                            </Link>
+                        )}
+                        {/* {userRoles.includes('fireExtinguisherBooking_update') && (
+                            <Link href={`Fire-List/Edit?id=${row.febking_id}`} className="btn btn-sm btn-primary">
+                                <FontAwesomeIcon icon={faPencilSquare} />
+                            </Link>
+                        )} */}
+                        {userRoles.includes('fireExtinguisherBooking_delete') && (
+                            <Link href={""} className="btn btn-sm btn-danger" style={{ cursor: 'pointer', color: '#ffffff' }}>
+                                <FontAwesomeIcon icon={faTrash} />
+                            </Link>
+                        )}
                     </div>
                 ),
             },
         ].filter(Boolean);
 
         setColumns(newColumns);
-    }, [visibleColumns]);
+    }, [visibleColumns , userRoles]);
 
-    const handleFirePrintClick = async (febking_id: string) => {
+    const handleFirePrintClick = async (q_quotation_no: string) => {
         try {
-            const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);
+            const getTDetail = await getFireBookingId.GetFireBookingId(q_quotation_no);
             handleFireDataPrint(getTDetail.data[0]);
+            console.log(getTDetail.data[0].client_firstName);
+            
         } catch (error) {
             console.error("Error fetching ticket data:", error);
         }
     };
 
-    const handleFireShareClick = async (febking_id: string) => {
+    const handleFireShareClick = async (q_quotation_no: string) => {
         try {
-            const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);
+            const getTDetail = await getFireBookingId.GetFireBookingId(q_quotation_no);
             FirePdf(getTDetail.data[0]);
         } catch (error) {
             console.error("Error fetching ticket data:", error);
@@ -237,8 +429,6 @@ const FireExtinguisherList: React.FC = () => {
             });
     };
 
-    const [searchTerm, setSearchTerm] = useState<string>('');
-    const [originalRecords, setOriginalRecords] = useState<User[]>([]); // Holds original data
 
 
     const handleFilter = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -254,7 +444,7 @@ const FireExtinguisherList: React.FC = () => {
         setRecords(newData);
     };
 
-    const [entriesPerPage, setEntriesPerPage] = useState<number>(10); 
+    const [entriesPerPage, setEntriesPerPage] = useState<number>(10);
 
     const handleEntriesPerPageChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         setEntriesPerPage(parseInt(event.target.value, 10));
@@ -269,20 +459,36 @@ const FireExtinguisherList: React.FC = () => {
             <Header />
             <div className="container-fluid mt-3">
                 <div className="card mb-3" style={{ width: 'auto' }}>
-                    <div className="card-header">
-                        <h4>Fire Extinguisher List</h4>
+
+                    <div className="card-header d-flex justify-content-between align-items-center">
+                        <h4 className="mb-0">Fire Extinguisher List</h4>
+                        <div className="d-flex align-items-center gap-3">
+                            <div className="d-flex align-items-center gap-2">
+                                <div className="d-flex flex-column">
+                                    <label style={{ fontSize: "12px" }} htmlFor="start-date" className="form-label mb-0">Start Date:</label>
+                                    <input style={{ fontSize: "12px" }} type="date" id="start-date" name="start-date"
+                                        value={startDate}
+                                        onChange={(e) => setStartDate(e.target.value)} className="form-control" />
+                                </div>
+                                <div className="d-flex flex-column ms-3">
+                                    <label style={{ fontSize: "12px" }} htmlFor="end-date" className="form-label mb-0">End Date:</label>
+                                    <input style={{ fontSize: "12px" }} type="date" id="end-date" name="end-date"
+                                        value={endDate}
+                                        onChange={(e) => setEndDate(e.target.value)} className="form-control" />
+                                </div>
+                            </div>
+                            <div className="d-flex align-items-center gap-2" style={{ marginTop: "22px" }}>
+                                <button style={{ fontSize: "12px" }} onClick={handleClick} className="btn btn-primary btn-sm" >
+                                    <FontAwesomeIcon icon={faFilter} />
+
+                                </button>
+                                <button style={{ fontSize: "12px" }} className="btn btn-success btn-sm" onClick={handleTodayList} >Today List</button>
+                                <button style={{ fontSize: "12px" }} onClick={handleClearFilter} className="btn btn-danger btn-sm" >Clear Filter</button>
+                            </div>
+                        </div>
                     </div>
                     <div className="table-options">
-                        {/* <div className="entries-selector">
-                            <label htmlFor="entries">Show </label>
-                            <select id="entries" value={entriesPerPage} onChange={handleEntriesPerPageChange}>
-                                <option value={10}>10</option>
-                                <option value={25}>25</option>
-                                <option value={50}>50</option>
-                                <option value={100}>100</option>
-                            </select>
-                            <span> entries</span>
-                        </div> */}
+
                         <div className="action-buttons">
                             <button className="pdf-button" onClick={handleFireListGeneratePDF}>PDF</button>
                             <button className="excel-button" onClick={handleFireExcelExport}>Excel</button>
@@ -291,7 +497,7 @@ const FireExtinguisherList: React.FC = () => {
                                 Column visibility
                             </button>
                         </div>
-                        <div id="column-visibility-menu" className="column-visibility-menu"  style={{marginLeft:"17%" , marginTop:"23%"}}>
+                        <div id="column-visibility-menu" className="column-visibility-menu" style={{ marginLeft: "17%", marginTop: "23%" }}>
                             {["Invoice No", "Name", "State/City", "Address", "Mobile No", "Actual Total", "Added By", "Action"].map(option => (
                                 <div key={option}>
                                     <input

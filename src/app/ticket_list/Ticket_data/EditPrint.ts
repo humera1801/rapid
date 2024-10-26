@@ -1,63 +1,47 @@
 // printUtils.ts
 
-type FormData = {
+export interface User {
+    tkt_no: string;
+    name: string;
     from_state_name: string;
-    to_state_name: string;
     from_city_name: string;
+    to_state_name: string;
     to_city_name: string;
-    ticket_id: string,
-    from_state: string,
-    travel_from: string,
-    to_state: string,
-    travel_to: string,
-    bus_type: string,
-    ticket_no: string,
     bdate: string;
     jdate: string;
-    mobile_no: string;
-    name: string;
-    cmp_name: string;
+    final_total_amount: string;
+    print_final_total_amount: string;
+    added_by_name: string;
+    mobile: string;
     cmp_mobile: string;
-    booking_type: 'seater' | 'sleeper' | 'both';
-    is_duplicate: boolean;
-    is_extra: boolean;
-    slr: number;
-    slr_rate: number;
-    slr_total_amount: number;
-    slr_print_rate: number;
-    slr_total_print_rate: number;
-    st: number;
-    st_rate: number;
-    st_total_amount: number;
-    st_print_rate: number;
-    st_total_print_rate: number;
-    ex: number; ex_rate: number;
-    ex_total_amount: number;
-    ex_print_rate: number;
+    bus_type: string,
+    bus_name: string;
+    payment_method: string;
+    bus_no: string;
     st_no: string;
     sI_no: string;
-    ex_total_print_rate: number;
-    rep_time: string;
-    dep_time: string;
-    bus_name: string;
-    bus_no: string;
-    boarding: string;
-    payment_method: string;
-    final_total_amount: number;
     ticket_actual_total: number;
-    print_final_total_amount: number;
+    boarding: string;
+    rep_time: string;
+    remarks: string;
+    slr: number;
+    st: number;
+    ex: number;
+    cmp_name: string;
+    ex_rate: number;
+    slr_rate: number;
+    st_rate: number;
+    st_print_rate:any;
+    slr_print_rate:any;
+    ex_print_rate:any;
     paid_amount: number;
     remaining_amount: number;
-    print_paid_amount: number;
-    print_remaining_amount: number;
-    remarks: string;
-    user_id: any;
-    received: 'Get'
-    tkt_no: string;
-    added_by_name: string;
-  };
+    mobileNo:any;
+    firstName:any;
+    dep_time:any;
+}
 
-const handleUpdatePrint = (row: FormData) => {
+const handleUpdatePrint = (row: User) => {
 
 
     const stNo = Number(row.slr);
@@ -69,11 +53,9 @@ const handleUpdatePrint = (row: FormData) => {
     // Calculate the sum
     const totalSum = stNo + siNo + ex;
 
-    const totalRate = Number(row.ex_rate) + Number(row.slr_rate) + Number(row.st_rate);
+    const totalRate = Number(row.ex_print_rate) + Number(row.slr_print_rate) + Number(row.st_print_rate);
 
 
-    console.log("data",row.from_city_name);
-    
 
 
     const printableContent = `
@@ -128,16 +110,16 @@ const handleUpdatePrint = (row: FormData) => {
                     </tr>
                     <tr>
                         <td><b>Name:</b></td>
-                        <td colspan="2">${row.name}</td>
-                        <td><b>Firm Name:</b></td>
+                        <td colspan="2">${row.firstName}</td>
+                        <td><b>Company Name:</b></td>
                         <td colspan="2">${row.cmp_name}</td>
                         <td><b>B. Date:</b></td>
                         <td>${row.bdate}</td>
                     </tr>
                     <tr>
                         <td><b>No:</b></td>
-                        <td colspan="2">${row.mobile_no}</td>
-                        <td><b>No:</b></td>
+                        <td colspan="2">${row.mobileNo}</td>
+                        <td><b>Company No:</b></td>
                         <td colspan="2">${row.cmp_mobile}</td>
                         <td><b>J. Date:</b></td>
                         <td>${row.jdate}</td>
@@ -147,10 +129,9 @@ const handleUpdatePrint = (row: FormData) => {
                         <td>${row.bus_type}</td>
                         <td><b>Bus Name:</b></td>
                         <td>${row.bus_name}</td>
-                        <td><b>Bus No:</b></td>
-                        <td>${row.bus_no}</td>
-                        <td><b>Payment Mode:</b></td>
-                        <td>${row.payment_method}</td>
+                        <td colspan="2" ><b>Bus No:</b></td>
+                        <td  colspan="2">${row.bus_no}</td>
+                       
                     </tr>
                     <tr>
                         <td><b>T. Pax:</b></td>
@@ -164,11 +145,8 @@ const handleUpdatePrint = (row: FormData) => {
                         <td><b>Rate:</b></td>
                         <td>${totalRate}</td>
                         <td><b>Total Amt:</b></td>
-                        <td>${row.final_total_amount}</td>
-                        <td><b>Adv:</b></td>
-                        <td>${row.paid_amount}</td>
-                        <td><b>Bal:</b></td>
-                        <td>${row.remaining_amount}</td>
+                        <td>${row.print_final_total_amount}</td>
+                       
                     </tr>
                     <tr>
                         <td><b>Boarding at:</b></td>
@@ -176,7 +154,7 @@ const handleUpdatePrint = (row: FormData) => {
                         <td><b>Reporting Time:</b></td>
                         <td colspan="2">${row.rep_time}</td>
                         <td><b>Journey Time:</b></td>
-                        <td>${row.jdate}</td>
+                        <td>${row.dep_time}</td>
                     </tr>
                     <tr>
                         <td><b>Remark:</b></td>

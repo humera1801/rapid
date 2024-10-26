@@ -140,7 +140,7 @@ export const generateclientPDF = async (formData) => {
         <div class="header">
             <div class="logo">
                 <img src="https://prolificdemo.com/dev_rapid_group/assets/theme/admin/logo/rapid_logo_black.png"
-                    alt="Rapid Fire Prevention Logo">
+                    alt="RAPID GROUP Logo">
             </div>
             <div class="address">
                 <div>8866396939, 9106077411</div>
@@ -185,8 +185,8 @@ export const generateclientPDF = async (formData) => {
                     Yours Faithfully,
                 </p>
                 <div class="yours">
-                    <div>(shravan Pillai)</div>
-                    <div>RAPID FIRE PREVENTION</div>
+                                       <div>RAPID Group</div>
+
                 </div>
             </div>
 

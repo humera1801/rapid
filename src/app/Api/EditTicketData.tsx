@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Dev URL
-const baseURL = 'http://192.168.0.100:3001';
+const baseURL = 'http://192.168.0.105:3001';
 
 
 
@@ -12,6 +12,7 @@ export default {
     try {
       const response: AxiosResponse = await axios.post(baseURL + '/ticket/get_ticket_booking_detail_data', {
         ticket_token: tickettoken,
+        
         headers: {
           'Accept': 'application/json',
           // 'Content-Type': 'application/json',

@@ -46,6 +46,7 @@ export interface FormData {
     poNo: string;
     service_data: Record<any, ProductData[]>;
     employee: any;
+    client_id_proof: any
 }
 
 interface ProductData {
@@ -62,6 +63,7 @@ interface ProductData {
     febd_sgst_amount: any;
     febd_cgst_amount: any;
     feb_id: string;
+    febd_sr_no: any,
 
 }
 
@@ -102,6 +104,8 @@ interface ClientData {
     client_pincode: string;
     poNo: string;
     vendorCode: string;
+
+
 }
 
 interface Client {
@@ -167,7 +171,7 @@ const EditFormData = () => {
 
     const [fireData, setFireData] = useState<any>("");
     const [error, setError] = useState<string>('');
-    // const [employeeNames, setEmployeeNames] = useState<Employee[]>([]);
+    const [imageName, setImageName] = useState<string>('');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -202,7 +206,7 @@ const EditFormData = () => {
                         setValue("firstName", response.data[0].firstName);
                         setValue("address", response.data[0].address);
                         setValue("email", response.data[0].email);
-                        setValue("gstNo", response.data[0].gstNo);
+                        setValue("gstNo", response.data[0].client_gstNo);
                         setValue("vendorCode", response.data[0].vendorCode);
                         setValue("poNo", response.data[0].poNo);
                         setValue("mobileNo", response.data[0].mobileNo);
@@ -214,6 +218,7 @@ const EditFormData = () => {
                         setMobileNoValue(response.data[0].mobileNo);
                         setValue("whatsup_no", response.data[0].whatsup_no || '');
                         setWMobileNoValue(response.data[0].whatsup_no);
+
 
 
                     }
@@ -295,6 +300,7 @@ const EditFormData = () => {
 
     const addProductDataForService = (serviceId: any) => {
         const newProductData: ProductData = {
+            febd_sr_no: '',
             feit_hsn_code: "",
             feit_id: "",
             qty: 1,
@@ -306,7 +312,8 @@ const EditFormData = () => {
             totalAmount: 0,
             capacity: "",
             febd_sgst: "",
-            febd_cgst: ""
+            febd_cgst: "",
+
         };
         setValue(`service_data.${serviceId}`, [...(getValues(`service_data.${serviceId}`) || []), newProductData]);
     };
@@ -351,6 +358,7 @@ const EditFormData = () => {
             poNo: '',
             mobileNo: '',
             whatsup_no: '',
+
         }
     });
 
@@ -489,6 +497,10 @@ const EditFormData = () => {
             setValue("client_city", selectedClient.client_city);
             setValue("client_state", selectedClient.client_state);
             setValue("client_pincode", selectedClient.client_pincode);
+
+
+
+
             setMobileNoValue(selectedClient.client_mobileNo); // Update mobileNoValue state
         }
     };
@@ -705,8 +717,10 @@ const EditFormData = () => {
         console.log("Filtered Form Data:", finalData);
 
         try {
-            const response = await axios.post('http://192.168.0.100:3001/booking/edit_fire_extingusher_booking_detail', finalData);
+            const response = await axios.post('http://192.168.0.105:3001/booking/edit_fire_extingusher_booking_detail', finalData);
             console.log('Data submitted successfully:', response.data);
+            console.log(fireData.febking_id);
+
 
             if (fireData?.febking_id) {
                 const febking_id = fireData.febking_id;
@@ -758,20 +772,23 @@ const EditFormData = () => {
 
 
     return (
-        <div className="container-fluid">
+        <div className="container" style={{ fontSize: "12px" }}>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="card">
-                    <div className="card-header d-flex justify-content-between align-items-center">
-                        <h3>Update Fire Extinguisher </h3>
+                <br />
+                <div className="d-flex justify-content-between align-items-center">
+                    <h4>Update Fire Extinguisher </h4>
 
-                        <div>
+                    <div>
 
 
-                            <Link href="/Fire/Fire-List" className="btn btn-sm btn-success">
-                                Back
-                            </Link>
-                        </div>
+                        <Link href="/Fire/Fire-List" className="btn btn-sm btn-primary">
+                            Back
+                        </Link>
                     </div>
+                </div>
+                <br />
+                <div className="card cardbox">
+
                     {fireData && (
                         <div className="card-body">
 
@@ -1105,8 +1122,7 @@ const EditFormData = () => {
 
                             <div className="row mt-4">
                                 <div className="col-md-12">
-                                    <h5>Client Details:</h5>
-                                </div>
+      <h6>Client Details:</h6>                                </div>
                                 <hr />
                             </div>
 
@@ -1211,8 +1227,9 @@ const EditFormData = () => {
                                     {errors?.client_pincode?.type === "minLength" && <span className="error">Enter valid Pin-code number. </span>}
                                     {errors?.client_pincode?.type === "maxLength" && <span className="error">Enter valid Pin-code number .</span>}
                                 </div>
-
-                                <div className="col-lg-4">
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-lg-3">
                                     <label className="form-label" htmlFor="email">Email-id</label>
                                     <input
                                         {...register("email", { required: true })}
@@ -1222,7 +1239,7 @@ const EditFormData = () => {
                                     />
                                 </div>
 
-                                <div className="col-lg-4">
+                                <div className="col-lg-3">
                                     <label className="form-label" htmlFor="gstNo">Gst-no</label>
                                     <input
                                         {...register("gstNo", { required: true })}
@@ -1232,7 +1249,7 @@ const EditFormData = () => {
                                     />
                                 </div>
 
-                                <div className="col-lg-4">
+                                <div className="col-lg-3">
                                     <label className="form-label" htmlFor="vendorCode">Vendor code</label>
                                     <input
                                         {...register("vendorCode")}
@@ -1243,7 +1260,7 @@ const EditFormData = () => {
                                     />
                                 </div>
 
-                                <div className="col-lg-4">
+                                <div className="col-lg-3">
                                     <label className="form-label" htmlFor="poNo">P.o.No.</label>
                                     <input
                                         {...register("poNo")}
@@ -1253,7 +1270,8 @@ const EditFormData = () => {
                                         placeholder="P.o.No."
                                     />
                                 </div>
-
+                            </div>
+                            <div className="row mb-3">
                                 <div className="col-lg-4">
                                     <label className="form-label" htmlFor="mobileNo">Mobile No</label>
                                     <input
@@ -1274,15 +1292,19 @@ const EditFormData = () => {
                                     {errors?.mobileNo?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
                                     {errors?.mobileNo?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
                                 </div>
+
+
+
+
                             </div>
 
 
 
 
 
-                            <div className="row mb-3">
-                                <div className="col-12">
-                                    <button type="submit" className="btn btn-primary">
+                            <div className="row">
+                                <div className="text-center">
+                                    <button className="btn btn-success btn-sm"  type="submit" id="save_ticket" name="save_form" >
                                         Update
                                     </button>
                                 </div>
@@ -1293,7 +1315,7 @@ const EditFormData = () => {
 
 
             </form >
-        </div>
+        </div >
     );
 };
 

@@ -9,54 +9,53 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import axios from 'axios';
 import { debounce } from 'lodash';
 import React, { useEffect, useState } from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useFieldArray, useForm, SubmitHandler } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
-import Select from 'react-select';
-import {generateUpdatePDF} from './Invoice/EditPdf.js'
+import { generateEditReceiverChallanPDF } from "../ReceiverChallan/ReceiverPdf/UpdateReceiver.js"
+import GetChallanList from '@/app/Api/FireApis/ReceiverChallan/GetChallanList';
+import Link from 'next/link.js';
 
 export interface FormData {
-    febking_id: any;
-    febking_total_sgst: any;
-    febking_total_cgst: any;
-    febking_entry_type: 1;
-    febking_created_by: any;
-    febking_final_amount: any;
-    fest_id: any;
-    febking_total_amount: string;
+    ferc_id: any;
+    ferc_created_by: any;
+    q_final_amount: string;
+    q_total_amount: string;
     firstName: string;
     address: string;
-    email: string;
-    gstNo: string;
-    mobileNo: string;
     client_city: string;
     client_state: string;
     client_pincode: string;
+    email: string;
+    ferc_date: any;
+    gstNo: string;
+    mobileNo: string;
     vendorCode: string;
-    client_id: any,
-    city: string;
-    state: string;
-    pincode: string;
+    ferc_dispatch_through: any;
+    ferc_driver_name: any;
+    ferc_driver_mobile_no: any;
+    ferc_vehicle_no: any;
+    ferc_driving_license: any;
+    client_id: any;
     invNo: string;
-    discount: any;
-    discount_amount: any;
-    whatsup_no: any;
     certificateNo: string;
     poNo: string;
-    product_data: ProductData[];
+    discount: string;
+    discount_amount: string;
+    ferc_whatsapp_no: string;
+    employee: any;
+    ferc_order_no: any;
+    service_data: {
+        fercd_quantity: any;
+        fercd_capacity: string;
+        feit_id: any;
+        feb_id: string;
+    }[];
 }
 
 interface ProductData {
-    id: any;
-    qty: any;
-    rate: any;
-    totalAmount: any;
-    hsnCode: string;
-    capacity: string;
+    fercd_quantity: any;
+    fercd_capacity: string;
     feit_id: any;
-    febd_sgst: any;
-    febd_cgst: any;
-    febd_sgst_amount: any;
-    febd_cgst_amount: any;
     feb_id: string;
 }
 
@@ -121,7 +120,7 @@ interface CapacityData {
     fec_capacity: string;
 }
 
-const EditFormData = () => {
+const EditReceiverChallan = () => {
 
     //-------------------------------------------------------------------------------------------------------------------------------------
 
@@ -161,9 +160,9 @@ const EditFormData = () => {
 
         const fetchData = async () => {
             try {
-                const febking_id = new URLSearchParams(window.location.search).get("id");
-                if (febking_id) {
-                    const response = await getFireBookingId.GetFireBookingId(febking_id);
+                const ferc_id = new URLSearchParams(window.location.search).get("id");
+                if (ferc_id) {
+                    const response = await GetChallanList.GetReceiverChallanBookingId(ferc_id);
                     setFireData(response.data[0]);
                     console.log("discount", response.data[0].discount);
 
@@ -174,8 +173,8 @@ const EditFormData = () => {
                         setFormData({
                             client_id: response.data[0].client_id,
                             firstName: response.data[0].firstName,
-                            address: response.data[0].address,
-                            email: response.data[0].email,
+                            address: response.data[0].client_address,
+                            email: response.data[0].client_email,
                             gstNo: response.data[0].gstNo,
                             vendorCode: response.data[0].vendorCode,
                             poNo: response.data[0].poNo,
@@ -186,11 +185,18 @@ const EditFormData = () => {
                         });
                         setInputValue(response.data[0].firstName);
 
-                        setValue("febking_id", response.data[0].febking_id);
+                        setValue("ferc_id", response.data[0].ferc_id);
+                        setValue("ferc_date", response.data[0].ferc_date);
+                        setValue("ferc_order_no", response.data[0].ferc_order_no);
+                        setValue("ferc_dispatch_through", response.data[0].ferc_dispatch_through);
+                        setValue("ferc_driver_name", response.data[0].ferc_driver_name);
+                        setValue("ferc_driver_mobile_no", response.data[0].ferc_driver_mobile_no);
+                        setValue("ferc_vehicle_no", response.data[0].ferc_vehicle_no);
+                        // setValue("ferc_driving_license", response.data[0].ferc_driving_license);
+                        setValue("email", response.data[0].client_email)
                         setValue("client_id", response.data[0].client_id)
                         setValue("firstName", response.data[0].firstName);
-                        setValue("address", response.data[0].address);
-                        setValue("email", response.data[0].email);
+                        setValue("address", response.data[0].client_address);
                         setValue("gstNo", response.data[0].gstNo);
                         setValue("vendorCode", response.data[0].vendorCode);
                         setValue("poNo", response.data[0].poNo);
@@ -201,24 +207,15 @@ const EditFormData = () => {
                         setValue("client_state", response.data[0].client_state);
                         setValue("client_pincode", response.data[0].client_pincode);
                         setMobileNoValue(response.data[0].mobileNo);
-                        setValue("whatsup_no", response.data[0].whatsup_no || ''); // Set whatsup_no in form
-                        setWMobileNoValue(response.data[0].whatsup_no);
+                        setValue("ferc_whatsapp_no", response.data[0].ferc_whatsapp_no || '');
+                        setWMobileNoValue(response.data[0].ferc_whatsapp_no);
+                        setDriMobileNoValue(response.data[0].ferc_driver_mobile_no);
+
 
                     }
 
 
-                    // Assuming you get an array of selected fest_ids
-                    const selectedFestIds: number[] = response.data[0].fest_id || []; // Modify based on your actual response
-                    console.log("dfsadf", response.data[0].fest_id);
 
-                    // Set services with proper selected state
-                    setServices((prevServices) =>
-                        prevServices.map(service =>
-                            selectedFestIds.includes(service.fest_id)
-                                ? { ...service, selected: true }
-                                : service
-                        )
-                    );
 
 
 
@@ -235,9 +232,9 @@ const EditFormData = () => {
         };
         const handleURLChange = () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const febking_id = urlParams.get("id");
-            if (febking_id) {
-                getTicketDetail(febking_id);
+            const ferc_id = urlParams.get("id");
+            if (ferc_id) {
+                getTicketDetail(ferc_id);
             } else {
                 setFireData(null);
             }
@@ -251,9 +248,9 @@ const EditFormData = () => {
     }, []);
 
 
-    const getTicketDetail = async (febking_id: string) => {
+    const getTicketDetail = async (ferc_id: string) => {
         try {
-            const getTDetail = await getFireBookingId.GetFireBookingId(febking_id);
+            const getTDetail = await GetChallanList.GetReceiverChallanBookingId(ferc_id);
             setFireData(getTDetail.data[0]);
             setError("");
             console.log("Fire details", getTDetail.data[0]);
@@ -271,18 +268,20 @@ const EditFormData = () => {
 
     const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>({
         defaultValues: {
-            febking_id: fireData.febking_id || '',
-            febking_created_by: storedData,
-            febking_entry_type: 1,
-            fest_id: "",
-            product_data: [],
-            febking_total_amount: '0.00',
-            febking_total_sgst: '0.00',
-            febking_total_cgst: '0.00',
-            febking_final_amount: '0.00',
+            ferc_id: fireData.ferc_id || '',
+            ferc_created_by: storedData,
+            service_data: [],
             client_id: "",
             discount: "",
             discount_amount: "",
+            ferc_driving_license: "",
+            ferc_date: "",
+            ferc_order_no: "",
+            ferc_whatsapp_no: "",
+            ferc_dispatch_through: "",
+            ferc_driver_name: "",
+            ferc_driver_mobile_no: "",
+            ferc_vehicle_no: "",
             firstName: '',
             address: '',
             email: '',
@@ -290,7 +289,6 @@ const EditFormData = () => {
             vendorCode: '',
             poNo: '',
             mobileNo: '',
-            whatsup_no: '',
         }
     });
 
@@ -298,26 +296,19 @@ const EditFormData = () => {
     //-----------------------------------------get data ----------------------------------------------------------------------------
     useEffect(() => {
         // Populate form fields when fireData changes
-        if (fireData && fireData.product_data && fireData.product_data.length > 0) {
-            const initialProductData = fireData.product_data.map((product: any) => ({
-                id: product.id,
-                qty: product.qty,
-                rate: product.rate,
-                totalAmount: product.totalAmount,
-                hsnCode: product.feit_hsn_code,
-                capacity: product.capacity,
+        if (fireData && fireData.service_data && fireData.service_data.length > 0) {
+            const initialProductData = fireData.service_data.map((product: any) => ({
+                fercd_quantity: product.fercd_quantity,
+
+                fercd_capacity: product.fercd_capacity,
                 feit_id: product.feit_id,
-                febd_sgst: product.febd_sgst,
-                febd_cgst: product.febd_cgst,
-                febd_sgst_amount: product.febd_sgst_amount,
-                febd_cgst_amount: product.febd_cgst_amount,
+
                 feb_id: product.feb_id,
             }));
 
 
 
-            setValue('product_data', initialProductData);
-            calculateActualTotal();
+            setValue('service_data', initialProductData);
         }
     }, [fireData, setValue]);
 
@@ -350,10 +341,10 @@ const EditFormData = () => {
                 setBrands(response);
 
                 // Assuming you have fireData containing the initial data from API
-                if (fireData && fireData.product_data && fireData.product_data.length > 0) {
-                    const initialBrandId = fireData.product_data[0].feb_id; // Adjust this according to your data structure
+                if (fireData && fireData.service_data && fireData.service_data.length > 0) {
+                    const initialBrandId = fireData.service_data[0].feb_id; // Adjust this according to your data structure
                     setSelectedBrandId(initialBrandId);
-                    setValue('product_data.0.feb_id', initialBrandId); // Set initial value to react-hook-form
+                    setValue('service_data.0.feb_id', initialBrandId); // Set initial value to react-hook-form
                 }
             } catch (error) {
                 console.error('Error fetching brands:', error);
@@ -369,7 +360,7 @@ const EditFormData = () => {
 
     const handleChangeBrand = (index: number) => (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedBrandId = e.target.value;
-        setValue(`product_data.${index}.feb_id`, selectedBrandId);
+        setValue(`service_data.${index}.feb_id`, selectedBrandId);
     };
 
     //---------------------------------------------------get ingredient data---------------------------------------------------------------
@@ -384,21 +375,18 @@ const EditFormData = () => {
                 const response = await GetIngredientList.getIngrediant();
                 setIngredients(response);
 
-                // Check if fireData has product_data and set initial HSN Code
-                if (fireData && fireData.product_data && fireData.product_data.length > 0) {
-                    const initialIngredientId = fireData.product_data[0].feit_id;
+                // Check if fireData has service_data and set initial HSN Code
+                if (fireData && fireData.service_data && fireData.service_data.length > 0) {
+                    const initialIngredientId = fireData.service_data[0].feit_id;
                     setSelectedIngredientId(initialIngredientId);
-                    setValue('product_data.0.feit_id', initialIngredientId);
+                    setValue('service_data.0.feit_id', initialIngredientId);
 
-                    // Set initial HSN Code from fireData
-                    const initialHSNCode = fireData.product_data[0].feit_hsn_code;
-                    setValue('product_data.0.hsnCode', initialHSNCode);
 
-                    const initialQty = fireData.product_data[0].qty;
-                    setValue('product_data.0.qty', initialQty);
+                    const initialQty = fireData.service_data[0].fercd_quantity;
+                    setValue('service_data.0.fercd_quantity', initialQty);
 
-                    const initialCapacity = fireData.product_data[0].capacity;
-                    setValue('product_data.0.capacity', initialCapacity);
+                    const initialCapacity = fireData.service_data[0].fercd_capacity;
+                    setValue('service_data.0.fercd_capacity', initialCapacity);
 
                 }
             } catch (error) {
@@ -420,29 +408,16 @@ const EditFormData = () => {
 
     const handleIngredientChange = (index: number) => (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedIngredientId = e.target.value;
-        setValue(`product_data.${index}.feit_id`, selectedIngredientId);
+        setValue(`service_data.${index}.feit_id`, selectedIngredientId);
 
         const selectedIngredient = ingredients.find(ing => ing.feit_id === parseInt(selectedIngredientId));
 
         if (selectedIngredient) {
-            setValue(`product_data.${index}.hsnCode`, selectedIngredient.feit_hsn_code);
-            setValue(`product_data.${index}.rate`, parseFloat(selectedIngredient.feit_rate));
-            setValue(`product_data.${index}.febd_sgst_amount`, parseFloat(selectedIngredient.feit_sgst));
-            setValue(`product_data.${index}.febd_cgst_amount`, parseFloat(selectedIngredient.feit_cgst));
-            setValue(`product_data.${index}.febd_sgst`, parseFloat(selectedIngredient.feit_sgst));
-            setValue(`product_data.${index}.febd_cgst`, parseFloat(selectedIngredient.feit_cgst));
-            setValue(`product_data.${index}.qty`, 1); // Default qty
 
-            const totalAmount = parseFloat(selectedIngredient.feit_rate) * 1;
-            setValue(`product_data.${index}.totalAmount`, totalAmount);
+            setValue(`service_data.${index}.fercd_quantity`, 1); // Default qty
 
-            const sgstAmount = (totalAmount * parseFloat(selectedIngredient.feit_sgst)) / 100;
-            setValue(`product_data.${index}.febd_sgst_amount`, sgstAmount.toFixed(2));
 
-            const cgstAmount = (totalAmount * parseFloat(selectedIngredient.feit_cgst)) / 100;
-            setValue(`product_data.${index}.febd_cgst_amount`, cgstAmount.toFixed(2));
 
-            calculateActualTotal();
         } else {
             console.error(`Ingredient with ID ${selectedIngredientId} not found.`);
         }
@@ -457,40 +432,13 @@ const EditFormData = () => {
 
 
 
-    const calculateActualTotal = () => {
-        const productdata = watch('product_data') as ProductData[];
-        const discountPercentage = parseFloat(watch('discount')) || 0;
 
-        if (productdata.length > 0) {
-            const newTotalAmount = productdata.reduce((sum, parcel) => sum + parseFloat(parcel.totalAmount), 0);
-            setValue('febking_total_amount', newTotalAmount.toFixed(2));
-
-            const newTotalSGST = productdata.reduce((sum, parcel) => sum + parseFloat(parcel.febd_sgst_amount), 0);
-            setValue('febking_total_sgst', newTotalSGST.toFixed(2));
-
-            const newTotalCGST = productdata.reduce((sum, parcel) => sum + parseFloat(parcel.febd_cgst_amount), 0);
-            setValue('febking_total_cgst', newTotalCGST.toFixed(2));
-
-            const discountAmount = (newTotalAmount * discountPercentage) / 100;
-            setValue('discount_amount', discountAmount.toFixed(2));
-
-            const finalAmount = newTotalAmount + newTotalSGST + newTotalCGST - discountAmount;
-            setValue('febking_final_amount', finalAmount.toFixed(2));
-        } else {
-            setValue('febking_total_amount', '0.00');
-            setValue('febking_total_sgst', '0.00');
-            setValue('febking_total_cgst', '0.00');
-            setValue('discount_amount', '0.00');
-            setValue('febking_final_amount', '0.00');
-        }
-    };
 
 
 
 
     useEffect(() => {
-        calculateActualTotal();
-    }, [watch('product_data'), watch('discount')]);
+    }, [watch('service_data'), watch('discount')]);
 
 
 
@@ -502,97 +450,37 @@ const EditFormData = () => {
 
 
     const handleQtyChange = (index: number, qty: number) => {
-        const rate = parseFloat(watch(`product_data.${index}.rate`) || '0');
-        setValue(`product_data.${index}.qty`, qty);
-        const totalAmount = qty * rate;
+        setValue(`service_data.${index}.fercd_quantity`, qty);
 
-        setValue(`product_data.${index}.totalAmount`, totalAmount);
 
-        // Calculate SGST and CGST based on new totalAmount
-        const ingredient = ingredients.find((ing) => ing.feit_id === parseInt(watch(`product_data.${index}.feit_id`)));
-
-        if (ingredient) {
-            const sgstAmount = (totalAmount * parseFloat(ingredient.feit_sgst)) / 100;
-            setValue(`product_data.${index}.febd_sgst_amount`, sgstAmount.toFixed(2));
-
-            const cgstAmount = (totalAmount * parseFloat(ingredient.feit_cgst)) / 100;
-            setValue(`product_data.${index}.febd_cgst_amount`, cgstAmount.toFixed(2));
-        }
-
-        calculateActualTotal();
     };
 
 
-    const handleRateChange = (index: number, rate: number) => {
-        setValue(`product_data.${index}.rate`, rate);
 
-        const qty = parseFloat(watch(`product_data.${index}.qty`));
-        const totalAmount = qty * rate;
-
-        setValue(`product_data.${index}.totalAmount`, totalAmount);
-
-        // Calculate SGST and CGST based on new totalAmount
-        const ingredient = ingredients.find((ing) => ing.feit_id === parseInt(watch(`product_data.${index}.feit_id`)));
-
-        if (ingredient) {
-            const sgstAmount = (totalAmount * parseFloat(ingredient.feit_sgst)) / 100;
-            setValue(`product_data.${index}.febd_sgst_amount`, sgstAmount.toFixed(2));
-
-            const cgstAmount = (totalAmount * parseFloat(ingredient.feit_cgst)) / 100;
-            setValue(`product_data.${index}.febd_cgst_amount`, cgstAmount.toFixed(2));
-        }
-
-        calculateActualTotal();
-    };
 
     //----------------------------------  ADD or Remove produtct data ---------------------------------------------------------
     const { fields, append, remove } = useFieldArray({
         control,
-        name: 'product_data',
+        name: 'service_data',
     });
 
 
-    //     const newId = productdata.length > 0 ? productdata[productdata.length - 1].id + 1 : 1;
-    //     setproductdata([
-    //         ...productdata,{
-    //         id: newId,
-    //         qty: 0,
-    //         rate: 0,
-    //         totalAmount: 0,
-    //         hsnCode: '',
-    //         capacity: '',
-    //         feit_id: '',
-    //         feb_id: '',
-    //         febd_sgst_amount: '',
-    //         febd_cgst_amount: '',
-    //         febd_sgst: "",
-    //         febd_cgst: ""
-    //         }
-    //     ]);
-    // };
+
 
     const addRow = () => {
         append({
-            id: "", qty: 0, rate: 0, totalAmount: 0, hsnCode: '', capacity: '', feit_id: '', feb_id: '', febd_sgst_amount: '',
-            febd_cgst_amount: '', febd_sgst: "", febd_cgst: ""
+            fercd_quantity: 0, fercd_capacity: '', feit_id: '', feb_id: '',
+
         });
     };
 
     const handleRemove = (index: number) => {
         remove(index);
-        calculateActualTotal();
     }
 
     //-------------------------------------------------------------------------------------------------------------------------
 
-    // const handleServiceSelection = (index: any) => {
-    //     const updatedServices = services.map((service, idx) => ({
-    //         ...service,
-    //         selected: idx === index
-    //     }));
-    //     setServices(updatedServices);
-    //     setFireData({ fest_id: services[index].fest_id });
-    // };
+
 
 
     const handleServiceSelection = (serviceId: number) => {
@@ -650,13 +538,23 @@ const EditFormData = () => {
         const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
         if (value.length <= 10) { // Restrict to 10 digits
             setWMobileNoValue(value);
-            setValue("whatsup_no", value); // Update form value
+            setValue("ferc_whatsapp_no", value); // Update form value
         }
     };
 
 
 
 
+
+    const [DrimobileNoValue, setDriMobileNoValue] = useState<string>('');
+
+    const handleDriverMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setDriMobileNoValue(value);
+            setValue("ferc_driver_mobile_no", value); // Update form value
+        }
+    };
 
 
 
@@ -772,36 +670,46 @@ const EditFormData = () => {
 
     const router = useRouter();
 
+    const handleFieldChange = (fieldName: string, value: string) => {
+        // Update ticketData state with the new value for the specified field
+        const updatedTicketData = { ...fireData, [fieldName]: value };
+
+
+
+        setFireData(updatedTicketData);
+    };
 
     const onSubmit = async (formData: any) => {
-        // Convert selected fest_ids to a comma-separated string
-        const selectedFestIds = services
-            .filter(service => service.selected)
-            .map(service => service.fest_id)
-            .join(','); // Convert to comma-separated string
 
-        // Prepare form data with selected fest_ids
-        const dataToSubmit = {
+
+        const finalData = {
             ...formData,
-            fest_id: selectedFestIds, // Add selected fest_ids to form data
-            mobileNo: mobileNoValue // Include mobileNo if necessary
+
         };
 
-        console.log("Form submit data", dataToSubmit);
-        console.log("Form submit data", dataToSubmit.fest_id);
-
+        console.log("Filtered Form Data:", finalData);
 
         try {
-            // Post the form data to the API endpoint
-            const response = await axios.post('http://192.168.0.100:3001/booking/edit_fire_extingusher_booking_detail', dataToSubmit).then((res: any) => {
-                generateUpdatePDF(res.data.data);
-                // generateUpdatePDF(dataToSubmit)
-                router.push('/Fire/Fire-List'); // Navigate to the desired route
-                console.log('Data submitted successfully:', res.data.data);
+            const response = await axios.post('http://192.168.0.105:3001/challan/edit_fire_extingusher_receiver_challan_data', finalData);
+            console.log('Data submitted successfully:', response.data);
+            console.log(fireData.ferc_id);
 
-            })
-            }   
-              catch (error) {
+
+            if (fireData?.ferc_id) {
+                const ferc_id = fireData.ferc_id;
+
+                try {
+                    const getTDetail = await GetChallanList.GetReceiverChallanBookingId(ferc_id);
+                    console.log("Fetched details:", getTDetail.data[0]);
+                    generateEditReceiverChallanPDF(getTDetail.data[0])
+                    router.push("/Receiver/List")
+
+
+                } catch (error) {
+                    console.error('Error fetching ticket data:', error);
+                }
+            }
+        } catch (error) {
             console.error('Error updating data:', error);
         }
     };
@@ -813,71 +721,72 @@ const EditFormData = () => {
 
 
 
-
-
-
     return (
-        <div className="container-fluid">
+        <div className="container" style={{ fontSize: "12px" }}>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <div className="card">
-                    <div className="card-header">
-                        <h3>Update Fire Extinguisher </h3>
+                <br />
+
+
+                <div className="d-flex justify-content-between align-items-center">
+                    <h4>Update Receiver Challan </h4>
+
+                    <div>
+
+
+                        <Link href="/Receiver/List" className="btn btn-sm btn-primary">
+                            Back
+                        </Link>
                     </div>
+                </div>
+                <br />
+
+                <div className="card cardbox">
+
                     {fireData && (
                         <div className="card-body">
 
-                            {/* <div className="mb-3 form-check d-flex flex-wrap">
-                                {services.map((service, index) => (
-                                    <div key={index} className="form-check mb-2" style={{ marginRight: '20px' }}>
-                                        <input
-                                            type="radio"
-
-                                            {...register("fest_id", { required: true })}
-                                            value={service.fest_id}
-                                            checked={fireData.fest_id === service.fest_id}
-                                            onChange={() => handleServiceSelection(index)}
-                                            className="form-check-input"
-                                            id={`service-${index}`}
-                                        />
-                                        <label htmlFor={`service-${index}`} className="form-check-label ml-2">{service.fest_name}</label>
-                                    </div>
-                                ))}
-                            </div> */}
                             <div className="row mb-3">
+                                <div className="col-lg-10 col-sm-8" style={{ display: "flex", gap: "15px" }}>
 
-                                <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="employee">Select Employees:</label>
-                                    <Select
-                                        className="form-control-sm"
-                                        id="employee"
-                                        isMulti
-                                        placeholder="--Select--"
-                                    />
-                                </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="bdate">Challan Date </label>
+                                        <input  {...register("ferc_date")} className="form-control form-control-sm" type="date" id="bdate" placeholder="Enter Booking date" />
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="Order">Your Order No</label>
+                                        <input {...register("ferc_order_no")} className="form-control form-control-sm" type="text" id="Order" placeholder="Enter Order no" />
 
+                                    </div>
+                                    <div className="col-lg-4">
+                                        <label className="form-label" htmlFor="what's_up">What'up No</label>
+                                        <input
+                                            type="text"
+                                            {...register("ferc_whatsapp_no", {
+                                                required: true,
+                                                minLength: 10,
+                                                maxLength: 10,
+                                                pattern: /^[0-9]+$/
+                                            })}
+                                            value={WmobileNoValue}
+                                            onChange={handleWMobileNoChange}
+                                            className={`form-control form-control-sm ${errors.ferc_whatsapp_no ? 'is-invalid' : ''}`}
+                                            id="ferc_whatsapp_no"
 
-
-
-                                <div className="col-lg-6 form-check d-flex" style={{ marginTop: "35px" }}>
-                                    {services.length > 0 && services.map((service, index) => (
-                                        <div key={index} className="form-check mb-2" style={{ marginRight: '20px' }}>
-                                            <input
-                                                type="checkbox"
-                                                value={service.fest_id}
-                                                checked={service.selected}
-                                                onChange={() => handleServiceSelection(service.fest_id)}
-                                                className="form-check-input"
-                                            />
-                                            <label htmlFor={`service-${index}`} className="form-check-label ml-2">
-                                                {service.fest_name}
-                                            </label>
-                                        </div>
-                                    ))}
+                                            placeholder="Enter Mobile No"
+                                        />
+                                        {errors?.ferc_whatsapp_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.ferc_whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.ferc_whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+                                    </div>
                                 </div>
                             </div>
 
-
-
+                            <div className="row mt-4">
+                                <div className="col-md-12">
+                                    <h5>Product Details:</h5>
+                                </div>
+                                <hr />
+                            </div>
                             {fields.map((field, index) => (
                                 <div>
                                     <div key={field.id} className="row mb-3">
@@ -890,10 +799,10 @@ const EditFormData = () => {
                                             <label className="form-label" htmlFor="feit_id">Select Item:</label>
                                             <select
                                                 className="form-control form-control-sm"
-                                                {...register(`product_data.${index}.feit_id`, { required: true })}
+                                                {...register(`service_data.${index}.feit_id`, { required: true })}
                                                 id={`feit_id-${index}`}
                                                 onChange={handleIngredientChange(index)}
-                                            // value={watch(`product_data.${index}.feit_id`)}
+                                            // value={watch(`service_data.${index}.feit_id`)}
                                             >
                                                 <option value="">--Select--</option>
                                                 {ingredients.map((ingredient) => (
@@ -904,19 +813,19 @@ const EditFormData = () => {
 
 
                                         <div className="col-lg-2 col-sm-3">
-                                            <label className="form-label" htmlFor={`capacity-${index}`}>Select Capacity:</label>
+                                            <label className="form-label" htmlFor={`fercd_capacity-${index}`}>Select Capacity:</label>
                                             <select
                                                 className="form-control form-control-sm"
-                                                {...register(`product_data.${index}.capacity`, { required: true })}
-                                                id={`capacity-${index}`}
-                                                value={watch(`product_data.${index}.capacity`)}
+                                                {...register(`service_data.${index}.fercd_capacity`, { required: true })}
+                                                id={`fercd_capacity-${index}`}
+                                                value={watch(`service_data.${index}.fercd_capacity`)}
                                                 onChange={(e) => {
-                                                    setValue(`product_data.${index}.capacity`, e.target.value);
+                                                    setValue(`service_data.${index}.fercd_capacity`, e.target.value);
                                                 }}
                                             >
                                                 <option value="">--Select--</option>
                                                 {ingredients
-                                                    .filter((ing) => ing.feit_id === parseInt(watch(`product_data.${index}.feit_id`)))
+                                                    .filter((ing) => ing.feit_id === parseInt(watch(`service_data.${index}.feit_id`)))
                                                     .map((ingredient) =>
                                                         ingredient.capacity.map((cap, capIndex) => (
                                                             <option key={capIndex} value={cap}>
@@ -934,10 +843,10 @@ const EditFormData = () => {
                                             <label className="form-label" htmlFor="feb_brand">Select Brand:</label>
                                             <select
                                                 className="form-control form-control-sm"
-                                                {...register(`product_data.${index}.feb_id`, { required: true })}
+                                                {...register(`service_data.${index}.feb_id`, { required: true })}
                                                 id={`fire_brand-${index}`}
-                                                name={`product_data.${index}.feb_id`}
-                                                // value={watch(`product_data.${index}.feb_id`)}
+                                                name={`service_data.${index}.feb_id`}
+                                                // value={watch(`service_data.${index}.feb_id`)}
                                                 onChange={handleChangeBrand(index)}
                                             >
                                                 <option value="">--Select--</option>
@@ -948,20 +857,7 @@ const EditFormData = () => {
                                                 ))}
                                             </select>
                                         </div>
-                                        <div className="col-lg-1 col-sm-2">
-                                            <label className="form-label" htmlFor={`hsnCode-${index}`}>HSN Code:</label>
-                                            <input
-                                                className="form-control form-control-sm"
-                                                {...register(`product_data.${index}.hsnCode`, { required: true })}
-                                                type="text"
-                                                id={`hsnCode-${index}`}
-                                                placeholder="HSN Code"
-                                                // value={watch(`product_data.${index}.hsnCode`)}
-                                                onChange={(e) => {
-                                                    setValue(`product_data.${index}.hsnCode`, e.target.value);
-                                                }}
-                                            />
-                                        </div>
+
 
 
                                         <div className="col-lg-5 line" style={{ display: "flex", gap: "15px" }}>
@@ -972,86 +868,22 @@ const EditFormData = () => {
                                                     style={{ width: "50PX" }}
                                                     className="form-control form-control-sm qty_cnt"
                                                     type='number'
-                                                    {...register(`product_data.${index}.qty`, {
+                                                    {...register(`service_data.${index}.fercd_quantity`, {
                                                         required: true
                                                     })}
                                                     onChange={(e) => handleQtyChange(index, parseInt(e.target.value))}
                                                     id='qty'
                                                     placeholder="Qty"
-                                                // value={watch(`product_data.${index}.qty`)}
+                                                // value={watch(`service_data.${index}.qty`)}
                                                 // onChange={(e) => {
-                                                //     setValue(`product_data.${index}.qty`, e.target.value);
+                                                //     setValue(`service_data.${index}.qty`, e.target.value);
                                                 // }}
                                                 />
                                             </div>
 
-                                            <div>
-                                                <label className="form-label">Rate:</label>
-                                                <input
-                                                    style={{ width: "70PX" }}
-                                                    className="form-control form-control-sm qty_cnt"
-                                                    type='number'
-                                                    {...register(`product_data.${index}.rate`, {
-                                                        required: true
-                                                    })}
-                                                    onChange={(e) => handleRateChange(index, parseFloat(e.target.value))}
-                                                    id='rate'
-                                                    placeholder="Rate"
-                                                />
-                                            </div>
 
-                                            <div>
-                                                <label className="form-label">Amount:</label>
-                                                <input
-                                                    className="form-control form-control-sm qty_cnt"
-                                                    {...register(`product_data.${index}.totalAmount`)}
-                                                    value={watch(`product_data.${index}.totalAmount`) > 0 ? watch(`product_data.${index}.totalAmount`) : ''}
-                                                    readOnly
-                                                    disabled
-                                                    placeholder='0.00'
-                                                />
-                                            </div>
-                                            <div >
-                                                <label className="form-label" style={{ marginLeft: "30px" }}>SGST:</label>
-                                                <div style={{ display: "flex", alignItems: "center" }}>
-                                                    <span style={{ marginRight: "5px" }}>{watch(`product_data.${index}.febd_sgst`)}%</span>
-                                                    <input
-                                                        style={{ width: "70px" }}
-                                                        className="form-control form-control-sm"
-                                                        {...register(`product_data.${index}.febd_sgst_amount`, {
-                                                            required: true
-                                                        })}
-                                                        type="text"
-                                                        readOnly={false} // Make it editable for calculations or user input
-                                                        disabled={false} // Enable it for calculations or user input
-                                                        value={watch(`product_data.${index}.febd_sgst_amount`)} // Bind to form state
-                                                        onChange={(e) => {
-                                                            // Optionally handle onChange if necessary
-                                                            // This allows user input or calculations to update the value
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
 
-                                            <div >
-                                                <label className="form-label" style={{ marginLeft: "30px" }}>CGST:</label>
-                                                <div style={{ display: "flex", alignItems: "center" }}>
-                                                    <span style={{ marginRight: "5px" }}>{watch(`product_data.${index}.febd_cgst`)}%</span>
 
-                                                    <input
-                                                        style={{ width: "70px" }}
-                                                        className="form-control form-control-sm"
-                                                        {...register(`product_data.${index}.febd_cgst_amount`, {
-                                                            required: true
-                                                        })}
-                                                        value={watch(`product_data.${index}.febd_cgst_amount`)} // Bind to form state
-                                                        readOnly
-                                                        disabled
-                                                        type="text"
-                                                    // Add any other necessary attributes
-                                                    />
-                                                </div>
-                                            </div>
                                             <div className="col-lg-1 col-sm-1 new" style={{ marginTop: "30px" }}>
                                                 <button type="button" className="btn btn-danger btn-sm" onClick={() => handleRemove(index)}>
                                                     <FontAwesomeIcon icon={faMinusCircle} />
@@ -1073,117 +905,10 @@ const EditFormData = () => {
                             </div>
 
 
-                            <div className="row">
-                                <div className="col-lg-8" style={{ display: "flex", gap: "15px" }}>
-                                    <div className="col-lg-2 col-sm-4 ">
-                                        <label className="form-label">Total Amount</label>
-                                        <input
-                                            className="form-control form-control-sm qty_cnt"
-                                            {...register('febking_total_amount')}
-                                            type="text"
-                                            value={watch('febking_total_amount') || '0.00'}
-                                            placeholder='actual total'
-                                            readOnly
-                                            disabled
-                                        />
-                                    </div>
 
 
-                                    <div className="col-lg-2 col-sm-4 ">
-                                        <label className="form-label">Discount(%)</label>
-                                        <input
-                                            className="form-control form-control-sm qty_cnt"
-                                            {...register('discount')}
-                                            type="text"
-
-                                            placeholder='Enter Discount'
-
-                                        />
-
-                                    </div>
-                                    <div className="col-lg-2 col-sm-4 ">
-                                        <label className="form-label">Discount Amount</label>
-                                        <input
-                                            className="form-control form-control-sm qty_cnt"
-                                            {...register('discount_amount')}
-                                            type="text"
-
-                                            placeholder='Enter Discount'
-
-                                        />
-
-                                    </div>
-
-                                    <div className="col-lg-2 col-sm-4 ">
-                                        <label className="form-label">Total SGST</label>
-                                        <input
-                                            className="form-control form-control-sm qty_cnt"
-                                            {...register('febking_total_sgst')}
-                                            type="text"
-                                            value={watch('febking_total_sgst') || '0.00'}
-                                            placeholder='actual gst'
-                                            readOnly
-                                            disabled
-                                        />
-
-                                    </div>
-                                    <div className="col-lg-2 col-sm-4 ">
-                                        <label className="form-label">Total CGST</label>
-                                        <input
-                                            className="form-control form-control-sm qty_cnt"
-                                            {...register('febking_total_cgst')}
-                                            type="text"
-                                            value={watch('febking_total_cgst') || '0.00'}
-                                            placeholder='actual gst'
-                                            readOnly
-                                            disabled
-                                        />
-
-                                    </div>
-                                    <div className="col-lg-2 col-sm-4 ">
-                                        <label className="form-label">Final Amount</label>
-                                        <input
-                                            className="form-control form-control-sm qty_cnt"
-                                            {...register('febking_final_amount')}
-
-                                            type="text"
-                                            value={watch('febking_final_amount') || '0.00'}
-                                            placeholder='actual gst'
-                                            readOnly
-                                            disabled
-                                        />
-
-                                    </div>
-                                </div>
-                            </div>
 
                             <br />
-                            <div className="row mb-3">
-                                <div className="col-lg-8 col-sm-8" style={{ display: "flex", gap: "15px" }}>
-                                    <div className="col-lg-4">
-                                        <label className="form-label" htmlFor="what's_up">What'up No</label>
-                                        <input
-                                            type="text"
-                                            {...register("whatsup_no", {
-                                                required: true,
-                                                minLength: 10,
-                                                maxLength: 10,
-                                                pattern: /^[0-9]+$/
-                                            })}
-                                            value={WmobileNoValue}
-                                            onChange={handleWMobileNoChange}
-                                            className={`form-control form-control-sm ${errors.whatsup_no ? 'is-invalid' : ''}`}
-                                            id="whatsup_no"
-
-                                            placeholder="Enter Mobile No"
-                                        />
-                                        {errors?.whatsup_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
-                                        {errors?.whatsup_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
-                                        {errors?.whatsup_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
-                                    </div>
-
-                                </div>
-                            </div>
 
 
 
@@ -1197,8 +922,7 @@ const EditFormData = () => {
 
                             <div className="row mt-4">
                                 <div className="col-md-12">
-                                    <h5>Client Details:</h5>
-                                </div>
+      <h6>Client Details:</h6>                                </div>
                                 <hr />
                             </div>
 
@@ -1371,11 +1095,100 @@ const EditFormData = () => {
                             </div>
 
 
+                            <div className="row mt-4">
+                                <div className="col-md-12">
+                                    <h5>Received Details:</h5>
+                                </div>
+                                <hr />
+                            </div>
+
+                            <div className="row mb-3">
+
+                            </div>
+
+                            <div className="row mb-3">
+                                <div className="col-lg-3 col-sm-6">
+                                    <label className="form-label" htmlFor="ReceivedThrough">Received Through</label>
+                                    <input
+                                        {...register("ferc_dispatch_through")}
+                                        type="text"
+                                        className="form-control form-control-sm"
+                                        id="dispatchThrough"
+
+
+                                        placeholder="Enter Dispatch Through"
+                                    />
+                                </div>
+
+                                <div className="col-lg-2 col-sm-6">
+                                    <label className="form-label" htmlFor="driverName">Driver Name</label>
+                                    <input
+                                        {...register("ferc_driver_name")}
+                                        type="text"
+                                        className="form-control form-control-sm"
+                                        id="driverName"
+
+                                        placeholder="Enter Driver Name"
+                                    />
+                                </div>
+
+                                <div className="col-lg-3 col-sm-6">
+                                    <label className="form-label" htmlFor="driverMobileNo">Driver Mobile No</label>
+                                    <input
+                                        {...register("ferc_driver_mobile_no", {
+                                            required: true,
+                                            minLength: 10,
+                                            maxLength: 10,
+                                            pattern: /^[0-9]+$/
+                                        })}
+                                        type="text"
+                                        value={DrimobileNoValue}
+                                        onChange={handleDriverMobileNoChange}
+                                        className="form-control form-control-sm"
+                                        id="driverMobileNo"
+
+                                        placeholder="Enter Mobile No"
+                                    />
+                                    {errors?.ferc_driver_mobile_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.ferc_driver_mobile_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.ferc_driver_mobile_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+                                </div>
+
+                                <div className="col-lg-2 col-sm-6">
+                                    <label className="form-label" htmlFor="vehicleNo">Vehicle No</label>
+                                    <input
+                                        {...register("ferc_vehicle_no")}
+                                        type="text"
+                                        className="form-control form-control-sm"
+                                        id="vehicleNo"
+
+                                        placeholder="Enter Vehicle No"
+                                    />
+                                </div>
+
+                                <div className="col-lg-2 col-sm-12">
+                                    <label className="form-label">Driving License</label>
+                                    <div className="form-check">
+                                        <input
+                                            {...register("ferc_driving_license")}
+                                            type="checkbox"
+                                            checked={fireData.ferc_driving_license === "1"}
+                                            onChange={(e) => handleFieldChange('ferc_driving_license', e.target.checked ? "1" : "0")}
+                                            className="form-check-input"
+                                            id="drivingLicenseYes"
+                                        />
+                                        <label className="form-check-label" htmlFor="drivingLicenseYes">
+                                            Yes
+                                        </label>
+                                    </div>
+
+                                </div>
+                            </div>
 
 
                             <div className="row mb-3">
-                                <div className="col-12">
-                                    <button type="submit" className="btn btn-primary">
+                                <div className="text-center">
+                                    <button type="submit" className="btn btn-success btn-sm" >
                                         Update
                                     </button>
                                 </div>
@@ -1390,5 +1203,6 @@ const EditFormData = () => {
     );
 };
 
-export default EditFormData;
+export default EditReceiverChallan;
+
 

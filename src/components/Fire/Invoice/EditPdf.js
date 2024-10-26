@@ -75,6 +75,8 @@ export const generateUpdatePDF = (formData, bankDetails) => {
                
            
         `).join('');
+
+        
         <hr />
         const html = `
             <html>
@@ -138,13 +140,12 @@ export const generateUpdatePDF = (formData, bankDetails) => {
                 <hr>
                 <h2 style="text-align: center;">Tax Invoice</h2>
                 <table>
-                    <tr><td rowspan=8 class="top-align">To, ${formData.firstName}<br>${formData.address}<br>${formData.client_city} - ${formData.client_state}<br>${formData.client_pincode}</td><td>Invoice No:</td><td>${formData.febking_invoice_no}</td></tr>
-                    <tr><td>Date:</td><td>${new Date().toLocaleDateString()}</td></tr>
-                    <tr><td>Order Date:</td><td>${formData.febking_created_at}</td></tr>
-                    <tr><td>Order No:</td><td>${formData.poNo}</td></tr>
+                    <tr><td rowspan=8 class="top-align">To, ${formData.client_firstName}<br>${formData.client_address}<br>${formData.client_city} - ${formData.client_state}<br>${formData.client_pincode}<br>Gst-No:${formData.gst_no}</td><td>Invoice No:</td><td>${formData.febking_invoice_no}</td></tr>
+                    <tr><td>Receiver Challan Date:</td><td>${formData.ferc_date}</td></tr>
+                    <tr><td>Delivery Challan Date:</td><td>${formData.fedc_date}</td></tr>
                     <tr><td>Vendor Code:</td><td>${formData.vendorCode}</td></tr>
-                    <tr><td>Contact Person:</td><td>${formData.firstName}</td></tr>
-                    <tr><td>Contact No:</td><td>${formData.mobileNo}</td></tr>
+                    <tr><td>Contact Person:</td><td>${formData.client_firstName}</td></tr>
+                    <tr><td>Contact No:</td><td>${formData.client_mobileNo}</td></tr>
                 </table>
                  <table>
                     <thead>
@@ -165,18 +166,17 @@ export const generateUpdatePDF = (formData, bankDetails) => {
                
                 <div class="footer">
                     <table>
-                        <tr><td colspan="4">Composite Dealer:</td></tr>
                         <tr><td colspan="4">OUR GST NO: ${formData.bank_details.gst_no || 'N/A'}</td></tr>
                         <tr><td colspan="4">Our Bank Name: ${formData.bank_details.bnk_name} , Branch: ${formData.bank_details.bnk_branch}</td></tr>
                         <tr><td colspan="4">Account No: ${formData.bank_details.bnk_acc_no} , IFSC Code: ${formData.bank_details.bnk_ifsc_code}</td></tr>
-                        <tr><td colspan="4">${toWords(formData.febking_final_amount)} Only</td></tr>
+                        <tr><td colspan="4">${toWords(formData.q_final_amount)} Only</td></tr>
                         <tr>
                             <td colspan="3"></td>
-                            <td colspan="4" style="text-align: right;">Grand Total: ${formData.febking_final_amount}</td>
+                            <td colspan="4" style="text-align: right;">Grand Total: ${formData.q_final_amount}</td>
                         </tr>
                         <tr>
                             <td colspan="3" style="text-align: left;">Thank You<br>Prevention Is Better Than Cure</td>
-                            <td colspan="3" style="text-align: right;">For Rapid Fire Prevention<br><br><br>Proprietor</td>
+                            <td colspan="3" style="text-align: right;">RAPID GROUP<br><br><br>Proprietor</td>
                         </tr>
                     </table>
                 </div>

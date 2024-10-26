@@ -14,6 +14,7 @@ import { debounce } from 'lodash';
 import GetEmployeeList from '@/app/Api/FireApis/GetEmployeeList';
 import { useRouter } from 'next/navigation';
 import { generateInvoicePDF } from './Invoice/Pdf';
+import Footer from '../Dashboard/Footer';
 
 interface Service {
     fest_id: any;
@@ -31,6 +32,9 @@ interface ClientData {
     client_city: string;
     client_state: string;
     client_pincode: string;
+    client_id_proof: any;
+    id_proof_url: any;
+
 }
 
 
@@ -84,7 +88,7 @@ export interface FormData {
     client_state: string;
     client_pincode: string;
     email: string;
-
+    client_id_proof: any;
     gstNo: string;
     mobileNo: string;
     vendorCode: string;
@@ -113,12 +117,12 @@ const FireData = () => {
 
     const { fields, append, remove } = useFieldArray({
         control,
-        name: 'service_data' // Update field array name
+        name: 'service_data'
     });
     //-----------------------------------------------get Client list -----------------------------------------------------------------
-    // const [records, setRecords] = useState<ClientData[]>([]);
 
     const [mobileNoValue, setMobileNoValue] = useState<string>('');
+    const [imageName, setImageName] = useState<string>('');
 
     const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
@@ -144,13 +148,13 @@ const FireData = () => {
 
     const fetchclientData = async (value: string) => {
         try {
-            const res = await GetClientList.getclientListData(value); // Assuming this is an async function
+            const res = await GetClientList.getclientListData(value);
             console.log('GetClientList.getclientListData', res);
             setClientData(res);
             setFilteredClients(res);
         } catch (error) {
+
             console.error('Error fetching client data:', error);
-            // Handle error state if needed
         }
     };
 
@@ -162,20 +166,16 @@ const FireData = () => {
             setFilteredClients([]);
             return;
         }
-
-        // Fetch data if clientData is empty
         if (clientData.length === 0) {
             await fetchclientData(value);
         }
 
-        // Filter the clientData based on client_firstName containing the inputValue
         const filtered = clientData.filter(client =>
             client.client_firstName.toLowerCase().includes(value)
         );
 
         setFilteredClients(filtered);
         debounceApiCall(value);
-        // You might want to update other state variables or UI based on filteredClients
     };
 
 
@@ -196,7 +196,14 @@ const FireData = () => {
             setValue("client_state", selectedClient.client_state);
             setValue("client_pincode", selectedClient.client_pincode);
             setValue("mobileNo", selectedClient.client_mobileNo);
+            setValue("client_id_proof", selectedClient.client_id_proof);
+
             setMobileNoValue(selectedClient.client_mobileNo); // Update mobileNoValue state
+
+
+
+            const fileProof = selectedClient.id_proof_url;
+            setImageName(fileProof)
         }
     };
 
@@ -217,6 +224,8 @@ const FireData = () => {
         setValue("client_city", '');
         setValue("client_state", '');
         setValue("client_pincode", '');
+        setValue("client_id_proof", '');
+
         setMobileNoValue('');
 
     };
@@ -267,7 +276,7 @@ const FireData = () => {
     const fetchBrandList = async () => {
         try {
             const response = await GetNewBrand.getAddBrand();
-            setBrands(response);
+            setBrands(response.data);
         } catch (error) {
             console.error('Error fetching brands:', error);
         }
@@ -451,6 +460,8 @@ const FireData = () => {
 
             console.log("Filtered Form Data:", finalData);
 
+            let clientId: number | undefined;
+
             if (isAddingNewClient) {
                 await submitNewClientFormData(finalData);
                 console.log('Form data submitted successfully for new client.');
@@ -459,6 +470,27 @@ const FireData = () => {
                 finalData.client_id = selectedClientId;
                 await submitFormData(finalData, selectedClientId);
                 console.log('Form data submitted successfully with selected client id:', selectedClientId);
+
+                if (data.client_id_proof && data.client_id_proof.length > 0) {
+                    const file = data.client_id_proof[0];
+
+                    // Only upload if a new file is provided
+                    console.log("New image uploaded:", {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                    });
+
+                    if (clientId !== undefined) { // Check if clientId is defined
+                        await uploadClientProofId(file, clientId);
+                    } else {
+                        console.error('Client ID is undefined; cannot upload image.');
+                    }
+                } else {
+                    console.log("No new image selected; skipping upload.");
+                }
+
+
             } else {
                 console.log('Please select a client or add a new client before submitting.');
             }
@@ -469,11 +501,28 @@ const FireData = () => {
 
     const router = useRouter();
 
+    const uploadClientProofId = async (file: File, clientId: number) => {
+        const formData = new FormData();
+        formData.append("client_id_proof", file); // Append the single file
+        formData.append("client_id", clientId.toString());
+
+        try {
+            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            console.log('Client proof ID uploaded successfully:', response.data);
+        } catch (error) {
+            console.error('Error uploading client proof ID:', error);
+        }
+    };
 
 
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.100:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
+            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
                 console.log("form data", res.data);
                 generateInvoicePDF(res.data.data);
                 router.push("/Fire/Fire-List")
@@ -490,7 +539,7 @@ const FireData = () => {
 
     const submitNewClientFormData = async (formData: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.100:3001/booking/add_fire_extingusher_booking_data', formData);
+            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData);
 
             console.log('Form data submitted successfully for new client.', response.data.data[0]);
             console.log('Server response:', response.data.data[0]);
@@ -573,230 +622,234 @@ const FireData = () => {
 
     return (
 
-        <div className='container-fluid'>
-            <br />
-            <Card>
-                <Card.Header><h3>Fire Extinguisher </h3></Card.Header>
-                <Card.Body>
-                    <form onSubmit={handleSubmit(onSubmit)}>
-                        <div className="row">
-                            {/* <!-- Employee Selector --> */}
-                            <div className="col-lg-3 col-md-6">
-                                <label className="form-label" htmlFor="employee">Select Employees:</label>
-                                <Select
-                                    className="form-control-sm"
-                                    id="employee"
-                                    {...register("employee")}
-                                    isMulti
-                                    options={options}
-                                    value={selectedEmployees}
-                                    onChange={handleChange}
-                                    placeholder="--Select--"
-                                />
-                            </div>
+        <>
 
-                            {/* <!-- Services Checkboxes --> */}
-                            <div className="col-lg-9 col-md-6">
-                                <div className="d-flex flex-wrap align-items-center mt-3">
-                                    {services.map((service) => (
-                                        <span key={service.fest_id} className="me-3 mb-2">
-                                            <input
-                                                className="form-check-input me-2"
-                                                type="checkbox"
-                                                checked={visibleFields.has(service.fest_id)}
-                                                onChange={() => handleServiceSelection(service.fest_id, service.fest_name)}
-                                            />
-                                            <label className="form-check-label">{service.fest_name}</label>
-                                        </span>
-                                    ))}
+            <div className='container' style={{ fontSize: "12px" }}>
+
+                <h4>Fire Extinguisher </h4>
+                <br />
+                <Card className='cardbox'>
+
+                    <Card.Body>
+                        <form onSubmit={handleSubmit(onSubmit)}>
+                            <div className="row">
+                                {/* <!-- Employee Selector --> */}
+                                <div className="col-lg-3 col-md-6">
+                                    <label className="form-label" htmlFor="employee">Select Employees:</label>
+                                    <Select
+                                        className="form-control-sm"
+                                        id="employee"
+                                        {...register("employee")}
+                                        isMulti
+                                        options={options}
+                                        value={selectedEmployees}
+                                        onChange={handleChange}
+                                        placeholder="--Select--"
+                                    />
+                                </div>
+
+                                {/* <!-- Services Checkboxes --> */}
+                                <div className="col-lg-9 col-md-6">
+                                    <div className="d-flex flex-wrap align-items-center mt-3">
+                                        {services.map((service) => (
+                                            <span key={service.fest_id} className="me-3 mb-2">
+                                                <input
+                                                    className="form-check-input me-2"
+                                                    type="checkbox"
+                                                    checked={visibleFields.has(service.fest_id)}
+                                                    onChange={() => handleServiceSelection(service.fest_id, service.fest_name)}
+                                                />
+                                                <label className="form-check-label">{service.fest_name}</label>
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
 
 
 
 
 
-                        {services.map((service) => (
-                            <div key={service.fest_id} className="mb-3">
-                                {/* Single Row for Checkboxes */}
+                            {services.map((service) => (
+                                <div key={service.fest_id} className="mb-3">
+                                    {/* Single Row for Checkboxes */}
 
-                                {/* Conditionally render service details */}
-                                {visibleFields.has(service.fest_id) && (
-                                    <div>
-                                        <h6 className='text-center'>Product Data for {service.fest_name}:</h6><br />
-                                        {(getValues(`service_data.${service.fest_id}`) || []).map((item, index) => (
-                                            <div className="row mb-4" key={index}>
-                                                {service.fest_name === 'New Supply' && showSrNo && (
-                                                    <div className='row mb-3'>
-                                                        <div className="col-lg-1">
-                                                            <label className="form-label" htmlFor={`sr_no-${service.fest_id}`}>Sr No:</label>
+                                    {/* Conditionally render service details */}
+                                    {visibleFields.has(service.fest_id) && (
+                                        <div>
+                                            <h6 className='text-center'>Product Data for {service.fest_name}:</h6><br />
+                                            {(getValues(`service_data.${service.fest_id}`) || []).map((item, index) => (
+                                                <div className="row mb-4" key={index}>
+                                                    {service.fest_name === 'New Supply' && showSrNo && (
+                                                        <div className='row mb-3'>
+                                                            <div className="col-lg-1">
+                                                                <label className="form-label" htmlFor={`sr_no-${service.fest_id}`}>Sr No:</label>
+                                                                <input
+                                                                    className="form-control form-control-sm"
+                                                                    {...register(`service_data.${service.fest_id}.${index}.febd_sr_no`)}
+                                                                    type="text"
+                                                                    id={`sr_no-${service.fest_id}`}
+                                                                    placeholder="Enter Sr No"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                    <div className="col-lg-2 col-sm-3">
+                                                        <label className="form-label" htmlFor={`feit_id-${index}`}>Select Item:</label>
+                                                        <select className="form-control form-control-sm"
+                                                            {...register(`service_data.${service.fest_id}.${index}.feit_id`)}
+                                                            onChange={handleIngredientChange(service.fest_id, index)}
+                                                            id={`feit_id-${index}`}
+                                                        >
+                                                            <option value="">-Select-</option>
+                                                            {ingredients.map((ingredient) => (
+                                                                <option key={ingredient.feit_id} value={ingredient.feit_id}>
+                                                                    {ingredient.feit_name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="col-lg-2 col-sm-3">
+                                                        <label className="form-label" htmlFor={`capacity-${index}`}>Select Capacity:</label>
+                                                        <select
+                                                            className="form-control form-control-sm"
+                                                            {...register(`service_data.${service.fest_id}.${index}.capacity`, { required: true })}
+                                                            id={`capacity-${index}`}
+                                                            onChange={(e) => {
+                                                                setValue(`service_data.${service.fest_id}.${index}.capacity`, e.target.value);
+                                                            }}
+                                                        >
+                                                            <option value="">--Select--</option>
+                                                            {ingredients
+                                                                .filter((ing) => ing.feit_id === parseInt(watch(`service_data.${service.fest_id}.${index}.feit_id`)))
+                                                                .map((ingredient) =>
+                                                                    ingredient.capacity.map((cap, capIndex) => (
+                                                                        <option key={capIndex} value={cap}>
+                                                                            {cap}
+                                                                        </option>
+                                                                    ))
+                                                                )}
+                                                        </select>
+                                                    </div>
+                                                    <div className="col-lg-2 col-sm-4">
+                                                        <label className="form-label" htmlFor={`feb_brand-${index}`}>Select Brand:</label>
+                                                        <select className="form-control form-control-sm" {...register(`service_data.${service.fest_id}.${index}.feb_id`, {
+                                                            required: true,
+                                                        })} id={`feb_brand-${index}`}>
+                                                            <option value="">--Select--</option>
+                                                            {brands.map((brand) => (
+                                                                <option key={brand.feb_id} value={brand.feb_id}>{brand.feb_name}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                    <div className="col-lg-1 col-sm-2">
+                                                        <label className="form-label" htmlFor={`hsnCode-${index}`}>HSN Code:</label>
+                                                        <input className="form-control form-control-sm" {...register(`service_data.${service.fest_id}.${index}.hsnCode`, {
+                                                            required: true
+                                                        })} type="text" id={`hsnCode-${index}`} placeholder="HSN Code" />
+                                                    </div>
+                                                    <div className="col-lg-4 col-sm-5 line" style={{ display: "flex", gap: "15px" }}>
+                                                        <div>
+                                                            <label className="form-label" htmlFor={`qty-${index}`}>Qty:</label>
                                                             <input
-                                                                className="form-control form-control-sm"
-                                                                {...register(`service_data.${service.fest_id}.${index}.febd_sr_no`)}
-                                                                type="text"
-                                                                id={`sr_no-${service.fest_id}`}
-                                                                placeholder="Enter Sr No"
+                                                                type="number"
+                                                                style={{ width: "50px" }}
+                                                                className="form-control form-control-sm qty_cnt" placeholder="Quantity"
+                                                                {...register(`service_data.${service.fest_id}.${index}.qty`)}
+                                                                onChange={(e) => handleQtyChange(service.fest_id, index, parseFloat(e.target.value))}
+                                                                id={`qty-${index}`}
                                                             />
                                                         </div>
-                                                    </div>
-                                                )}
-                                                <div className="col-lg-2 col-sm-3">
-                                                    <label className="form-label" htmlFor={`feit_id-${index}`}>Select Item:</label>
-                                                    <select className="form-control form-control-sm"
-                                                        {...register(`service_data.${service.fest_id}.${index}.feit_id`)}
-                                                        onChange={handleIngredientChange(service.fest_id, index)}
-                                                        id={`feit_id-${index}`}
-                                                    >
-                                                        <option value="">-Select-</option>
-                                                        {ingredients.map((ingredient) => (
-                                                            <option key={ingredient.feit_id} value={ingredient.feit_id}>
-                                                                {ingredient.feit_name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-
-                                                <div className="col-lg-2 col-sm-3">
-                                                    <label className="form-label" htmlFor={`capacity-${index}`}>Select Capacity:</label>
-                                                    <select
-                                                        className="form-control form-control-sm"
-                                                        {...register(`service_data.${service.fest_id}.${index}.capacity`, { required: true })}
-                                                        id={`capacity-${index}`}
-                                                        onChange={(e) => {
-                                                            setValue(`service_data.${service.fest_id}.${index}.capacity`, e.target.value);
-                                                        }}
-                                                    >
-                                                        <option value="">--Select--</option>
-                                                        {ingredients
-                                                            .filter((ing) => ing.feit_id === parseInt(watch(`service_data.${service.fest_id}.${index}.feit_id`)))
-                                                            .map((ingredient) =>
-                                                                ingredient.capacity.map((cap, capIndex) => (
-                                                                    <option key={capIndex} value={cap}>
-                                                                        {cap}
-                                                                    </option>
-                                                                ))
-                                                            )}
-                                                    </select>
-                                                </div>
-                                                <div className="col-lg-2 col-sm-4">
-                                                    <label className="form-label" htmlFor={`feb_brand-${index}`}>Select Brand:</label>
-                                                    <select className="form-control form-control-sm" {...register(`service_data.${service.fest_id}.${index}.feb_id`, {
-                                                        required: true,
-                                                    })} id={`feb_brand-${index}`}>
-                                                        <option value="">--Select--</option>
-                                                        {brands.map((brand) => (
-                                                            <option key={brand.feb_id} value={brand.feb_id}>{brand.feb_name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div className="col-lg-1 col-sm-2">
-                                                    <label className="form-label" htmlFor={`hsnCode-${index}`}>HSN Code:</label>
-                                                    <input className="form-control form-control-sm" {...register(`service_data.${service.fest_id}.${index}.hsnCode`, {
-                                                        required: true
-                                                    })} type="text" id={`hsnCode-${index}`} placeholder="HSN Code" />
-                                                </div>
-                                                <div className="col-lg-4 col-sm-5 line" style={{ display: "flex", gap: "15px" }}>
-                                                    <div>
-                                                        <label className="form-label" htmlFor={`qty-${index}`}>Qty:</label>
-                                                        <input
-                                                            type="number"
-                                                            style={{ width: "50px" }}
-                                                            className="form-control form-control-sm qty_cnt" placeholder="Quantity"
-                                                            {...register(`service_data.${service.fest_id}.${index}.qty`)}
-                                                            onChange={(e) => handleQtyChange(service.fest_id, index, parseFloat(e.target.value))}
-                                                            id={`qty-${index}`}
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="form-label" htmlFor={`rate-${index}`}>Rate:</label>
-                                                        <input
-                                                            style={{ width: "70px" }}
-                                                            className="form-control form-control-sm qty_cnt"
-                                                            type="number"
-                                                            placeholder="Rate"
-                                                            {...register(`service_data.${service.fest_id}.${index}.rate`)}
-                                                            onChange={(e) => handleRateChange(service.fest_id, index, parseFloat(e.target.value))}
-                                                            id={`rate-${index}`}
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="form-label">Amount:</label>
-                                                        <input
-                                                            className="form-control form-control-sm qty_cnt"
-                                                            type="text"
-                                                            placeholder="Total Amount"
-                                                            {...register(`service_data.${service.fest_id}.${index}.totalAmount`)}
-                                                            readOnly
-                                                            disabled
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="form-label" style={{ marginLeft: "30px" }}>SGST:</label>
-                                                        <div style={{ display: "flex", alignItems: "center" }}>
-                                                            <span style={{ marginRight: "5px" }}>{watch(`service_data.${service.fest_id}.${index}.febd_sgst`)}</span>
+                                                        <div>
+                                                            <label className="form-label" htmlFor={`rate-${index}`}>Rate:</label>
                                                             <input
                                                                 style={{ width: "70px" }}
-                                                                className="form-control form-control-sm"
-                                                                type="text"
-                                                                placeholder="0.00"
-                                                                {...register(`service_data.${service.fest_id}.${index}.febd_sgst_amount`)}
-                                                                readOnly
+                                                                className="form-control form-control-sm qty_cnt"
+                                                                type="number"
+                                                                placeholder="Rate"
+                                                                {...register(`service_data.${service.fest_id}.${index}.rate`)}
+                                                                onChange={(e) => handleRateChange(service.fest_id, index, parseFloat(e.target.value))}
+                                                                id={`rate-${index}`}
                                                             />
                                                         </div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="form-label" style={{ marginLeft: "30px" }}>CGST:</label>
-                                                        <div style={{ display: "flex", alignItems: "center" }}>
-                                                            <span style={{ marginRight: "5px" }}>{watch(`service_data.${service.fest_id}.${index}.febd_cgst`)}</span>
+                                                        <div>
+                                                            <label className="form-label">Amount:</label>
                                                             <input
-                                                                style={{ width: "70px" }}
-                                                                className="form-control form-control-sm"
+                                                                className="form-control form-control-sm qty_cnt"
                                                                 type="text"
-                                                                placeholder="0.00"
-                                                                {...register(`service_data.${service.fest_id}.${index}.febd_cgst_amount`)}
+                                                                placeholder="Total Amount"
+                                                                {...register(`service_data.${service.fest_id}.${index}.totalAmount`)}
                                                                 readOnly
+                                                                disabled
                                                             />
                                                         </div>
-                                                    </div>
-                                                    <div className="col-lg-1 col-sm-1 new" style={{ marginTop: "30px" }}>
-                                                        <button className="btn btn-danger btn-sm" type="button" onClick={() => {
-                                                            const updatedData = getValues(`service_data.${service.fest_id}`);
-                                                            updatedData.splice(index, 1);
-                                                            setValue(`service_data.${service.fest_id}`, updatedData);
-                                                            calculateActualTotal();
-                                                        }}>
-                                                            <FontAwesomeIcon icon={faMinusCircle} />
-                                                        </button>
+                                                        <div>
+                                                            <label className="form-label" style={{ marginLeft: "30px" }}>SGST:</label>
+                                                            <div style={{ display: "flex", alignItems: "center" }}>
+                                                                <span style={{ marginRight: "5px" }}>{watch(`service_data.${service.fest_id}.${index}.febd_sgst`)}</span>
+                                                                <input
+                                                                    style={{ width: "70px" }}
+                                                                    className="form-control form-control-sm"
+                                                                    type="text"
+                                                                    placeholder="0.00"
+                                                                    {...register(`service_data.${service.fest_id}.${index}.febd_sgst_amount`)}
+                                                                    readOnly
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label className="form-label" style={{ marginLeft: "30px" }}>CGST:</label>
+                                                            <div style={{ display: "flex", alignItems: "center" }}>
+                                                                <span style={{ marginRight: "5px" }}>{watch(`service_data.${service.fest_id}.${index}.febd_cgst`)}</span>
+                                                                <input
+                                                                    style={{ width: "70px" }}
+                                                                    className="form-control form-control-sm"
+                                                                    type="text"
+                                                                    placeholder="0.00"
+                                                                    {...register(`service_data.${service.fest_id}.${index}.febd_cgst_amount`)}
+                                                                    readOnly
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="col-lg-1 col-sm-1 new" style={{ marginTop: "30px" }}>
+                                                            <button className="btn btn-danger btn-sm" type="button" onClick={() => {
+                                                                const updatedData = getValues(`service_data.${service.fest_id}`);
+                                                                updatedData.splice(index, 1);
+                                                                setValue(`service_data.${service.fest_id}`, updatedData);
+                                                                calculateActualTotal();
+                                                            }}>
+                                                                <FontAwesomeIcon icon={faMinusCircle} />
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
+                                            ))}
+                                            <div className="row">
+                                                <div className="col-lg-12 data">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => addProductDataForService(service.fest_id)}
+                                                        style={{ marginTop: "5px", marginRight: '15px' }}
+                                                        className="btn btn-primary btn-sm"
+                                                    >
+                                                        <FontAwesomeIcon icon={faPlusCircle} />
+                                                    </button>
+                                                </div>
                                             </div>
-                                        ))}
-                                        <div className="row">
-                                            <div className="col-lg-12 data">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => addProductDataForService(service.fest_id)}
-                                                    style={{ marginTop: "5px", marginRight: '15px' }}
-                                                    className="btn btn-primary btn-sm"
-                                                >
-                                                    <FontAwesomeIcon icon={faPlusCircle} />
-                                                </button>
-                                            </div>
+
                                         </div>
-
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                                    )}
+                                </div>
+                            ))}
 
 
 
 
 
-                        <br />
-                   
+                            <br />
+
                             <div className="row mb-3">
                                 <div className="col-lg-12 d-flex flex-wrap gap-3">
                                     <div className="col-lg-2 col-md-4 col-sm-6">
@@ -871,245 +924,263 @@ const FireData = () => {
                                     </div>
                                 </div>
                             </div>
-                     
 
 
-                        <div className="row mb-3">
-                            <div className="col-lg-8 col-sm-8" style={{ display: "flex", gap: "15px" }}>
+
+                            <div className="row mb-3">
+                                <div className="col-lg-8 col-sm-8" style={{ display: "flex", gap: "15px" }}>
+                                    <div className="col-lg-4">
+                                        <label className="form-label" htmlFor="what's_up">What'up No</label>
+                                        <input
+                                            type="text"
+                                            {...register("whatsup_no", {
+                                                required: true,
+                                                minLength: 10,
+                                                maxLength: 10,
+                                                pattern: /^[0-9]+$/
+                                            })}
+                                            value={WmobileNoValue}
+                                            onChange={handleWMobileNoChange}
+                                            className={`form-control form-control-sm ${errors.whatsup_no ? 'is-invalid' : ''}`}
+                                            id="whatsup_no"
+
+                                            placeholder="Enter Mobile No"
+                                        />
+                                        {errors?.whatsup_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.whatsup_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.whatsup_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+                                    </div>
+
+                                </div>
+                            </div>
+
+
+                            <div className="row mt-4">
+                                <div className="col-md-12">
+      <h6>Client Details:</h6>                                </div>
+                                <hr />
+                            </div>
+                            <div className="row mb-3">
+                                <div className="col-lg-3 col-sm-3">
+                                    <label className="form-label" htmlFor="clientId">Select Client:</label>
+                                    <div className="">
+                                        {isAddingNewClient ? (
+                                            <input
+                                                {...register("firstName", { required: true })}
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder="Enter Client Name"
+                                            />
+                                        ) : (
+                                            <>
+                                                <input
+                                                    {...register("firstName", { required: true })}
+                                                    type="text"
+                                                    className="form-control form-control-sm"
+                                                    id="clientId"
+                                                    value={inputValue}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Enter Client Name"
+                                                />
+                                                {errors?.firstName?.type === "required" && <span className="error">This field is required</span>}
+
+                                                {(inputValue.length > 0 || selectedClientId !== null) && (
+                                                    <div className="list-group autocomplete-items">
+                                                        {inputValue.length > 0 && (
+                                                            <button
+                                                                type="button"
+                                                                className="list-group-item list-group-item-action text-primary"
+                                                                onClick={handleAddNewClient}
+                                                            >
+                                                                Add New Client
+                                                            </button>
+                                                        )}
+
+                                                        {filteredClients.map(client => (
+                                                            <button
+                                                                key={client.client_id}
+                                                                type="button"
+                                                                className="list-group-item list-group-item-action"
+                                                                onClick={() => handleSelectClient(client.client_id)}
+                                                            >
+                                                                {client.client_firstName}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="address">Address</label>
+                                    <textarea
+                                        {...register("address", { required: true })}
+                                        className="form-control form-control-sm"
+                                        id="address"
+                                        placeholder="Enter Address"
+                                    />
+                                    {errors?.address?.type === "required" && <span className="error">This field is required</span>}
+
+                                </div>
+
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="state">State</label>
+                                    <input
+                                        {...register("client_state", { required: true })}
+                                        className="form-control form-control-sm"
+                                        id="state"
+                                        placeholder="Enter state"
+                                    />
+                                    {errors?.client_state?.type === "required" && <span className="error">This field is required</span>}
+
+                                </div>
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="city">city</label>
+                                    <input
+                                        {...register("client_city", { required: true })}
+                                        className="form-control form-control-sm"
+                                        id="city"
+                                        placeholder="Enter city"
+                                    />
+                                    {errors?.client_city?.type === "required" && <span className="error">This field is required</span>}
+
+                                </div>
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="pincode">Pin-Code:</label>
+                                    <input
+                                        {...register("client_pincode", {
+                                            required: true,
+                                            maxLength: 6,
+                                            minLength: 6
+
+                                        })}
+                                        className="form-control form-control-sm"
+                                        id="pincode"
+                                        placeholder="Enter pincode"
+                                    />
+                                    {errors?.client_pincode?.type === "required" && <span className="error">This field is required</span>}
+                                    {errors?.client_pincode?.type === "minLength" && <span className="error">Enter valid Pin-code number. </span>}
+                                    {errors?.client_pincode?.type === "maxLength" && <span className="error">Enter valid Pin-code number .</span>}
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="email">Email-id</label>
+                                    <input
+                                        {...register("email", { required: true })}
+                                        type="email"
+                                        className="form-control form-control-sm"
+                                        placeholder="Enter your email"
+                                    />
+                                    {errors?.email?.type === "required" && <span className="error">This field is required</span>}
+                                    {/* {errors?.gstNo?.type === "pattern" && <span className="error">Enetr GST valid Number</span>} */}
+
+                                </div>
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="gstNo">Gst-no</label>
+                                    <input
+                                        {...register("gstNo", {
+                                            required: true,
+                                            pattern: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9A-Z]{1}$/
+                                        })}
+                                        className="form-control form-control-sm"
+                                        type="text"
+                                        placeholder="Enter Gst no."
+                                    />
+                                    {errors?.gstNo?.type === "required" && <span className="error">This field is required</span>}
+                                    {errors?.gstNo?.type === "pattern" && <span className="error">Enetr GST valid Number</span>}
+
+
+                                </div>
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="vendorCode">Vendor code</label>
+                                    <input
+                                        {...register("vendorCode")}
+                                        className="form-control form-control-sm"
+                                        type="text"
+                                        id="vendorCode"
+                                        placeholder="Enter Vendor code"
+                                    />
+                                </div>
+
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="poNo">P.o.No.</label>
+                                    <input
+                                        {...register("poNo")}
+                                        className="form-control form-control-sm"
+                                        type="text"
+                                        id="poNo"
+                                        placeholder="P.o.No."
+                                    />
+                                </div>
+                            </div>
+                            <div className="row mb-3">
+
                                 <div className="col-lg-4">
-                                    <label className="form-label" htmlFor="what's_up">What'up No</label>
+                                    <label className="form-label" htmlFor="client_mobileNo">Mobile No</label>
                                     <input
                                         type="text"
-                                        {...register("whatsup_no", {
+                                        {...register("mobileNo", {
                                             required: true,
                                             minLength: 10,
                                             maxLength: 10,
                                             pattern: /^[0-9]+$/
                                         })}
-                                        value={WmobileNoValue}
-                                        onChange={handleWMobileNoChange}
-                                        className={`form-control form-control-sm ${errors.whatsup_no ? 'is-invalid' : ''}`}
-                                        id="whatsup_no"
+                                        value={mobileNoValue}
+                                        onChange={handleMobileNoChange}
+                                        className={`form-control form-control-sm ${errors.mobileNo ? 'is-invalid' : ''}`}
+                                        id="mobileNo"
 
                                         placeholder="Enter Mobile No"
                                     />
-                                    {errors?.whatsup_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
-                                    {errors?.whatsup_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
-                                    {errors?.whatsup_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+                                    {errors?.mobileNo?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.mobileNo?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                    {errors?.mobileNo?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
                                 </div>
 
-                            </div>
-                        </div>
-
-
-                        <div className="row mt-4">
-                            <div className="col-md-12">
-                                <h5>Client Details:</h5>
-                            </div>
-                            <hr />
-                        </div>
-                        <div className="row mb-3">
-                            <div className="col-lg-3 col-sm-3">
-                                <label className="form-label" htmlFor="clientId">Select Client:</label>
-                                <div className="">
-                                    {isAddingNewClient ? (
-                                        <input
-                                            {...register("firstName", { required: true })}
-                                            type="text"
-                                            className="form-control form-control-sm"
-                                            placeholder="Enter Client Name"
-                                        />
-                                    ) : (
-                                        <>
-                                            <input
-                                                {...register("firstName", { required: true })}
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                id="clientId"
-                                                value={inputValue}
-                                                onChange={handleInputChange}
-                                                placeholder="Enter Client Name"
-                                            />
-                                            {errors?.firstName?.type === "required" && <span className="error">This field is required</span>}
-
-                                            {(inputValue.length > 0 || selectedClientId !== null) && (
-                                                <div className="list-group autocomplete-items">
-                                                    {inputValue.length > 0 && (
-                                                        <button
-                                                            type="button"
-                                                            className="list-group-item list-group-item-action text-primary"
-                                                            onClick={handleAddNewClient}
-                                                        >
-                                                            Add New Client
-                                                        </button>
-                                                    )}
-
-                                                    {filteredClients.map(client => (
-                                                        <button
-                                                            key={client.client_id}
-                                                            type="button"
-                                                            className="list-group-item list-group-item-action"
-                                                            onClick={() => handleSelectClient(client.client_id)}
-                                                        >
-                                                            {client.client_firstName}
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </>
+                                <div className="col-lg-3">
+                                    <label className="form-label" htmlFor="particulars">Image Upload</label>
+                                    <input className="form-control form-control-sm" type="file" {...register("client_id_proof")} />
+                                    {/* {imageName && <span style={{ marginTop: "10px" }} className="mb-2">{imageName}</span>} Display selected image name */}
+                                    {imageName && (
+                                        <div className="col-lg-12 mt-2">
+                                            <img src={imageName} alt="Client ID Proof" style={{ width: '100px', height: '100px' }} />
+                                        </div>
                                     )}
                                 </div>
-                            </div>
-
-
-                            <div className="col-lg-3">
-                                <label className="form-label" htmlFor="address">Address</label>
-                                <textarea
-                                    {...register("address", { required: true })}
-                                    className="form-control form-control-sm"
-                                    id="address"
-                                    placeholder="Enter Address"
-                                />
-                                {errors?.address?.type === "required" && <span className="error">This field is required</span>}
-
-                            </div>
-
-                            <div className="col-lg-2">
-                                <label className="form-label" htmlFor="state">State</label>
-                                <input
-                                    {...register("client_state", { required: true })}
-                                    className="form-control form-control-sm"
-                                    id="state"
-                                    placeholder="Enter state"
-                                />
-                                {errors?.client_state?.type === "required" && <span className="error">This field is required</span>}
-
-                            </div>
-                            <div className="col-lg-2">
-                                <label className="form-label" htmlFor="city">city</label>
-                                <input
-                                    {...register("client_city", { required: true })}
-                                    className="form-control form-control-sm"
-                                    id="city"
-                                    placeholder="Enter city"
-                                />
-                                {errors?.client_city?.type === "required" && <span className="error">This field is required</span>}
-
-                            </div>
-                            <div className="col-lg-2">
-                                <label className="form-label" htmlFor="pincode">Pin-Code:</label>
-                                <input
-                                    {...register("client_pincode", {
-                                        required: true,
-                                        maxLength: 6,
-                                        minLength: 6
-
-                                    })}
-                                    className="form-control form-control-sm"
-                                    id="pincode"
-                                    placeholder="Enter pincode"
-                                />
-                                {errors?.client_pincode?.type === "required" && <span className="error">This field is required</span>}
-                                {errors?.client_pincode?.type === "minLength" && <span className="error">Enter valid Pin-code number. </span>}
-                                {errors?.client_pincode?.type === "maxLength" && <span className="error">Enter valid Pin-code number .</span>}
-                            </div>
-
-                            <div className="col-lg-3">
-                                <label className="form-label" htmlFor="email">Email-id</label>
-                                <input
-                                    {...register("email", { required: true })}
-                                    type="email"
-                                    className="form-control form-control-sm"
-                                    placeholder="Enter your email"
-                                />
-                                {errors?.email?.type === "required" && <span className="error">This field is required</span>}
-                                {/* {errors?.gstNo?.type === "pattern" && <span className="error">Enetr GST valid Number</span>} */}
-
-                            </div>
-
-                            <div className="col-lg-3">
-                                <label className="form-label" htmlFor="gstNo">Gst-no</label>
-                                <input
-                                    {...register("gstNo", {
-                                        required: true,
-                                        pattern: /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9]{1}[A-Z]{1}[0-9A-Z]{1}$/
-                                    })}
-                                    className="form-control form-control-sm"
-                                    type="text"
-                                    placeholder="Enter Gst no."
-                                />
-                                {errors?.gstNo?.type === "required" && <span className="error">This field is required</span>}
-                                {errors?.gstNo?.type === "pattern" && <span className="error">Enetr GST valid Number</span>}
 
 
                             </div>
 
-                            <div className="col-lg-3">
-                                <label className="form-label" htmlFor="vendorCode">Vendor code</label>
-                                <input
-                                    {...register("vendorCode")}
-                                    className="form-control form-control-sm"
-                                    type="text"
-                                    id="vendorCode"
-                                    placeholder="Enter Vendor code"
-                                />
+
+
+
+
+
+
+
+
+
+                            <div className="row">
+                                <div className="text-center">
+                                    <input className="btn btn-success btn-sm"  type="submit" id="save_ticket" name="save_form" />
+                                </div>
                             </div>
+                        </form>
+                    </Card.Body>
+                </Card>
+            </div>
 
-                            <div className="col-lg-3">
-                                <label className="form-label" htmlFor="poNo">P.o.No.</label>
-                                <input
-                                    {...register("poNo")}
-                                    className="form-control form-control-sm"
-                                    type="text"
-                                    id="poNo"
-                                    placeholder="P.o.No."
-                                />
-                            </div>
-
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="client_mobileNo">Mobile No</label>
-                                <input
-                                    type="text"
-                                    {...register("mobileNo", {
-                                        required: true,
-                                        minLength: 10,
-                                        maxLength: 10,
-                                        pattern: /^[0-9]+$/
-                                    })}
-                                    value={mobileNoValue}
-                                    onChange={handleMobileNoChange}
-                                    className={`form-control form-control-sm ${errors.mobileNo ? 'is-invalid' : ''}`}
-                                    id="mobileNo"
-
-                                    placeholder="Enter Mobile No"
-                                />
-                                {errors?.mobileNo?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
-                                {errors?.mobileNo?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
-                                {errors?.mobileNo?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
-                            </div>
+            <Footer />
 
 
-
-                        </div>
-
-
-
-
-
-
-
-
-
-
-                        <div className="row">
-                            <div className="text-center">
-                                <input className="btn btn-primary" type="submit" id="save_ticket" name="save_form" />
-                            </div>
-                        </div>
-                    </form>
-                </Card.Body>
-            </Card>
-        </div>
+        </>
     );
 };
 

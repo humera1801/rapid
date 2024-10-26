@@ -7,7 +7,7 @@ interface User {
   client_gstNo: any;
   client_email:any;
   fest_id: any;
-  febking_final_amount: string;
+  q_final_amount: string;
   client_firstName: string;
   client_address: string;
   email: string;
@@ -54,7 +54,7 @@ export const exportToFireExcel = (data: User[]) => {
   const formattedData = data.map(row => ({
     'Added By': row.created_by_name,
     'Client GST No': row.client_gstNo,
-    'Febking Final Amount': row.febking_final_amount,
+    'Febking Final Amount': row.q_final_amount,
     'Client First Name': row.client_firstName,
     'Client Address': row.client_address,
     'Email': row.client_email,

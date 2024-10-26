@@ -2,7 +2,7 @@
 
 import AuthProvider from '@/components/Dashboard/AuthProvider'
 import Header from '@/components/Dashboard/Header'
-import TicketBook from '@/components/Ticket/TicketBook'
+import TicketBook from '@/components/Ticket/BusTIcket';
 import React from 'react'
 
 const page = () => {
@@ -13,9 +13,7 @@ const page = () => {
             <AuthProvider>
                 <Header />
                 <br />
-                <div className="container">
-                    <TicketBook />
-                </div>
+                <TicketBook />
             </AuthProvider>
         </>
     )

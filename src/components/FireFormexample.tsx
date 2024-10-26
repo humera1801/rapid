@@ -17,7 +17,7 @@ export default function TicketBook() {
 
     try {
       const response = await fetch(
-        "http://192.168.0.100:3001/parcel/test_data",
+        "http://192.168.0.105:3001/parcel/test_data",
         {
           method: "POST",
           body: formData,

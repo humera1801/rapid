@@ -1,5 +1,10 @@
-/* components/Navbar.module.css */
+.body{
+  font-family: Arial, sans-serif;
+}
+.cardbox{
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 
+}
 
 
 .custom-nav-dropdown .dropdown-menu {
@@ -8,16 +13,14 @@
   border-radius: 0.375rem;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
   padding: 0;
+  min-width: 228px !important;
   margin-top: 0.25rem;
 }
-
-
 
 .custom-nav-dropdown .dropdown-menu .custom-dropdown-item:hover {
   background-color: #e9ecef;
 
 }
-
 
 .custom-nav-dropdown .dropdown-menu .custom-nav-link {
   color: #212529;
@@ -169,7 +172,7 @@
 }
 
 .error {
-  font-size: 13px;
+  font-size: 9px;
   color: #f72611;
 }
 
@@ -359,8 +362,13 @@ input::-webkit-inner-spin-button {
 }
 
 
+.sdate{
+  font-size: 12px;
+}
 
-
+.edate{
+  font-size: 12px;
+}
 
 
 
@@ -372,7 +380,7 @@ input::-webkit-inner-spin-button {
 
  .action-buttons {
   display: flex;
-  gap: 5px; 
+  gap: 4px; 
   align-items: center;
 }
 
@@ -380,16 +388,158 @@ input::-webkit-inner-spin-button {
 .action-buttons a {
   white-space: nowrap; 
   overflow: hidden; 
-  margin: 0; 
+  margin: 0;
+  font-size: 12px;
+ 
 }
 
-/* Responsive table styles */
 @media (max-width: 768px) {
   .react-data-table-component {
-      font-size: 14px; /* Reduce font size for smaller screens */
+      font-size: 14px; 
   }
 
   .action-buttons {
-      gap: 2px; /* Reduce gap on smaller screens */
+      gap: 2px; 
   }
+}
+.advance-paid {
+  font-weight: bold;
+  color: #007bff;
+}
+
+.pending-balance {
+  color: green; 
+  font-weight: bold; 
+}
+
+.abc  .dropdown-toggle  .nav-link .dropdown-menu .dropdown-menu[data-bs-popper] 
+  {
+  right: 0 !important;
+}
+
+.dropdown-menu[data-bs-popper] {
+  top: 100%;
+  right: 0 !important; 
+  margin-top: var(--bs-dropdown-spacer)
+}
+
+
+
+
+.custom-nav-dropdown {
+  position: relative;
+}
+
+.custom-dropdown-item {
+  padding: 1px 2px;
+}
+
+.custom-nav-link {
+  text-decoration: none;
+  color: #000;
+}
+
+
+.custom-dropdown-item .dropdown-menu {
+  left: 100%; 
+  top: 0; 
+  margin-left: 3px; 
+}
+
+
+
+@media (max-width: 576px) {
+  .custom-dropdown-item .dropdown-menu {
+      left: 0;
+      top: 100%; 
+  }
+}
+
+
+.nav-dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item {
+  padding: 2px 5px;
+  color: #333;
+  text-decoration: none;
+}
+
+.dropdown-item:hover {
+  background-color: #f5f5f5;
+}
+
+
+
+
+
+
+
+
+
+.dropdown-item-custom:hover {
+  background-color: #f8f9fa; 
+}
+
+.dropdown-divider-custom {
+  border-top: 1px solid #dee2e6; 
+  margin: 0.5rem 0; 
+}
+
+
+/* styles/footer.css */
+
+.footer1 {
+  background-color: #427001; /* Light gray background */
+  color: #ffffff;            /* Gray text */
+  text-align: center;        /* Center the text */
+  padding: 12px 0;          /* Vertical padding */
+  position: relative;        /* Position relative to its parent */
+  border-top: 1px solid #dee2e6; /* Top border for separation */
+  margin-top: 25px;
+}
+
+@media (max-width: 768px) {
+  .footer1{
+    padding: 10px 0; /* Smaller padding on mobile */
+  }
+}
+
+.navbar {
+  background-color: #f8f9fa;
+  padding: 5px;
+}
+.btn-primary {
+  font-size: 14px;
+ transition: background-color 0.3s, border-color 0.3s;
+}
+
+.cardbox {
+  box-shadow: 0 0.5rem 1rem rgba(78, 65, 48, 0.35);
+  border-radius: 0.5rem; /* Optional: Add rounded corners */
+  background-color: #ffffff; /* Optional: Background color */
+}
+
+.first-page-con{
+  background: url(../img/bck_login.jpg);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100%100%;
+}
+
+.form-control-sm{
+  font-size: 0.610rem !important;
+}
+
+.form-label{
+  font-size: 10px !important;
+  letter-spacing: 0.05rem !important;
 }

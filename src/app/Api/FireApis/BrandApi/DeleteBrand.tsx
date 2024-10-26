@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Dev URL
-export const baseURL = 'http://192.168.0.100:3001';
+export const baseURL = 'http://192.168.0.105:3001';
 
 
 
@@ -13,17 +13,11 @@ export default {
           }, {
             headers: {
               'Accept': 'application/json',
-              // Optionally add Content-Type if needed
-              // 'Content-Type': 'application/json',
+             
             },
           });
     
-          // Check response status
-        //   if (response.status === 1) {
-        //     return response;
-        //   } else {
-        //     throw new Error('Response status is not 1');
-        //   }
+        
 
         console.log("data",response.data);
         

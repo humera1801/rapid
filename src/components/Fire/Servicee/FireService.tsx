@@ -45,7 +45,7 @@ const FireService = () => {
         console.log("form data", FormData);
 
         try {
-            const response = await axios.post('http://192.168.0.103:3001/service/add_fire_extinguisher_service_type', FormData);
+            const response = await axios.post('http://192.168.0.105:3001/service/add_fire_extinguisher_service_type', FormData);
 
             console.log('service added successfully:', response.data);
 
@@ -78,7 +78,7 @@ const FireService = () => {
         try {
             if (!editservices) return;
     
-            const response = await axios.post('http://192.168.0.103:3001/service/edit_fire_extinguisher_service_type', {
+            const response = await axios.post('http://192.168.0.105:3001/service/edit_fire_extinguisher_service_type', {
                 ...FormData,
                 fest_id: editservices.fest_id  // Include the ID of the ingredient being edited
             });

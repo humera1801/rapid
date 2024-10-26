@@ -40,7 +40,7 @@ const FireBrand = () => {
 
     const onSubmit = async (data: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.100:3001/brand/add_new_fire_brand', {
+            const response = await axios.post('http://192.168.0.105:3001/brand/add_new_fire_brand', {
                 brand_name: data.brand_name,
                 created_by: storedData,
             });
@@ -77,7 +77,7 @@ const FireBrand = () => {
         try {
             if (!editBrand) return;
 
-            const response = await axios.post('http://192.168.0.100:3001/brand/edit_fire_brand_name', {
+            const response = await axios.post('http://192.168.0.105:3001/brand/edit_fire_brand_name', {
                 feb_id: editBrand.feb_id,
                 feb_name: data.brand_name,
                 created_by: storedData,

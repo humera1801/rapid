@@ -17,6 +17,8 @@ import { useRouter } from 'next/navigation';
 import handleParcelPrint from '@/app/parcel_list/parcel_data/printpparcelUtils';
 import UpdateParcelPrint from '@/app/parcel_list/parcel_data/EditParcelprint';
 import Link from 'next/link';
+import { debounce } from 'lodash';
+import GetClientList from '@/app/Api/FireApis/FireExtinghsherList/GetClientList';
 
 
 type FormData = {
@@ -41,7 +43,7 @@ type FormData = {
     reciver_proof_detail: string
     pic_delivery_type: string;
     pic_charge: number;
-
+    is_client_send_or_rec: any;
     pic_office_detail: string;
     actual_paid_amount: number;
     dis_delivery_type: string;
@@ -55,7 +57,8 @@ type FormData = {
     book_to: string,
     last_updated_by: any;
     user_id: any;
-
+    sender_whatsapp_no: any;
+    receiver_whatsapp_no: any;
     pic_address: {
         pickup_client_address: string;
         pickup_office_address: string;
@@ -85,6 +88,16 @@ type FormData = {
     parcel_imgs: any;
     remove_files: any;
     transection_id: any;
+    firstName: string;
+    client_city: string;
+    client_state: string;
+    client_pincode: string;
+    email: string;
+    client_id: any
+
+    mobileNo: string;
+    address: any;
+    client_id_proof: any;
 
 };
 
@@ -108,18 +121,33 @@ interface ParcelDetail {
     QTYtotal: number;
 }
 
+interface ClientData {
+    client_id: number;
+    client_firstName: string;
+    client_address: string;
+    client_email: string;
 
+    client_mobileNo: string;
 
+    client_city: string;
+    client_state: string;
+    client_pincode: string;
+    client_id_proof: any;
+    id_proof_urls: any;
 
-interface OPTION {
-
-    statevalue: string;
-    label: string;
 }
 
-interface ToState {
-    tostate: string;
-    detail: string;
+
+interface SenderDetails {
+    sender_name: string;
+    send_mob: string;
+    send_add: any
+}
+
+interface ReceiverDetails {
+    rec_name: string;
+    rec_mob: string;
+    rec_add: any;
 }
 
 interface City {
@@ -284,14 +312,46 @@ const EditParcelData = () => {
     const getTicketDetail = async (ticketToken: string) => {
         try {
             const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);
+            console.log(getTDetail.data[0]);
+            
             const { from_state, book_from, to_state, book_to } = getTDetail.data[0];
             setSelectedFromStateId(from_state);
             setSelectedToStateId(to_state);
             fetchCities(from_state, true);
             fetchCities(to_state, false);
             setParcelData(getTDetail.data[0]);
+            setValue("firstName", getTDetail.data[0].client_firstName);
+            setInputValue(getTDetail.data[0].client_firstName);
+            setValue("email", getTDetail.data[0].client_email)
+            setValue("client_id", getTDetail.data[0].client_id)
+            setSelectedClientId(getTDetail.data[0].client_id);
+            setValue("address", getTDetail.data[0].client_address);
+            setValue("mobileNo", getTDetail.data[0].client_mobileNo);
+            setMobileNoValue(getTDetail.data[0].mobileNo);
+            setValue("sender_whatsapp_no", getTDetail.data[0].sender_whatsapp_no);
+            setSenderMobileValue(getTDetail.data[0].sender_whatsapp_no);
+            setValue("receiver_whatsapp_no", getTDetail.data[0].receiver_whatsapp_no);
+            setWMobileNoValue(getTDetail.data[0].receiver_whatsapp_no);
+            setValue("client_city", getTDetail.data[0].client_city);
+            setValue("client_state", getTDetail.data[0].client_state);
+            setValue("client_pincode", getTDetail.data[0].client_pincode);
+            setValue("sender_name", getTDetail.data[0].sender_name);
+            setValue("send_mob", getTDetail.data[0].send_mob);
+            setValue("send_add", getTDetail.data[0].send_add);
+            setSenderDetails(getTDetail.data[0].send_mob)
+            setSenderDetails(getTDetail.data[0].send_add)
+            setSenderDetails(getTDetail.data[0].sender_name)
+            setValue("rec_name", getTDetail.data[0].rec_name);
+            setValue("rec_mob", getTDetail.data[0].rec_mob);
+            setValue("rec_add", getTDetail.data[0].rec_add);
+            setValue("is_client_send_or_rec", getTDetail.data[0].is_client_send_or_rec);
+            setSenderOption(getTDetail.data[0].is_client_send_or_rec)
+            setReceiverDetails(getTDetail.data[0].rec_mob)
+            setReceiverDetails(getTDetail.data[0].rec_add)
+            setReceiverDetails(getTDetail.data[0].rec_name)
+            setClientDetails(getTDetail.data[0].client_id)
             setError("");
-            console.log("fgdjg", getTDetail);
+            console.log("fgdjg", senderDetails);
 
 
         } catch (error) {
@@ -315,12 +375,8 @@ const EditParcelData = () => {
 
                 receipt_no: '',
                 actual_total: 0,
-                sender_name: '',
-                rec_name: '',
-                send_mob: '',
-                rec_mob: '',
-                send_add: '',
-                rec_add: '',
+
+               
                 sender_proof_type: '',
                 reciver_proof_type: '',
                 pic_delivery_type: '',
@@ -331,8 +387,8 @@ const EditParcelData = () => {
                 print_gst_amount: 0,
                 print_bal_amount: 0,
                 print_paid_amount: 0,
-                pic_address: [{ pickup_client_address: '', pickup_office_address: '' }],
-                dis_address: [{ dispatch_client_address: '', dispatch_office_address: '' }],
+                // pic_address: [{ pickup_client_address: '', pickup_office_address: '' }],
+                // dis_address: [{ dispatch_client_address: '', dispatch_office_address: '' }],
                 dis_charge: 0,
                 bus_no: '',
                 driver_no: '',
@@ -368,13 +424,13 @@ const EditParcelData = () => {
     setValue("actual_bal_amount", parcelData.actual_bal_amount)
     setValue("book_from", parcelData.book_from)
     setValue("book_to", parcelData.book_to)
-    setValue("sender_name", parcelData.sender_name)
+    // setValue("sender_name", parcelData.sender_name)
     setValue("particulars", parcelData.particulars)
     setValue("rec_name", parcelData.rec_name)
-    setValue("send_add", parcelData.send_add)
-    setValue("send_mob", parcelData.send_mob)
-    setValue("rec_mob", parcelData.rec_mob)
-    setValue("rec_add", parcelData.rec_add)
+    // setValue("send_add", parcelData.send_add)
+    // setValue("send_mob", parcelData.send_mob)
+    // setValue("rec_mob", parcelData.rec_mob)
+    // setValue("rec_add", parcelData.rec_add)
     setValue("sender_proof_type", parcelData.sender_proof_type)
     setValue("pic_delivery_type", parcelData.pic_delivery_type)
     setValue("pic_charge", parcelData.pic_charge)
@@ -424,6 +480,7 @@ const EditParcelData = () => {
     //=========================================================================================================================   
 
     const appendPicAddress = () => {
+
         setAddressFields({
             ...addressFields,
             pic_address: [...addressFields.pic_address, { pickup_client_address: '', pickup_office_address: '' }],
@@ -460,7 +517,7 @@ const EditParcelData = () => {
     /********************************************parcel_bill_details*******************************************************/
 
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, field: keyof ParcelBillDetail) => {
+    const handleEwayChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, field: keyof ParcelBillDetail) => {
         const updatedFields = [...EwayFields];
         updatedFields[index] = {
             ...updatedFields[index],
@@ -491,11 +548,11 @@ const EditParcelData = () => {
         ]);
     };
 
-    const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
-        setParcelData({ ...parcelData, whatsapp_no: value });
+    // const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     const value = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
+    //     setParcelData({ ...parcelData, whatsapp_no: value });
 
-    };
+    // };
 
 
 
@@ -908,11 +965,240 @@ const EditParcelData = () => {
     const router = useRouter();
 
 
+    //------------------------------------------------------------------------------------------------------------------------
+    const [senderOption, setSenderOption] = useState<string>('');
+    const [clientDetails, setClientDetails] = useState<ClientData | null>(null);
+    const [senderDetails, setSenderDetails] = useState<SenderDetails>({
+        sender_name: '',
+        send_mob: '',
+        send_add: "",
+    });
+    const [receiverDetails, setReceiverDetails] = useState<ReceiverDetails>({
+        rec_name: '',
+        rec_mob: '',
+        rec_add: "",
+    });
+
+
+    const handlesenderOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selectedOption = e.target.value;
+        setSenderOption(selectedOption);
+
+        if (selectedOption === 'sender' && clientDetails) {
+            setSenderDetails({
+                sender_name: parcelData.client_firstName,
+                send_mob: parcelData.client_mobileNo,
+                send_add: parcelData.client_address,
+            });
+            setReceiverDetails({
+                rec_name: '',
+                rec_mob: '',
+                rec_add: "",
+            });
+        } else if (selectedOption === 'receiver' && clientDetails) {
+            setReceiverDetails({
+                rec_name: parcelData.client_firstName,
+                rec_mob: parcelData.client_mobileNo,
+                rec_add: parcelData.client_address,
+            });
+            setSenderDetails({
+                sender_name: '',
+                send_mob: '',
+                send_add: "",
+            });
+        }
+        else if (selectedOption === 'other_data') {
+            setSenderDetails({
+                sender_name: '',
+                send_mob: '',
+                send_add: "",
+            });
+            setReceiverDetails({
+                rec_name: '',
+                rec_mob: '',
+                rec_add: "",
+            });
+        };
+
+    }
+
+    //-------------------------------------Client data------------------------------------------------------------------------------------------
+    const [mobileNoValue, setMobileNoValue] = useState<string>('');
+
+    const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setMobileNoValue(value);
+            setValue("mobileNo", value); // Update form value
+        }
+    };
+
+
+    const [SenderMobileValue, setSenderMobileValue] = useState<string>('');
+
+    const handleSenderMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setSenderMobileValue(value);
+            setValue("sender_whatsapp_no", value); // Update form value
+        }
+    };
+
+
+    const [WmobileNoValue, setWMobileNoValue] = useState<string>('');
+
+    const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
+        if (value.length <= 10) { // Restrict to 10 digits
+            setWMobileNoValue(value);
+
+            setValue("receiver_whatsapp_no", value); // Update form value
+        }
+    };
+
+    //------------------------------------------------------------------------------------------------------------------
+    const [clientData, setClientData] = useState<ClientData[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+    const [inputValue, setInputValue] = useState<string>('');
+    const [filteredClients, setFilteredClients] = useState<ClientData[]>([]);
+    const [isAddingNewClient, setIsAddingNewClient] = useState<boolean>(false);
+    const [imageName, setImageName] = useState<string>('');
+
+
+    const debounceApiCall = debounce((value: string) => {
+        if (value.trim() === '') {
+            setFilteredClients([]);
+            return;
+        }
+        fetchclientData(value);
+    }, 100);
+
+    const fetchclientData = async (value: string) => {
+        try {
+            const res = await GetClientList.getclientListData(value);
+            console.log('GetClientList.getclientListData', res);
+            setClientData(res);
+            setFilteredClients(res);
+        } catch (error) {
+
+            console.error('Error fetching client data:', error);
+        }
+    };
+
+    const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.toLowerCase();
+        setInputValue(value);
+
+        if (value.trim() === '') {
+            setFilteredClients([]);
+            return;
+        }
+        if (clientData.length === 0) {
+            await fetchclientData(value);
+        }
+
+        const filtered = clientData.filter(client =>
+            client.client_firstName.toLowerCase().includes(value)
+        );
+
+        setFilteredClients(filtered);
+        debounceApiCall(value);
+    };
+
+
+    const handleSelectClient = (clientId: number) => {
+        setSelectedClientId(clientId);
+        setInputValue(clientData.find(client => client.client_id === clientId)?.client_firstName || '');
+        setFilteredClients([]);
+
+        const selectedClient = clientData.find(client => client.client_id === clientId);
+        if (selectedClient) {
+            setValue("firstName", selectedClient.client_firstName);
+            setValue("address", selectedClient.client_address);
+            setValue("email", selectedClient.client_email);
+            setValue("client_city", selectedClient.client_city);
+            setValue("client_state", selectedClient.client_state);
+            setValue("client_pincode", selectedClient.client_pincode);
+            setValue("mobileNo", selectedClient.client_mobileNo);
+            setValue("client_id_proof", selectedClient.client_id_proof);
+
+            setMobileNoValue(selectedClient.client_mobileNo);
+
+            const fileProof = selectedClient.id_proof_urls;
+            setImageName(fileProof)
+
+            console.log(fileProof);
+
+            // if (typeof fileProof === 'string') {
+            //     setSelectedFile(null);
+            //     setImageName(''); 
+            // } else {
+            //     setSelectedFile(fileProof);
+            //     setImageName(fileProof.name); 
+            // }
+            if (selectedClient) {
+                setClientDetails(selectedClient);
+            }
+
+        }
+    };
+
+
+    const handleAddNewClient = () => {
+        setSelectedClientId(null);
+        setIsAddingNewClient(true);
+        setInputValue('');
+        setFilteredClients([]);
+        // Clear existing form values
+        setValue("firstName", '');
+        setValue("address", '');
+        setValue("email", '');
+        setValue("mobileNo", '');
+        setValue("client_city", '');
+        setValue("client_state", '');
+        setValue("client_pincode", '');
+        setValue("client_id_proof", '');
+
+        setMobileNoValue('');
+
+    };
+
+
+    //------------------------------------------------------------------------------------------------------------------------
     const onSubmit: SubmitHandler<FormData> = async (formData: any) => {
-        console.log("datadddd", formData);
+        
+    if (senderOption === 'sender') {
+        parcelData.sender_name = senderDetails.sender_name;
+        parcelData.send_mob = senderDetails.send_mob;
+        parcelData.send_add = senderDetails.send_add;
+
+    } else if (senderOption === 'receiver') {
+        parcelData.rec_name = receiverDetails.rec_name;
+        parcelData.rec_mob = receiverDetails.rec_mob;
+        parcelData.rec_add = receiverDetails.rec_add;
+
+    }
+
+
+    // if (senderOption === 'sender') {
+    //     formData.sender_name = senderDetails.sender_name;
+    //     formData.send_mob = senderDetails.send_mob;
+    //     formData.send_add = senderDetails.send_add;
+
+    // } else if (senderOption === 'receiver') {
+    //     formData.rec_name = receiverDetails.rec_name;
+    //     formData.rec_mob = receiverDetails.rec_mob;
+    //     formData.rec_add = receiverDetails.rec_add;
+
+    // }
+       
+
+
+        console.log('Submitting:', senderOption);
+
+        console.log(">>>>>>>>>>>>>>>>", formData);
 
         try {
-            // State variables (you need to define these based on your component or context)
             let fromStateName = '';
             let toStateName = '';
             let fromCityName = '';
@@ -921,7 +1207,6 @@ const EditParcelData = () => {
             const selectedFromStateIdStr = String(selectedFromStateId);
             const selectedToStateIdStr = String(selectedToStateId);
 
-            // Fetch state names directly from the `fromStates` and `toStates` arrays
             const fromState = fromStates.find(state => String(state.id) === selectedFromStateIdStr);
             const toState = toStates.find(state => String(state.id) === selectedToStateIdStr);
 
@@ -932,7 +1217,6 @@ const EditParcelData = () => {
                 toStateName = toState.name;
             }
 
-            // Fetch city names directly from the `fromCities` and `toCities` arrays
             const fromCity = fromCities.find(city => String(city.id) === formData.travel_from);
             const toCity = toCities.find(city => String(city.id) === formData.travel_to);
 
@@ -952,7 +1236,7 @@ const EditParcelData = () => {
 
             // Handle custom city input if needed
             if (showCustomCityInput && customCity) {
-                const response = await axios.post('http://192.168.0.100:3001/ticket/add_new_city_from_state', {
+                const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
                     city_name: customCity,
                     state_id: selectedFromStateId,
                 });
@@ -960,7 +1244,7 @@ const EditParcelData = () => {
             }
 
             if (showCustomToCityInput && customToCity) {
-                const response = await axios.post('http://192.168.0.100:3001/ticket/add_new_city_from_state', {
+                const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
                     city_name: customToCity,
                     state_id: selectedToStateId,
                 });
@@ -970,82 +1254,196 @@ const EditParcelData = () => {
 
             formData.from_state = selectedFromStateIdStr;
             formData.to_state = selectedToStateIdStr;
-
             formData.remove_files = removedFileNames;
 
-            const response = await axios.post('http://192.168.0.100:3001/parcel/update_parcel_detail_data', formData);
 
-            console.log('Form submitted successfully:', response.data);
+            const finalData: FormData = {
+                ...formData,
+                
+            };
 
-            if (response.data.status == 1) {
-                console.log("formData0", formData);
+            let clientId: number | undefined;
 
-                if (formData.parcel_imgs && formData.parcel_imgs.length > 0) {
-                    const formDataImages = new FormData();
-                    formDataImages.append("parcel_token", response.data.parcel_token);
 
-                    for (const file of formData.parcel_imgs) {
-                        formDataImages.append("parcel_imgs", file);
-                    }
+            if (isAddingNewClient) {
+                finalData.client_id = "";
+                console.log(finalData, "finalData");
 
-                    console.log('FormData prepared for images:', formDataImages);
+                const response = await submitNewClientFormData(finalData);
+                console.log('Form data submitted successfully for new client.', finalData);
+                clientId = response.client_id;
+                console.log(clientId);
 
-                    try {
-                        const uploadResponse = await axios.post("http://192.168.0.100:3001/parcel/upload_parcel_image", formDataImages, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data'
-                            }
-                        });
+                setIsAddingNewClient(false);
+            } else if (selectedClientId) {
+                finalData.client_id = selectedClientId;
+                clientId = selectedClientId;
+                const parcelDataResponse = await submitFormData(finalData, clientId);
+                console.log('Form data submitted successfully with selected client id:', finalData);
 
-                        const uploadResult = uploadResponse.data;
-                        console.log('Image upload response:', uploadResult);
-
-                        if (uploadResult.status === "1") {
-                            console.log("Images added successfully");
-                        } else {
-                            console.log("Failed to upload images");
-                        }
-                    } catch (uploadError) {
-                        console.error("Error uploading images:", uploadError);
-                        alert("Failed to upload images");
-                    }
-                } else {
-                    console.log("No images to upload");
+                if (!parcelDataResponse.ok) {
+                    throw new Error('Failed to create parcel data');
                 }
+                const parcelData = await parcelDataResponse.json();
+                console.log("images" , parcelData.token);
+                // console.log("images" , parcelData.parcel_token);
 
-                if (response.data.parcel_token) {
-                    try {
-                        const parcelDetailResponse = await EditParcelDataList.getEditParcelData(response.data.parcel_token);
-                        console.log("Parcel data:", parcelDetailResponse.data[0]);
-                        handleParcelPrint(parcelDetailResponse.data[0]);
-                        router.push("/parcel_list");
-                    } catch (fetchError) {
-                        console.error('Error fetching parcel data:', fetchError);
+
+
+                if (parcelData.status == 1) {
+                    console.log("formData", formData);
+
+                    if (formData.parcel_imgs && formData.parcel_imgs.length > 0) {
+                        const formDataImages = new FormData();
+                        formDataImages.append("parcel_token", parcelData.token);
+
+                        for (const file of formData.parcel_imgs) {
+                            formDataImages.append("parcel_imgs", file);
+                        }
+
+                        console.log('FormData prepared for images:', formDataImages);
+
+                        try {
+                            const uploadResponse = await axios.post("http://192.168.0.105:3001/parcel/upload_parcel_image", formDataImages, {
+                                headers: {
+                                    'Content-Type': 'multipart/form-data'
+                                }
+                            });
+
+                            const uploadResult = uploadResponse.data;
+                            console.log('Image upload response:', uploadResult);
+
+                            if (uploadResult.status === "1") {
+                                console.log("Images added successfully");
+                            } else {
+                                console.log("Failed to upload images");
+                            }
+                        } catch (uploadError) {
+                            console.error("Error uploading images:", uploadError);
+                            alert("Failed to upload images");
+                        }
+                    } else {
+                        console.log("No images to upload");
                     }
+                    if (parcelData.token) {
+                        try {
+                            const parcelDetailResponse = await EditParcelDataList.getEditParcelData(parcelData.token);
+                            console.log("Parcel data:", parcelDetailResponse.data[0]);
+                            handleParcelPrint(parcelDetailResponse.data[0]);
+                            router.push("/parcel_list");
+                        } catch (fetchError) {
+                            console.error('Error fetching parcel data:', fetchError);
+                        }
+                    }
+
+                } else {
+                    console.log("Failed to update parcel details");
                 }
 
             } else {
-                console.log("Failed to update parcel details");
+                console.log('Please select a client or add a new client before submitting.');
+                return;
             }
-            // UpdateParcelPrint(formData);
 
-            // router.push('/parcel_list');
+
+
+            if (formData.client_id_proof && formData.client_id_proof.length > 0) {
+                const file = formData.client_id_proof[0];
+
+                // Only upload if a new file is provided
+                console.log("New image uploaded:", {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                });
+
+                if (clientId !== undefined) {
+                    await uploadClientProofId(file, clientId);
+                } else {
+                    console.error('Client ID is undefined; cannot upload image.');
+                }
+            } else {
+                console.log("No new image selected; skipping upload.");
+            }
+
+
+
+
+            // const response = await axios.post('http://192.168.0.105:3001/parcel/update_parcel_detail_data', formData);
+
+            // console.log('Form submitted successfully:', response.data);
+
+
+
+
+
+
+
+
+
+
+
         } catch (error) {
             console.error('Error submitting form:', error);
 
         }
     };
 
+    const uploadClientProofId = async (file: File, clientId: number) => {
+        const formData = new FormData();
+        formData.append("client_id_proof", file); // Append the single file
+        formData.append("client_id", clientId.toString());
 
-    // const onSubmit = async (data: any) => {
+        try {
+            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+
+            console.log('Client proof ID uploaded successfully:', response.data);
+        } catch (error) {
+            console.error('Error uploading client proof ID:', error);
+        }
+    }
 
 
-    //     console.log('Submitting form with removed file names:', removedFileNames);
+    async function submitFormData(formData: FormData, clientId: number | undefined) {
+        const response = await fetch('http://192.168.0.105:3001/parcel/update_parcel_detail_data', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        });
+
+        return response;
+    }
+
+    async function submitNewClientFormData(formData: FormData) {
+        try {
+            const response = await axios.post('http://192.168.0.105:3001/parcel/update_parcel_detail_data', formData);
+            console.log('Form data submitted successfully for new client.', response.data);
+            return response.data; // Ensure this returns the data with client_id
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.error('Axios Error Details:', {
+                    message: error.message,
+                    code: error.code,
+                    config: error.config,
+                    request: error.request,
+                    response: error.response
+                });
+            } else {
+                console.error('Unexpected Error:', error);
+            }
+        }
+    }
 
 
 
-    //     };
 
+    //------------------------------------------------------------------------------------------------------------------------
 
     const handleShowCustomCityInput = () => {
         setShowCustomCityInput(true);
@@ -1062,20 +1460,7 @@ const EditParcelData = () => {
 
 
 
-    const [receipt_no, setReceiptNo] = useState();
-    useEffect(() => {
-        receiptNo.getRecieptNo()
-            .then((res) => {
-                console.log('receiptNo.getRecieptNo', res);
-                setReceiptNo(res.data);
-                setValue('receipt_no', res.data);
-            })
-            .catch((e) => {
-                console.log('Err', e);
-            });
-        fetchStates(true); // Fetch "From" states
-        fetchStates(false); // Fetch "To" states
-    }, []);
+   
 
     //---------------------------------------------------phone validation------------------------------------------------------------
 
@@ -1154,19 +1539,18 @@ const EditParcelData = () => {
     return (
         <>
 
-            <div className="container-fluid">
+            <div className="container" style={{ fontSize: "12px" }}>
                 <br />
-                <Card>
-                    <Card.Header style={{ display: "flex", justifyContent: "space-between" }}><h3>Update Parcel Booking</h3>
-                        <div>
-                           
+                <div style={{ display: "flex", justifyContent: "space-between" }}><h4>Update Parcel Booking</h4>
+                    <div>
+                        <Link href="/parcel_list" className="btn btn-sm btn-primary" style={{ float: "right", marginRight: "8px" }}>Back</Link>
+                    </div>
 
-                            <Link href="/parcel_list" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</Link>
+                </div>
+                <br />
+                <Card className='cardbox'>
 
-                        </div>
-
-                    </Card.Header>
-                    {error && <p>{error}</p>}
+                    {/* {error && <p>{error}</p>} */}
                     {parcelData && (
                         <Card.Body>
                             <form onSubmit={handleSubmit(onSubmit)}>
@@ -1174,14 +1558,7 @@ const EditParcelData = () => {
                                 {/* First-Row */}
                                 <div className="row mb-3">
 
-                                    <div className="col-lg-3">
-                                        <label className="form-label" htmlFor="to">Booking date</label>
-                                        <input {...register('booking_date')} className="form-control form-control-sm" value={parcelData.booking_date} onChange={(e) => handleFieldChange('booking_date', e.target.value)} type="date" id="booking_date" placeholder="Booking date" />
-                                    </div>
-                                    <div className="col-lg-3">
-                                        <label className="form-label" htmlFor="to">Disptach date</label>
-                                        <input {...register('dispatch_date')} value={parcelData.dispatch_date} onChange={(e) => handleFieldChange('dispatch_date', e.target.value)} className="form-control form-control-sm" type="date" id="dispatch_date" placeholder="Disptach date" />
-                                    </div>
+
 
 
                                     <div className="col-lg-3 ">
@@ -1245,10 +1622,6 @@ const EditParcelData = () => {
                                         )}
 
                                     </div>
-                                </div>
-
-                                {/* second-Row */}
-                                <div className='row mb-3'>
 
 
                                     <div className="col-lg-3">
@@ -1310,72 +1683,364 @@ const EditParcelData = () => {
                                             />
                                         )}
                                     </div>
-                                    <div className="col-lg-3">
-                                        <label className="form-label" htmlFor="sender_name">Sender Name</label>
-                                        <input {...register('sender_name', {
-
-                                        })} className="form-control form-control-sm" value={parcelData.sender_name} onChange={(e) => handleFieldChange('sender_name', e.target.value)} type="text" id="sender_name" placeholder="Sender Name" />
-                                    </div>
-                                    <div className="col-lg-3">
-                                        <label className="form-label" htmlFor="rec_name">Receiver Name</label>
-                                        <input {...register('rec_name', {
-
-                                        })} className="form-control form-control-sm" value={parcelData.rec_name} onChange={(e) => handleFieldChange('rec_name', e.target.value)} type="text" id="rec_name" placeholder="Rec. Name" />
-                                    </div>
-
                                 </div>
 
-                                {/* Fourth-Row */}
+                                {/* second-Row */}
+                                <div className='row mb-3'>
+
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="to">Booking date</label>
+                                        <input {...register('booking_date')} className="form-control form-control-sm" value={parcelData.booking_date} onChange={(e) => handleFieldChange('booking_date', e.target.value)} type="date" id="booking_date" placeholder="Booking date" />
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="to">Disptach date</label>
+                                        <input {...register('dispatch_date')} value={parcelData.dispatch_date} onChange={(e) => handleFieldChange('dispatch_date', e.target.value)} className="form-control form-control-sm" type="date" id="dispatch_date" placeholder="Disptach date" />
+                                    </div>
+                                  
+                                </div>
+
+
+
+
+
                                 <div className="row mb-3">
-                                    <div className="col-lg-4">
-                                        <label className="form-label" htmlFor="send_mob">Sender Mobile No.</label>
-                                        <input type="text"
-                                            {...register("send_mob", {
-                                                minLength: 10,
 
 
-                                            })} value={parcelData.send_mob} maxLength={10}
-                                            onChange={handleCmpPhoneChange} className="form-control form-control-sm" name="send_mob" id="send_mob" placeholder="Enter Company Mobile No" />
-                                        {errors.send_mob?.type === "required" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
-                                        {errors?.send_mob?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
+                                    <div className="col-md-12">
+          <h6>Client Details:</h6>                                    </div>
+                                    <hr />
+                                </div>
+
+                                <div className="row mb-3">
+                                    <div className="col-lg-4 col-sm-4">
+                                        <label className="form-label" htmlFor="clientId">Select Client:</label>
+                                        <div className="">
+                                            {isAddingNewClient ? (
+                                                <input
+                                                    {...register("firstName", { required: true })}
+                                                    type="text"
+                                                    className="form-control form-control-sm"
+                                                    placeholder="Enter Client Name"
+                                                />
+                                            ) : (
+                                                <>
+                                                    <input
+                                                        {...register("firstName", { required: true })}
+                                                        type="text"
+                                                        className="form-control form-control-sm"
+                                                        id="clientId"
+                                                        value={inputValue}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Enter Client Name"
+                                                    />
+                                                    {(inputValue.length > 0 || selectedClientId !== null) && (
+                                                        <div className="list-group autocomplete-items">
+                                                            {inputValue.length > 0 && (
+                                                                <button
+                                                                    type="button"
+                                                                    className="list-group-item list-group-item-action text-primary"
+                                                                    onClick={handleAddNewClient}
+                                                                >
+                                                                    Add New Client
+                                                                </button>
+                                                            )}
+
+                                                            {filteredClients.map(client => (
+                                                                <button
+                                                                    key={client.client_id}
+                                                                    type="button"
+                                                                    className="list-group-item list-group-item-action"
+                                                                    onClick={() => handleSelectClient(client.client_id)}
+                                                                >
+                                                                    {client.client_firstName}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="col-lg-2">
+                                        <label className="form-label" htmlFor="address">Address</label>
+                                        <textarea
+                                            {...register("address", { required: true })}
+
+                                            className="form-control form-control-sm"
+                                            id="address"
+                                            placeholder="Enter Address"
+                                        />
+                                    </div>
+                                    <div className="col-lg-2">
+                                        <label className="form-label" htmlFor="state">State</label>
+                                        <input
+                                            {...register("client_state", { required: true })}
+                                            className="form-control form-control-sm"
+                                            id="state"
+                                            placeholder="Enter state"
+                                        />
+                                        {errors?.client_state?.type === "required" && <span className="error">This field is required</span>}
 
                                     </div>
-                                    <div className="col-lg-4">
-                                        <label className="form-label" htmlFor="rec_mob">Receiver Mobile No.</label>
-                                        <input type="text"
-                                            {...register("rec_mob", {
-                                                minLength: 10,
-                                                pattern: /^[0-9]+$/
+                                    <div className="col-lg-2">
+                                        <label className="form-label" htmlFor="city">city</label>
+                                        <input
+                                            {...register("client_city", { required: true })}
+                                            className="form-control form-control-sm"
+                                            id="city"
+                                            placeholder="Enter city"
+                                        />
+                                        {errors?.client_city?.type === "required" && <span className="error">This field is required</span>}
+
+                                    </div>
+                                    <div className="col-lg-2">
+                                        <label className="form-label" htmlFor="pincode">Pin-Code:</label>
+                                        <input
+                                            {...register("client_pincode", {
+                                                required: true,
+                                                maxLength: 6,
+                                                minLength: 6
 
                                             })}
-                                            className="form-control form-control-sm" value={parcelData.rec_mob} maxLength={10}
-                                            onChange={handlePhoneChange} id="rec_mob" placeholder="Enter rec_mob No" />
-                                        {errors.rec_mob?.type === "required" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
-                                        {errors?.rec_mob?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
-
-                                        <span id="rec_mobile_err" ></span>
+                                            className="form-control form-control-sm"
+                                            id="pincode"
+                                            placeholder="Enter pincode"
+                                        />
+                                        {errors?.client_pincode?.type === "required" && <span className="error">This field is required</span>}
+                                        {errors?.client_pincode?.type === "minLength" && <span className="error">Enter valid Pin-code number. </span>}
+                                        {errors?.client_pincode?.type === "maxLength" && <span className="error">Enter valid Pin-code number .</span>}
                                     </div>
 
-                                    <div className="col-lg-4">
-                                        <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">What's-up No</label>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="email">Email-id</label>
+                                        <input
+                                            {...register("email", { required: true })}
+                                            type="email"
+                                            className="form-control form-control-sm"
+                                            placeholder="Enter your email"
+                                        />
+                                    </div>
+
+
+
+
+
+
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="mobileNo">Mobile No</label>
                                         <input
                                             type="text"
-                                            {...register("whatsapp_no", {
+                                            {...register("mobileNo", {
                                                 required: true,
                                                 minLength: 10,
                                                 maxLength: 10,
                                                 pattern: /^[0-9]+$/
                                             })}
-                                            value={parcelData.whatsapp_no}
-                                            onChange={handleWMobileNoChange}
-                                            className={`form-control form-control-sm ${errors.whatsapp_no ? 'is-invalid' : ''}`}
-                                            id="whatsapp_no"
+                                            value={mobileNoValue}
+                                            onChange={handleMobileNoChange}
+                                            className={`form-control form-control-sm ${errors.mobileNo ? 'is-invalid' : ''}`}
+                                            id="mobileNo"
+                                            placeholder="Enter Mobile No"
+                                        />
+                                        {errors?.mobileNo?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.mobileNo?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.mobileNo?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+                                    </div>
+
+
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="particulars">Image Upload</label>
+                                        <input className="form-control form-control-sm" type="file" {...register("client_id_proof")} />
+                                        {/* {imageName && <span style={{ marginTop: "10px" }} className="mb-2">{imageName}</span>} Display selected image name */}
+                                        {imageName && (
+                                            <div className="col-lg-12 mt-2">
+                                                <img src={imageName} alt="Client ID Proof" style={{ width: '100px', height: '100px' }} />
+                                            </div>
+                                        )}
+                                    </div>
+
+
+                                </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                <div className="row mb-3">
+                                    <div className="col-lg-6">
+                                        <label className="form-label" htmlFor="send_mob">Is Sender Or Receiver?</label>&nbsp;
+                                        <br />
+                                        <div className="d-flex gap-2">
+                                            <input
+                                                {...register('is_client_send_or_rec')}
+                                                type="radio"
+                                                checked={senderOption === 'sender'}
+                                                onChange={handlesenderOptionChange}
+                                                id="sender"
+                                                value="sender"
+                                            /> Sender
+                                            <input
+                                                {...register('is_client_send_or_rec')}
+                                                type="radio"
+                                                checked={senderOption === 'receiver'}
+                                                onChange={handlesenderOptionChange}
+                                                value="receiver"
+                                            /> Receiver
+                                            <input
+                                                {...register('is_client_send_or_rec')}
+                                                type="radio"
+                                                checked={senderOption === 'other_data'}
+                                                onChange={handlesenderOptionChange}
+                                                value="other_data"
+                                            /> Other
+                                        </div>
+                                    </div>
+                                </div>
+
+
+                                <div className="row mt-4">
+                                    <div className="col-md-6">
+                                        <h5>Sender Details:</h5>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <h5>Reciever Details:</h5>
+                                    </div>
+                                    <hr />
+                                </div>
+                                <div className="row mb-3">
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="sender_name">Sender Name</label>
+                                        <input
+                                            {...register('sender_name')}
+                                            className="form-control form-control-sm"
+                                            type="text"
+                                            id="sender_name"
+                                            placeholder="Sender Name"
+                                            value={senderDetails.sender_name}
+                                            onChange={(e) => setSenderDetails({ ...senderDetails, sender_name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="send_mob">Sender Mobile No.</label>
+                                        <input
+                                            type="text"
+                                            {...register("send_mob", { minLength: 10 })}
+                                            className="form-control form-control-sm"
+                                            name="send_mob"
+                                            id="send_mob"
+                                            placeholder="Enter Sender Mobile No"
+                                            value={senderDetails.send_mob}
+                                            onChange={(e) => setSenderDetails({ ...senderDetails, send_mob: e.target.value })}
+                                        />
+                                        {errors.send_mob?.type === "required" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.send_mob?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
+
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="rec_name">Receiver Name</label>
+                                        <input
+                                            {...register('rec_name', {})}
+                                            className="form-control form-control-sm"
+                                            type="text"
+                                            id="rec_name"
+                                            placeholder="Receiver Name"
+                                            value={receiverDetails.rec_name}
+                                            onChange={(e) => setReceiverDetails({ ...receiverDetails, rec_name: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="rec_mob">Receiver Mobile No.</label>
+                                        <input
+                                            type="text"
+                                            {...register("rec_mob", { minLength: 10 })}
+                                            className="form-control form-control-sm"
+                                            name="rec_mob"
+                                            id="rec_mob"
+                                            placeholder="Enter Receiver Mobile No"
+                                            value={receiverDetails.rec_mob}
+                                            onChange={(e) => setReceiverDetails({ ...receiverDetails, rec_mob: e.target.value })}
+                                        />
+                                        {errors.rec_mob?.type === "required" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.rec_mob?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
+
+                                        <span id="rec_mobile_err" ></span>
+                                    </div>
+                                </div>
+
+                                {/* --------------*/}
+                                <div className="row mb-3">
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="send_add">Sender Address</label>
+                                        <textarea
+                                            {...register('send_add')}
+                                            className="form-control form-control-sm"
+                                            id="send_add"
+                                            placeholder="Sender address"
+                                            value={senderDetails.send_add}
+                                            onChange={(e) => setSenderDetails({ ...senderDetails, send_add: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">Sender Whatsapp No</label>
+                                        <input
+                                            type="text"
+                                            {...register("sender_whatsapp_no", {
+                                                required: true,
+                                                minLength: 10,
+                                                maxLength: 10,
+                                                pattern: /^[0-9]+$/
+                                            })}
+                                            value={SenderMobileValue}
+                                            onChange={handleSenderMobileChange}
+                                            className={`form-control form-control-sm ${errors.sender_whatsapp_no ? 'is-invalid' : ''}`}
+                                            id="sender_whatsapp_no"
 
                                             placeholder="Enter Mobile No"
                                         />
-                                        {errors?.whatsapp_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
-                                        {errors?.whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
-                                        {errors?.whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+                                        {errors?.sender_whatsapp_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.sender_whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.sender_whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
+
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="ex_rate">Receiver Address</label>
+                                        <textarea
+                                            {...register('rec_add')}
+                                            className="form-control form-control-sm"
+                                            id="rec_add"
+                                            placeholder="receiver address"
+                                            value={receiverDetails.rec_add}
+                                            onChange={(e) => setReceiverDetails({ ...receiverDetails, rec_add: e.target.value })}
+                                        />                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" style={{ appearance: "textfield" }} htmlFor="mobile">Reciver Whatsapp No</label>
+                                        <input
+                                            type="text"
+                                            {...register("receiver_whatsapp_no", {
+                                                required: true,
+                                                minLength: 10,
+                                                maxLength: 10,
+                                                pattern: /^[0-9]+$/
+                                            })}
+                                            value={WmobileNoValue}
+                                            onChange={handleWMobileNoChange}
+                                            className={`form-control form-control-sm ${errors.receiver_whatsapp_no ? 'is-invalid' : ''}`}
+                                            id="receiver_whatsapp_no"
+
+                                            placeholder="Enter Mobile No"
+                                        />
+                                        {errors?.receiver_whatsapp_no?.type === "required" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.receiver_whatsapp_no?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
+                                        {errors?.receiver_whatsapp_no?.type === "pattern" && <span className="error">Enter numeric characters only.</span>}
 
                                     </div>
                                 </div>
@@ -1491,18 +2156,14 @@ const EditParcelData = () => {
                                     </div>
                                 </div>
 
-                                {/* --------------*/}
-                                <div className="row mb-3">
-                                    <div className="col-lg-6">
-                                        <label className="form-label" htmlFor="send_add">Sender Address</label>
-                                        <textarea {...register('send_add')} value={parcelData.send_add} onChange={(e) => handleFieldChange('send_add', e.target.value)} className="form-control form-control-sm" name="send_add" id="send_add" placeholder="Address"></textarea>
-                                    </div>
-                                    <div className="col-lg-6">
-                                        <label className="form-label" htmlFor="ex_rate">Receiver Address</label>
-                                        <textarea {...register('rec_add')} value={parcelData.rec_add} onChange={(e) => handleFieldChange('rec_add', e.target.value)} className="form-control form-control-sm" name="rec_add" id="rec_add" placeholder="Address"></textarea>
-                                    </div>
-                                </div>
 
+                                <div className="row mt-4">
+                                    <div className="col-md-12">
+                                        <h5>Parcel Detail</h5>
+
+                                    </div>
+                                    <hr />
+                                </div>
 
 
 
@@ -1638,7 +2299,7 @@ const EditParcelData = () => {
                                             <input
                                                 {...register(`bill_detail.${index}.e_way_bill_no`)}
                                                 value={field.e_way_bill_no}
-                                                onChange={(e) => handleInputChange(e, index, 'e_way_bill_no')}
+                                                onChange={(e) => handleEwayChange(e, index, 'e_way_bill_no')}
                                                 className="form-control form-control-sm"
                                                 type="text"
                                                 id={`eWayBill_${index}`}
@@ -1650,7 +2311,7 @@ const EditParcelData = () => {
                                             <input
                                                 {...register(`bill_detail.${index}.p_o_no`)}
                                                 value={field.p_o_no}
-                                                onChange={(e) => handleInputChange(e, index, 'p_o_no')}
+                                                onChange={(e) => handleEwayChange(e, index, 'p_o_no')}
                                                 className="form-control form-control-sm"
                                                 type="text"
                                                 id={`pONo_${index}`}
@@ -1662,7 +2323,7 @@ const EditParcelData = () => {
                                             <input
                                                 {...register(`bill_detail.${index}.invoice_no`)}
                                                 value={field.invoice_no}
-                                                onChange={(e) => handleInputChange(e, index, 'invoice_no')}
+                                                onChange={(e) => handleEwayChange(e, index, 'invoice_no')}
                                                 className="form-control form-control-sm"
                                                 type="text"
                                                 id={`invoiceNo_${index}`}
@@ -1674,7 +2335,7 @@ const EditParcelData = () => {
                                             <input
                                                 {...register(`bill_detail.${index}.invoice_amount`)}
                                                 value={field.invoice_amount}
-                                                onChange={(e) => handleInputChange(e, index, 'invoice_amount')}
+                                                onChange={(e) => handleEwayChange(e, index, 'invoice_amount')}
                                                 className="form-control form-control-sm"
                                                 type="text"
                                                 id={`invoiceAmount_${index}`}
@@ -2044,32 +2705,7 @@ const EditParcelData = () => {
                                 </div>
                                 <div className="row mb-3">
 
-                                    <div className="col-lg-3">
-                                        <label className="form-label" htmlFor="total">Payment Method</label>
 
-                                        <select {...register('payment_method')} value={parcelData.payment_method} onChange={(e) => handleFieldChange('payment_method', e.target.value)} className="form-control" name="payment_method" id="payment_method">
-                                            <option value="">--Select-</option>
-                                            <option value="cash">Cash</option>
-                                            <option value="transfer">Transfer</option>
-                                            <option value="pending">Pending</option>
-                                            <option value="gpay">G-pay</option>
-                                            <option value="phonepay">PhonePay</option>
-                                            <option value="paytm">Paytm</option>
-                                            <option value="credit">Credit</option>
-                                        </select>
-                                        {(paymentMethod === 'gpay' || paymentMethod === 'phonepay' || paymentMethod === 'paytm') && (
-                                            <div className="mt-2">
-                                                <label className="form-label">Transaction ID</label>
-                                                <input
-                                                    {...register('transection_id')}
-                                                    type="text"
-                                                    className="form-control"
-                                                    placeholder="Enter transaction ID"
-                                                    defaultValue={parcelData?.transection_id || ''}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
                                     <div className="col-lg-2">
                                         <label className="form-label" htmlFor="total">Actual Final Total</label>
                                         <input {...register('actual_total')} value={parcelData.actual_total} onChange={(e) => handleFieldChange('actual_total', e.target.value)} className="form-control-plaintext" type="number"
@@ -2121,7 +2757,32 @@ const EditParcelData = () => {
                                             checked={parcelData.is_demurrage === "1"} // Check if ticketData.is_demurrage is "1"
                                             onChange={(e) => handleFieldChange('is_demurrage', e.target.checked ? "1" : "0")} />
                                     </div>
+                                    <div className="col-md-7">
+                                        {parcelData.is_demurrage === "1" && <div className="row mb-3">
 
+                                            <div className="col-md-3">
+                                                <label className="form-label">Demurrage Charges</label>
+                                                <input  {...register('demurrage_charges')} value={parcelData.demurrage_charges} onChange={(e) => handleFieldChange('demurrage_charges', e.target.value)} type="number" id="demurrage_charges" className="form-control" defaultValue="10" />
+                                            </div>
+
+                                            <div className="col-md-3">
+                                                <label className="form-label">Demurrage Days</label>
+                                                <input  {...register('demurrage_days')} value={parcelData.demurrage_days} onChange={(e) => handleFieldChange('demurrage_days', e.target.value)} type="number" id="demurrage_days" className="form-control" placeholder="Enter days" />
+                                            </div>
+                                            <div className="col-md-3">
+                                                <label className="form-label">Total Demurrage Charges</label>
+                                                <input   {...register('total_demurrage_charges')} value={parcelData.total_demurrage_charges} type="text" id="total_demurrage_charge" className="form-control-plaintext" />
+                                            </div>
+                                        </div>}
+                                    </div>
+
+
+                                </div>
+
+
+
+
+                                <div className="row mb-3">
                                     <div className="col-lg-3">
                                         <label className="form-label" htmlFor="receive">Actual Payable Amount</label>
                                         <input {...register('actual_payable_amount')}
@@ -2137,55 +2798,11 @@ const EditParcelData = () => {
 
                                             className="form-control-plaintext" type="number" id="print_payable_amount" />
                                     </div>
-
-                                </div>
-
-                                {parcelData.is_demurrage === "1" && <div className="row mb-3">
-
-                                    <div className="col-md-3">
-                                        <label className="form-label">Demurrage Charges</label>
-                                        <input  {...register('demurrage_charges')} value={parcelData.demurrage_charges} onChange={(e) => handleFieldChange('demurrage_charges', e.target.value)} type="number" id="demurrage_charges" className="form-control" defaultValue="10" />
-                                    </div>
-
-                                    <div className="col-md-3">
-                                        <label className="form-label">Demurrage Days</label>
-                                        <input  {...register('demurrage_days')} value={parcelData.demurrage_days} onChange={(e) => handleFieldChange('demurrage_days', e.target.value)} type="number" id="demurrage_days" className="form-control" placeholder="Enter days" />
-                                    </div>
-                                    <div className="col-md-3">
-                                        <label className="form-label">Total Demurrage Charges</label>
-                                        <input   {...register('total_demurrage_charges')} value={parcelData.total_demurrage_charges} type="text" id="total_demurrage_charge" className="form-control-plaintext" />
-                                    </div>
-                                </div>}
-
-
-                                <div className="row mb-3">
-                                    <div className="col-lg-3">
-                                        <label className="form-label" htmlFor="receive">Actual Paid Amount</label>
-                                        <input  {...register('actual_paid_amount')} value={parcelData.actual_paid_amount} onChange={(e) => handleFieldChange('actual_paid_amount', e.target.value)} className="form-control form-control-sm" type="number" id="parcel_receive" placeholder="Enter Received" />
-                                    </div>
-                                    <div className="col-lg-3">
-                                        <label className="form-label" htmlFor="receive">Print Paid Amount</label>
-                                        <input  {...register('print_paid_amount')} value={parcelData.print_paid_amount} onChange={(e) => handleFieldChange('print_paid_amount', e.target.value)} className="form-control form-control-sm" type="number" id="print_parcel_receive" placeholder="Enter Received" />
-                                    </div>
-                                    <div className="col-lg-3">
-                                        <label className="form-label" htmlFor="balance">Actual Balance Amount</label>
-                                        <input  {...register('actual_bal_amount')} value={parcelData.actual_bal_amount} className="form-control-plaintext" type="number" id="parcel_balance_show" readOnly placeholder="Enter Balance" />
-
-                                        <input className="form-control-plaintext" type="hidden" id="parcel_balance" placeholder="Enter Balance" />
-
-                                    </div>
-                                    <div className="col-lg-3">
-                                        <label className="form-label" htmlFor="balance">Print Balance Amount</label>
-                                        <input {...register('print_bal_amount')} value={parcelData.print_bal_amount} className="form-control-plaintext" type="number" readOnly id="print_parcel_balance_show" placeholder="Enter Balance" />
-
-                                        <input className="form-control-plaintext" value="20" type="hidden" id="print_parcel_balance" placeholder="Enter Balance" />
-
-                                    </div>
                                 </div>
 
                                 <div className="row">
                                     <div className="text-center">
-                                        <button className="btn btn-primary" type="submit" id="save_ticket" name="save_form" >
+                                        <button className="btn btn-success btn-sm" type="submit" id="save_ticket" name="save_form" >
                                             Update
                                         </button>
                                     </div>

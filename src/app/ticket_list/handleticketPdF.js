@@ -1,12 +1,17 @@
-import * as html2pdf from 'html2pdf.js';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 
 export const handleticketPDF = async (row) => {
 
 
-    
+
     console.log("parcel", row.mobile);
 
     try {
+
+        const margin = 10; // Margin in mm
+        const pageWidth = 200; // A4 width in mm
         const stNo = Number(row.slr);
         const siNo = Number(row.st);
         const ex = Number(row.ex);
@@ -16,13 +21,14 @@ export const handleticketPDF = async (row) => {
         const totalRate = Number(row.ex_rate) + Number(row.slr_rate) + Number(row.st_rate);
 
         // HTML template
-        const htmlTemplate = `
+        const html = `
             <html>
                 <head>
                    <style>
                         body {
                             margin: 0;
                             font-family: Arial, sans-serif;
+                            font-size:20px
                         }
                         .container {
                             padding: 20px;
@@ -81,72 +87,69 @@ export const handleticketPDF = async (row) => {
                                             rapidgroupbaroda@gmail.com
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td><b>From:</b></td>
-                                        <td colspan="2">${row.from_state_name} - ${row.from_city_name}</td>
-                                        <td><b>To:</b></td>
-                                        <td colspan="2">${row.to_state_name} - ${row.to_city_name}</td>
-                                        <td><b>Ticket No:</b></td>
-                                        <td colspan="2">${row.tkt_no}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Name:</b></td>
-                                        <td colspan="2">${row.name}</td>
-                                        <td><b>Firm Name:</b></td>
-                                        <td colspan="2">${row.cmp_name}</td>
-                                        <td><b>B. Date:</b></td>
-                                        <td>${row.bdate}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>No:</b></td>
-                                        <td colspan="2">${row.mobile}</td>
-                                        <td><b>No:</b></td>
-                                        <td colspan="2">${row.cmp_mobile}</td>
-                                        <td><b>J. Date:</b></td>
-                                        <td>${row.jdate}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Bus Type:</b></td>
-                                        <td>${row.bus_type}</td>
-                                        <td><b>Bus Name:</b></td>
-                                        <td>${row.bus_name}</td>
-                                        <td><b>Bus No:</b></td>
-                                        <td>${row.bus_no}</td>
-                                        <td><b>Payment Mode:</b></td>
-                                        <td>${row.payment_method}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>T. Pax:</b></td>
-                                        <td>${totalSum}</td>
-                                        <td><b>St. No:</b></td>
-                                        <td>${row.st_no}</td>
-                                        <td><b>Slr. No:</b></td>
-                                        <td colspan="3">${row.sI_no}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Rate:</b></td>
-                                        <td>${totalRate}</td>
-                                        <td><b>Total Amt:</b></td>
-                                        <td>${row.final_total_amount}</td>
-                                        <td><b>Adv:</b></td>
-                                        <td>${row.paid_amount}</td>
-                                        <td><b>Bal:</b></td>
-                                        <td>${row.remaining_amount}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Boarding at:</b></td>
-                                        <td colspan="2">${row.boarding}</td>
-                                        <td><b>Reporting Time:</b></td>
-                                        <td colspan="2">${row.rep_time}</td>
-                                        <td><b>Journey Time:</b></td>
-                                        <td>${row.jdate}</td>
-                                    </tr>
-                                    <tr>
-                                        <td><b>Remark:</b></td>
-                                        <td colspan="5">${row.remarks}</td>
-                                        <td><b>Booked by:</b></td>
-                                        <td>${row.added_by_name}</td>
-                                    </tr>
+                                   <tr>
+                        <td><b>From:</b></td>
+                        <td colspan="2">${row.from_state_name} - ${row.from_city_name}</td>
+                        <td><b>To:</b></td>
+                        <td colspan="2">${row.to_state_name} - ${row.to_city_name}</td>
+                        <td><b>Ticket No:</b></td>
+                        <td colspan="2">${row.tkt_no}</td>
+                       
+                    </tr>
+                    <tr>
+                        <td><b>Name:</b></td>
+                        <td colspan="2">${row.client_firstName}</td>
+                        <td><b>Company Name:</b></td>
+                        <td colspan="2">${row.cmp_name}</td>
+                        <td><b>B. Date:</b></td>
+                        <td>${row.bdate}</td>
+                    </tr>
+                    <tr>
+                        <td><b>No:</b></td>
+                        <td colspan="2">${row.client_mobileNo}</td>
+                        <td><b>Company No:</b></td>
+                        <td colspan="2">${row.cmp_mobile}</td>
+                        <td><b>J. Date:</b></td>
+                        <td>${row.jdate}</td>
+                    </tr>
+                    <tr>
+                        <td><b>Bus Type:</b></td>
+                        <td>${row.bus_type}</td>
+                        <td><b>Bus Name:</b></td>
+                        <td>${row.bus_name}</td>
+                        <td colspan="2" ><b>Bus No:</b></td>
+                        <td colspan="2" >${row.bus_no}</td>
+                       
+                    </tr>
+                    <tr>
+                        <td><b>T. Pax:</b></td>
+                        <td>${totalSum}</td>
+                        <td><b>St. No:</b></td>
+                        <td>${row.st_no}</td>
+                        <td><b>Slr. No:</b></td>
+                        <td colspan="3">${row.sI_no}</td>
+                    </tr>
+                    <tr>
+                        <td><b>Rate:</b></td>
+                        <td>${totalRate}</td>
+                        <td><b>Total Amt:</b></td>
+                        <td>${row.print_final_total_amount}</td>
+                       
+                    </tr>
+                    <tr>
+                        <td><b>Boarding at:</b></td>
+                        <td colspan="2">${row.boarding}</td>
+                        <td><b>Reporting Time:</b></td>
+                        <td colspan="2">${row.rep_time}</td>
+                        <td><b>Journey Time:</b></td>
+                        <td>${row.dep_time}</td>
+                    </tr>
+                    <tr>
+                        <td><b>Remark:</b></td>
+                        <td colspan="5">${row.remarks}</td>
+                        <td><b>Booked by:</b></td>
+                        <td>${row.added_by_name}</td>
+                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -155,12 +158,40 @@ export const handleticketPDF = async (row) => {
             </html>
         `;
 
-        // Generate PDF from HTML template
-        const pdf = await html2pdf().from(htmlTemplate).toPdf().output('blob');
+        const tempElement = document.createElement('div');
+        tempElement.style.position = 'absolute';
+        tempElement.style.left = '-9999px';
+        tempElement.innerHTML = html;
+        document.body.appendChild(tempElement);
 
-        // Open the PDF in a new tab
-        const url = URL.createObjectURL(pdf);
-        window.open(url, '_blank');
+        const canvas = await html2canvas(tempElement, {
+            scrollY: -window.scrollY,
+            scrollX: -window.scrollX,
+            useCORS: true,
+        });
+
+        document.body.removeChild(tempElement);
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', margin, 10, pageWidth - 2 * margin, canvas.height * (pageWidth - 2 * margin) / canvas.width);
+
+
+                pdf.save('ticket.pdf');
+
+
+        const pdfBlob = pdf.output('blob');
+
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+
+        const message = `Here is your invoice: ${pdfUrl}`;
+        const whatsappUrl = `https://wa.me/${row.whatsapp_no}?text=${encodeURIComponent(message)}`;
+
+        window.open(whatsappUrl, '_blank');
+
+        URL.revokeObjectURL(pdfUrl);
+
+        
     } catch (error) {
         console.error('Error generating PDF:', error);
     }

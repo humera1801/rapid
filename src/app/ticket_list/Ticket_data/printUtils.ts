@@ -31,9 +31,14 @@ export interface User {
     ex_rate: number;
     slr_rate: number;
     st_rate: number;
+    st_print_rate:any;
+    slr_print_rate:any;
+    ex_print_rate:any;
     paid_amount: number;
     remaining_amount: number;
-
+    client_mobileNo:any;
+    client_firstName:any;
+    dep_time:any;
 }
 
 const handlePrint = (row: User) => {
@@ -48,7 +53,7 @@ const handlePrint = (row: User) => {
     // Calculate the sum
     const totalSum = stNo + siNo + ex;
 
-    const totalRate = Number(row.ex_rate) + Number(row.slr_rate) + Number(row.st_rate);
+    const totalRate = Number(row.ex_print_rate) + Number(row.slr_print_rate) + Number(row.st_print_rate);
 
 
 
@@ -105,16 +110,16 @@ const handlePrint = (row: User) => {
                     </tr>
                     <tr>
                         <td><b>Name:</b></td>
-                        <td colspan="2">${row.name}</td>
-                        <td><b>Firm Name:</b></td>
+                        <td colspan="2">${row.client_firstName}</td>
+                        <td><b>Company Name:</b></td>
                         <td colspan="2">${row.cmp_name}</td>
                         <td><b>B. Date:</b></td>
                         <td>${row.bdate}</td>
                     </tr>
                     <tr>
                         <td><b>No:</b></td>
-                        <td colspan="2">${row.mobile}</td>
-                        <td><b>No:</b></td>
+                        <td colspan="2">${row.client_mobileNo}</td>
+                        <td><b>Company No:</b></td>
                         <td colspan="2">${row.cmp_mobile}</td>
                         <td><b>J. Date:</b></td>
                         <td>${row.jdate}</td>
@@ -126,8 +131,7 @@ const handlePrint = (row: User) => {
                         <td>${row.bus_name}</td>
                         <td><b>Bus No:</b></td>
                         <td>${row.bus_no}</td>
-                        <td><b>Payment Mode:</b></td>
-                        <td>${row.payment_method}</td>
+                       
                     </tr>
                     <tr>
                         <td><b>T. Pax:</b></td>
@@ -141,11 +145,8 @@ const handlePrint = (row: User) => {
                         <td><b>Rate:</b></td>
                         <td>${totalRate}</td>
                         <td><b>Total Amt:</b></td>
-                        <td>${row.final_total_amount}</td>
-                        <td><b>Adv:</b></td>
-                        <td>${row.paid_amount}</td>
-                        <td><b>Bal:</b></td>
-                        <td>${row.remaining_amount}</td>
+                        <td>${row.print_final_total_amount}</td>
+                       
                     </tr>
                     <tr>
                         <td><b>Boarding at:</b></td>
@@ -153,7 +154,7 @@ const handlePrint = (row: User) => {
                         <td><b>Reporting Time:</b></td>
                         <td colspan="2">${row.rep_time}</td>
                         <td><b>Journey Time:</b></td>
-                        <td>${row.jdate}</td>
+                        <td>${row.dep_time}</td>
                     </tr>
                     <tr>
                         <td><b>Remark:</b></td>

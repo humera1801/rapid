@@ -6,8 +6,9 @@ import "../../../public/css/ticketview.css"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMinusCircle } from '@fortawesome/free-solid-svg-icons';
 import handleParcelPrint from '@/app/parcel_list/parcel_data/printpparcelUtils';
-import { Modal } from 'react-bootstrap';
+import { Button, Dropdown, Modal } from 'react-bootstrap';
 import Link from 'next/link';
+import PArcelPaymentModel from './ParcelPaymentModel';
 
 type FormData = {
     parcel_id: string;
@@ -109,6 +110,7 @@ const ViewParcelData = () => {
     const [parcelImages, setParcelImages] = useState<string[]>([]);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
+    const [imageName, setImageName] = useState<string>('');
 
 
     const [parcelData, setParcelData] = useState<any>("");
@@ -253,6 +255,8 @@ const ViewParcelData = () => {
             const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);
 
             setParcelData(getTDetail.data[0]);
+            setImageName(getTDetail.data[0].id_proof_urls)
+
             setError("");
             console.log("fgdjg", getTDetail);
 
@@ -295,6 +299,50 @@ const ViewParcelData = () => {
 
 
 
+    const [paymentModel, setpaymentModel] = useState(false);
+    const [PaymentId, setPaymentId] = useState<number | null>(null);
+    const [Paymentdata, setPaymentdata] = useState<any[]>([]);
+
+    const handlePayment = async (ticketToken: number) => {
+        try {
+            const response = await EditParcelDataList.getEditParcelData(ticketToken.toString());
+
+
+            console.log(">>>>>>", response.data[0]);
+
+            setPaymentId(response.data[0].ticketToken);
+            setPaymentdata(response.data[0]);
+            setpaymentModel(true);
+
+
+
+
+
+        } catch (error) {
+            console.error('Error handling journey start:', error);
+            alert('Error occurred while handling payment journey.');
+        }
+    };
+
+
+    const handleStatus = async (id: number, parcel_status: any) => {
+        try {
+            const response = await EditParcelDataList.getstatusParcelData(id.toString(), parcel_status);
+
+
+            console.log(">>>>>>", response.data);
+
+
+            window.location.reload();
+
+
+
+
+        } catch (error) {
+            console.error('Error handling status:', error);
+
+        }
+    };
 
 
 
@@ -307,451 +355,606 @@ const ViewParcelData = () => {
 
 
 
-            <div className="d-flex justify-content-center">
-                <div className="container-fluid mt-3">
-                    <div className="card mb-3" style={{ width: "auto" }}>
-                        <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
-                            <h4>View Parcel Detail</h4>
-                            <div>
-                                <button onClick={() => handleParcelPrint(parcelData)}
-                                    className="btn btn-sm btn-primary" style={{ float: "right" }} >Print</button>
+            <br />
+            <div className="container" style={{ fontSize: "12px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <h4>View Parcel Detail</h4>
+                    <div>
 
-                                <Link href="/parcel_list" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Back</Link>
+                        <Link href="/parcel_list" className="btn btn-sm btn-primary" style={{ float: "right", marginRight: "8px", fontSize: "12px" }}>Back</Link>
 
-                            </div>
-                        </div>
-                        <div className="card-body">
-                            <form method="post" action="">
-                                <div className="card mb-3" style={{ width: "auto" }}>
-                                    {error && <p>{error}</p>}
-                                    {parcelData && (
-                                        <div className="card-body">
-                                            <div className="row mb-3">
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Booking date : </label>
-                                                    <span>{parcelData.booking_date}</span>
-                                                </div>
+                        <button onClick={() => handleParcelPrint(parcelData)}
+                            className="btn btn-sm btn-primary" style={{ float: "right", marginRight: "10px", fontSize: "12px" }} >Print</button>
+                        <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "10px", fontSize: "12px" }} onClick={() => handlePayment(parcelData.token)}>Payment</Button>
+
+                        {/* <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "10px", fontSize: "12px" }} onClick={() => handlePayment(parcelData.token)}>Booked</Button> */}
+
+                        {
+                            parcelData.parcel_status == "0" ? (
+                                <Button
+                                    size="sm"
+                                    className="btn btn-sm btn-primary"
+                                    style={{ float: "right", marginRight: "10px", fontSize: "12px" }}
+                                    onClick={() => handleStatus(parcelData.id, 1)}
+                                >
+                                    Booked
+                                </Button>
+                            ) : parcelData.parcel_status == "1" ? (
+                                <Button
+                                    size="sm"
+                                    className="btn btn-sm btn-warning"
+                                    style={{ float: "right", marginRight: "10px", fontSize: "12px" , }}
+                                    onClick={() => handleStatus(parcelData.id, 2)}                                >
+                                    In-Transit
+                                </Button>
+                            ) : parcelData.parcel_status == "2" ? (
+                                <Button
+                                    size="sm"
+                                    className="btn btn-sm btn-success"
+                                    style={{ float: "right", marginRight: "10px", fontSize: "12px" }}
+                                >
+                                    Delivered
+                                </Button>
+                            ) :(
+                                   <></>
+                            )
+                        }
+
+
+                      
+                    </div>
+                    <PArcelPaymentModel
+                        show={paymentModel}
+                        handleClose={() => setpaymentModel(false)}
+                        paymentinitialData={Paymentdata}
+                        PaymentId={PaymentId}
+                    />
+                </div>
+                <br />
+                <div className="card mb-3 cardbox" style={{ width: "auto" }}>
+
+
+                    <form method="post" action="">
+
+                        {error && <p>{error}</p>}
+                        {parcelData && (
+                            <div className="card-body">
+                                <div className="row mb-3">
+                                    <div className="col-lg-6 ">
+                                        <label className="set_label">Receipt No:</label>
+                                        <span  >{parcelData.receipt_no}</span>
+                                    </div>
+                                </div>
+                                <div className="row mt-4">
+                                    <div className="col-md-12">
+                                        <h6>Client Details:</h6>
+                                    </div>
+                                    <hr />
+                                </div>
+
+
+
+
+                                <div className="row mb-3">
+                                    <div className="col-lg-3 col-sm-3">
+                                        <label className="form-label" htmlFor="clientId">Client Name: </label>
+                                        <span> {parcelData.client_firstName}</span>
+
+                                    </div>
+
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="address">Address:</label>
+                                        <span> {parcelData.client_address}</span>
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="address">City:</label>
+                                        <span> {parcelData.client_city}</span>
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="address">State:</label>
+                                        <span> {parcelData.client_state}</span>
+                                    </div>
+                                </div>
+                                <div className="row mb-3">
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="address">Pin-code:</label>
+                                        <span> {parcelData.client_pincode}</span>
+                                    </div>
+
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="email">Email-id:</label>
+                                        <span> {parcelData.email}</span>
+                                    </div>
+
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="mobileNo">Mobile No:</label>
+
+                                        <span> {parcelData.client_mobileNo}</span>
+                                    </div>
+
+
+                                    <div className="col-lg-3">
+                                        <label className="form-label" htmlFor="Place_visit">Client Id Proof:</label>
+                                        {imageName && (
+                                            <div className="col-lg-12 mt-2">
+                                                <img src={imageName} alt="Client ID Proof" style={{ width: '100px', height: '100px' }} />
                                             </div>
-                                            <div className="row mb-3">
-                                                <div className="col-lg-6 ">
-                                                    <label className="set_labelData">From:</label>
-                                                    <span>{parcelData.from_state_name} - {parcelData.from_city_name}</span>
-                                                </div>
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">To: </label>
-                                                    <span>{parcelData.to_state_name} - {parcelData.to_city_name}</span>
-                                                </div>
+                                        )}
+                                    </div>
+                                    <div className="row mt-4">
+
+                                        <div className="col-lg-3">
+                                            <label className="set_label">whatsapp No:</label>
+                                            <span>{parcelData.whatsapp_no}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="row mt-4">
+                                    <div className="col-md-6">
+                                        <h5>Sender Details:</h5>
+                                    </div>
+                                    <div className="col-md-6">
+                                        <h5>Reciever Details:</h5>
+                                    </div>
+                                    <hr />
+                                </div>
+
+                                <div className="row mb-3">
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Sender Name:</label>
+                                        <span> {parcelData.sender_name}</span>
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Sender Mobile No:</label>
+                                        <span>{parcelData.send_mob}</span>
+                                    </div>
 
 
-                                            </div>
 
-                                            <div className="row mb-3">
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Sender Name:</label>
-                                                    <span> {parcelData.sender_name}</span>
-                                                </div>
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Reciver Name:</label>
-                                                    <span> {parcelData.rec_name}</span>
-                                                </div>
-                                            </div>
-                                            <div className="row mb-3">
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Sender Mobile No:</label>
-                                                    <span>{parcelData.send_mob}</span>
-                                                </div>
-                                                <div className="col-lg-3">
-                                                    <label className="set_labelData">Reciver Mobile No:</label>
-                                                    <span>{parcelData.rec_mob}</span>
-                                                </div>
-                                                <div className="col-lg-3">
-                                                    <label className="set_labelData">whatsapp No:</label>
-                                                    <span>{parcelData.whatsapp_no}</span>
-                                                </div>
-                                            </div>
-                                            <div className="row mb-3">
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Select Sender ID Proof Type:</label><br />
-                                                    <span>{parcelData.sender_proof_type}</span>
-                                                </div>
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Select Reciver ID Proof Type:</label><br />
-                                                    <span>{parcelData.reciver_proof_type}</span>
-                                                </div>
-                                            </div>
-                                            <div className="row mb-3">
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Sender Adhar No./PAN No./GST No:</label>
-                                                    <span>{parcelData.sender_proof_detail}</span>
-                                                </div>
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Reciver Adhar No./PAN No./GST No:</label>
-                                                    <span>{parcelData.reciver_proof_detail}</span>
-                                                </div>
-                                            </div>
-                                            <div className="row mb-3">
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Sender Address</label>
-                                                    <span>{parcelData.send_add}</span>
-                                                </div>
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Reciver Address</label>
-                                                    <span>{parcelData.rec_add}</span>
-                                                </div>
-                                            </div>
-                                            <div className="row mb-3">
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Created By</label>
-                                                    <span>{parcelData.added_by_name}</span>
-                                                </div>
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Updated By</label>
-                                                    <span>{parcelData.updated_by_name}</span>
-                                                </div>
-                                            </div>
-                                            <div className="row mb-3">
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Created Date</label>
-                                                    <span>{parcelData.created_at}</span>
-                                                </div>
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Updated Date</label>
-                                                    <span>{parcelData.updated_at}</span>
-                                                </div>
-                                            </div>
-                                            <br />
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Reciver Name:</label>
+                                        <span> {parcelData.rec_name}</span>
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Reciver Mobile No:</label>
+                                        <span>{parcelData.rec_mob}</span>
+                                    </div>
+                                </div>
+                                <div className="row mb-3">
+
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Sender Address</label>
+                                        <span>{parcelData.send_add}</span>
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Select Sender ID Proof Type:</label>
+                                        <span>{parcelData.sender_proof_type}</span>
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Reciver Address</label>
+                                        <span>{parcelData.rec_add}</span>
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Select Reciver ID Proof Type:</label>
+                                        <span>{parcelData.reciver_proof_type}</span>
+                                    </div>
+                                </div>
+                                <div className="row mb-3">
+                                    <div className="col-lg-6">
+                                        <label className="set_labelData">Sender Adhar No./PAN No./GST No:</label>
+                                        <span>{parcelData.sender_proof_detail}</span>
+                                    </div>
+                                    <div className="col-lg-6">
+                                        <label className="set_labelData">Reciver Adhar No./PAN No./GST No:</label>
+                                        <span>{parcelData.reciver_proof_detail}</span>
+                                    </div>
+
+                                </div>
+                                <div className="row mt-4">
+                                    <div className="col-md-12">
+                                        <h6>Parcel Details:</h6>
+                                    </div>
+                                    <hr />
+                                </div>
 
 
-                                            <div className="row mb-3">
+                                <div className="row mb-3">
+                                    <div className="col-lg-6">
+                                        <label className="set_labelData">Booking date : </label>
+                                        <span>{parcelData.booking_date}</span>
+                                    </div>
+                                </div>
+                                <div className="row mb-3">
+                                    <div className="col-lg-6 ">
+                                        <label className="set_labelData">From:</label>
+                                        <span>{parcelData.from_state_name} - {parcelData.from_city_name}</span>
+                                    </div>
+                                    <div className="col-lg-6">
+                                        <label className="set_labelData">To: </label>
+                                        <span>{parcelData.to_state_name} - {parcelData.to_city_name}</span>
+                                    </div>
 
-                                                <table id="example" className="table table-striped" style={{ width: "100%" }}>
 
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Type</th>
-                                                            <th>Weight</th>
-                                                            <th>Qty</th>
-                                                            <th>Rate</th>
-                                                            <th>Total</th>
-                                                            <th>Print Rate</th>
-                                                            <th>Total Print Rate</th>
-                                                        </tr>
-                                                    </thead>
-
-                                                    {parcelDetail.map((field, index) => (
-                                                        <tbody>
-                                                            <tr key={index}>
-                                                                <td>{field.parcel_type}</td>
-                                                                <td>{field.weight}</td>
-                                                                <td>{field.qty}</td>
-                                                                <td>{field.rate}</td>
-                                                                <td>{field.total_amount}</td>
-                                                                <td>{field.print_rate}</td>
-                                                                <td>{field.total_print_rate}</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    ))}
-                                                    <tfoot>
-
-                                                        <tr>
-                                                            <td></td>
-                                                            <td></td>
-                                                            <td></td>
-                                                            <td></td>
-                                                            <td><b>{parcelData.actual_total}</b></td>
-                                                            <td></td>
-                                                            <td><b>{parcelData.print_total}</b></td>
-                                                        </tr>
-                                                    </tfoot>
-
-                                                </table>
-
-                                            </div>
+                                </div>
 
 
 
 
 
-                                            <div className="col-lg-12">
-                                                <label className="set_labelData">Parcel Images:</label>
-                                                <div className="image-gallery1">
-                                                    {parcelImages.length > 0 ? (
-                                                        parcelImages.map((imageUrl, index) => (
-                                                            <img
-                                                                key={index}
-                                                                src={imageUrl}
-                                                                alt={`Parcel ${index}`}
-                                                                className="parcel-image1"
-                                                                onClick={() => handleImageClick(imageUrl)}
-                                                                style={{ cursor: 'pointer' }}
-                                                            />
-                                                        ))
-                                                    ) : (
-                                                        <p>No images available.</p>
-                                                    )}
-                                                </div>
 
+                                <div className="row mb-3">
 
-                                                {selectedImage && (
-                                                    <div className="modal-parcel" onClick={handleCloseModal}>
-                                                        <span className="close" onClick={handleCloseModal}>&times;</span>
-                                                        <img src={selectedImage} alt="Enlarged" className="modal-content-parcel" />
+                                    <table id="example" className="table table-striped" style={{ width: "100%" }}>
 
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="row mb-3">
-                                                <table className="table table-striped" style={{ width: "100%" }}>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>E Way Bill No.</th>
-                                                            <th>P.O. No.</th>
-                                                            <th>Invoice No.</th>
-                                                        </tr>
-                                                    </thead>
-                                                    {EwayFields.map((field, index) => (
-                                                        <tbody>
-                                                            <tr>
-                                                                <td>E Way Bill No 1</td>
-                                                                <td>P O No 1</td>
-                                                                <td>IN#001</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    ))}
-                                                </table>
-                                            </div>
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>Weight</th>
+                                                <th>Qty</th>
+                                                <th>Rate</th>
+                                                <th>Total</th>
+                                                <th>Print Rate</th>
+                                                <th>Total Print Rate</th>
+                                            </tr>
+                                        </thead>
 
+                                        {parcelDetail.map((field, index) => (
+                                            <tbody>
+                                                <tr key={index}>
+                                                    <td>{field.parcel_type}</td>
+                                                    <td>{field.weight}</td>
+                                                    <td>{field.qty}</td>
+                                                    <td>{field.rate}</td>
+                                                    <td>{field.total_amount}</td>
+                                                    <td>{field.print_rate}</td>
+                                                    <td>{field.total_print_rate}</td>
+                                                </tr>
+                                            </tbody>
+                                        ))}
+                                        <tfoot>
 
-                                            <div className="row">
-                                                <div className="col-md-12">
-                                                    <h5>Pickup Detail</h5>
-                                                </div>
+                                            <tr>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td></td>
+                                                <td><b>{parcelData.actual_total}</b></td>
+                                                <td></td>
+                                                <td><b>{parcelData.print_total}</b></td>
+                                            </tr>
+                                        </tfoot>
 
-                                            </div>
-                                            <hr />
-                                            <div className="row mb-3">
-                                                <div className="col-md-6">
-                                                    <label className="set_labelData">Delivery Type :</label>
-                                                    {parcelData.pic_delivery_type === "2" && (
-                                                        <span>
-                                                            <br />
-                                                            {parcelData.pic_delivery_type}
+                                    </table>
 
-
-                                                            <div className="col">
-                                                                {addressFields.pic_address!.map((field, index) => (
-                                                                    <div key={index}>
-
-                                                                        <div className="row mt-2" key={index}>
-
-                                                                            <div className="col-md-4">
-                                                                                {field.pickup_client_address}
-                                                                            </div>
-                                                                            <div className="col-md-4">
-                                                                                {field.pickup_office_address}
-                                                                            </div>
-
-
-
-
-                                                                        </div>
+                                </div>
 
 
 
 
 
-                                                                    </div>
-
-                                                                ))}
-                                                            </div>
-                                                        </span>
-                                                    )}
-                                                    {parcelData.pic_delivery_type === "1" && (
-                                                        <span>
-                                                            {parcelData.pic_delivery_type}
-
-                                                            <br />
-                                                            <div className="col-md-4">
-                                                                {parcelData.pic_office_detail}
-                                                            </div>
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="set_labelData">Pickup Charge</label>
-                                                    <span>{parcelData.pic_charge}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="col-md-12">
-                                                    <h5>Dispatch Detail</h5>
-                                                </div>
-
-                                            </div>
-                                            <hr />
-                                            <div className="row mb-3">
-                                                <div className="col-md-6">
-                                                    <label className="set_labelData">Delivery Type</label>
-                                                    {parcelData.dis_delivery_type === "2" && (
-                                                        <span>
-                                                            <br />
-                                                            {parcelData.dis_delivery_type}
+                                <div className="col-lg-12">
+                                    <label className="set_labelData">Parcel Images:</label>
+                                    <div className="image-gallery1">
+                                        {parcelImages.length > 0 ? (
+                                            parcelImages.map((imageUrl, index) => (
+                                                <img
+                                                    key={index}
+                                                    src={imageUrl}
+                                                    alt={`Parcel ${index}`}
+                                                    className="parcel-image1"
+                                                    onClick={() => handleImageClick(imageUrl)}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
+                                            ))
+                                        ) : (
+                                            <p>No images available.</p>
+                                        )}
+                                    </div>
 
 
-                                                            <div className="col">
-                                                                {addressFields.dis_address!.map((field, index) => (
-                                                                    <div className="row mt-2" key={index}>
-
-                                                                        <div className="col-md-4">
-                                                                            {field.dispatch_client_address}
-                                                                        </div>
-                                                                        <div className="col-md-4">
-                                                                            {field.dispatch_office_address}
-                                                                        </div>
-
-
-
-
-                                                                    </div>
-
-                                                                ))}
-                                                            </div>
-                                                        </span>
-                                                    )}
-                                                    {parcelData.dis_delivery_type === "1" && (
-                                                        <span>
-                                                            {parcelData.dis_delivery_type}
-
-                                                            <br />
-                                                            <div className="col-md-4">
-                                                                {parcelData.dis_office_detail}
-                                                            </div>
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="set_labelData">Dispatch Charge</label>
-                                                    <span>{parcelData.dis_charge}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="row">
-                                                <div className="col-md-12">
-                                                    <h5>Transportation Detail</h5>
-                                                </div>
-
-                                            </div>
-                                            <hr />
-                                            <div className="row mb-3">
-                                                <div className="col-md-3">
-                                                    <label className="set_labelData">LR No.</label>
-                                                    <span>{parcelData.lr_no}</span>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <label className="set_labelData">Bus No.</label>
-                                                    <span>{parcelData.bus_no}</span>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <label className="set_labelData">Driver Phone No.</label>
-                                                    <span>{parcelData.driver_no}</span>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <label className="set_labelData">Transport Charge</label>
-                                                    <span>{parcelData.transport_charge} </span>
-                                                </div>
-                                            </div>
-
-                                            <br />
-                                            <div className="row">
-                                                <div className="col-md-12">
-                                                    <h5>Payment Detail</h5>
-                                                </div>
-
-                                            </div>
-                                            <hr />
-                                            <div className="row mb-3">
-                                                <div className="col-md-3">
-                                                    <label className="set_labelData">Actual Final Total</label>
-                                                    <span>{parcelData.actual_total}</span>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <label className="set_labelData">Print Final Total</label>
-                                                    <span>{parcelData.print_total}</span>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <label className="set_labelData">GST Amount</label>
-                                                    <span>{parcelData.gst_amount}</span>
-                                                </div>
-                                                <div className="col-md-3">
-                                                    <label className="set_labelData">Bilty Charges</label>
-                                                    <span>{parcelData.bilty_charge}</span>
-                                                </div>
-                                            </div>
-                                            <div className="row mb-3">
-                                                <div className="col-lg-3">
-                                                    <label className="set_labelData">Payment Method</label>
-
-                                                    <span>{parcelData.payment_method}</span>
-                                                </div>
-                                                {(paymentMethod === 'gpay' || paymentMethod === 'phonepay' || paymentMethod === 'paytm') && (
-
-                                                    <div className="col-lg-3">
-                                                        <label className="set_label">Transction Id:</label>
-                                                        <span>{parcelData.transection_id}</span>
-                                                    </div>
-                                                )}
-
-                                                <div className="col-lg-3">
-                                                    <label className="set_labelData">Print Payable Amount</label>
-                                                    <span>{parcelData.print_payable_amount}</span>
-                                                </div>
-                                                <div className="col-lg-3">
-                                                    <label className="set_labelData">Actual Payable Amount</label>
-                                                    <span>{parcelData.actual_payable_amount}</span>
-                                                </div>
-
-                                            </div>
-                                            <div className="row mb-3">
-
-                                                <div className="col-lg-3">
-                                                    <label className="set_labelData">Actual Paid Amount</label>
-                                                    <span>{parcelData.actual_paid_amount} </span>
-                                                </div>
-                                                <div className="col-lg-3">
-                                                    <label className="set_labelData">Actual Balance Amount</label>
-                                                    <span>{parcelData.actual_bal_amount}</span>
-                                                </div>
-                                                <div className="col-lg-3">
-                                                    <label className="set_labelData">Print Paid Amount</label>
-                                                    <span>{parcelData.print_paid_amount}</span>
-                                                </div>
-
-                                                <div className="col-lg-3">
-                                                    <label className="set_labelData">Print Balance Amount</label>
-                                                    <span>{parcelData.print_bal_amount} </span>
-                                                </div>
-                                            </div>
-                                            <div className="row mb-3">
-                                                <div className="col-lg-6">
-                                                    <label className="set_labelData">Particulars</label>
-                                                    <span>{parcelData.particulars} </span>
-                                                </div>
-                                            </div>
-
+                                    {selectedImage && (
+                                        <div className="modal-parcel" onClick={handleCloseModal}>
+                                            <span className="close" onClick={handleCloseModal}>&times;</span>
+                                            <img src={selectedImage} alt="Enlarged" className="modal-content-parcel" />
 
                                         </div>
                                     )}
                                 </div>
-                            </form>
-                        </div >
-                    </div >
+                                <div className="row mb-3">
+                                    <table className="table table-striped" style={{ width: "100%" }}>
+                                        <thead>
+                                            <tr>
+                                                <th>E Way Bill No.</th>
+                                                <th>P.O. No.</th>
+                                                <th>Invoice No.</th>
+                                            </tr>
+                                        </thead>
+                                        {EwayFields.map((field, index) => (
+                                            <tbody>
+                                                <tr>
+                                                    <td>E Way Bill No 1</td>
+                                                    <td>P O No 1</td>
+                                                    <td>IN#001</td>
+                                                </tr>
+                                            </tbody>
+                                        ))}
+                                    </table>
+                                </div>
 
 
+                                <div className="row">
+                                    <div className="col-md-12">
+                                        <h5>Pickup Detail</h5>
+                                    </div>
+                                    <hr />
+                                </div>
+
+                                <div className="row mb-3">
+                                    <div className="col-md-6">
+                                        <label className="set_labelData">Delivery Type :</label>
+                                        {parcelData.pic_delivery_type === "2" && (
+                                            <span>
+                                                <br />
+                                                Client Location:
+                                                <div className="col">
+                                                    {addressFields.pic_address!.map((field, index) => (
+                                                        <div key={index} className="row mt-2">
+                                                            <div className="col-md-4">
+                                                                {field.pickup_client_address}
+                                                            </div>
+                                                            <div className="col-md-4">
+                                                                {/* Optionally, include additional client-related information here */}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </span>
+                                        )}
+                                        {parcelData.pic_delivery_type === "1" && (
+                                            <>
+                                                <span>
+                                                    Office
+                                                </span>
+                                                <br />
+                                                <label className="set_labelData">Office Detail :</label>
+                                                <span>
+                                                    {parcelData.pic_office_detail}
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="set_labelData">Pickup Charge</label>
+                                        <span>{parcelData.pic_charge}</span>
+                                    </div>
+                                </div>
+
+
+                                <div className="row">
+                                    <div className="col-md-12">
+                                        <h5>Dispatch Detail</h5>
+                                    </div>
+                                    <hr />
+                                </div>
+
+                                <div className="row mb-3">
+                                    <div className="col-md-6">
+                                        <label className="set_labelData">Delivery Type:</label>
+                                        {parcelData.dis_delivery_type === "2" && (
+                                            <span>
+
+                                                Client Location:
+                                                <div className="col">
+                                                    {addressFields.dis_address!.map((field, index) => (
+                                                        <div className="row mt-2" key={index}>
+                                                            <div className="col-md-2">
+
+                                                                {field.dispatch_client_address}
+                                                            </div>
+                                                            <div className="col-md-2">
+                                                                {field.dispatch_office_address}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </span>
+                                        )}
+                                        {parcelData.dis_delivery_type === "1" && (
+                                            <span>
+                                                {parcelData.dis_delivery_type} - Office Location:
+                                                <br />
+                                                <div className="col-md-4">
+                                                    {parcelData.dis_office_detail}
+                                                </div>
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="col-md-6">
+                                        <label className="set_labelData">Dispatch Charge</label>
+                                        <span>{parcelData.dis_charge}</span>
+                                    </div>
+                                </div>
+
+                                <div className="row">
+                                    <div className="col-md-12">
+                                        <h5>Transportation Detail</h5>
+                                    </div>
+                                    <hr />
+                                </div>
+
+                                <div className="row mb-3">
+                                    <div className="col-md-3">
+                                        <label className="set_labelData">LR No.</label>
+                                        <span>{parcelData.lr_no}</span>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <label className="set_labelData">Bus No.</label>
+                                        <span>{parcelData.bus_no}</span>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <label className="set_labelData">Driver Phone No.</label>
+                                        <span>{parcelData.driver_no}</span>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <label className="set_labelData">Transport Charge</label>
+                                        <span>{parcelData.transport_charge} </span>
+                                    </div>
+                                </div>
+
+                                <br />
+
+
+                                <div className="row mb-3">
+                                    <div className="col-lg-6">
+                                        <label className="set_labelData">Created By</label>
+                                        <span>{parcelData.added_by_name}</span>
+                                    </div>
+                                    <div className="col-lg-6">
+                                        <label className="set_labelData">Updated By</label>
+                                        <span>{parcelData.updated_by_name}</span>
+                                    </div>
+                                </div>
+                                <div className="row mb-3">
+                                    <div className="col-lg-6">
+                                        <label className="set_labelData">Created Date</label>
+                                        <span>{parcelData.created_at}</span>
+                                    </div>
+                                    <div className="col-lg-6">
+                                        <label className="set_labelData">Updated Date</label>
+                                        <span>{parcelData.updated_at}</span>
+                                    </div>
+                                </div>
+                                <br />
+                                {/* <div className="row">
+                                    <div className="col-md-12">
+                                        <h5>Payment Detail</h5>
+                                    </div>
+                                    <hr />
+                                </div> */}
+
+                                <div className="row mb-3">
+                                    <div className="col-md-3">
+                                        <label className="set_labelData">Actual Final Total</label>
+                                        <span>{parcelData.actual_total}</span>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <label className="set_labelData">Print Final Total</label>
+                                        <span>{parcelData.print_total}</span>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <label className="set_labelData">GST Amount</label>
+                                        <span>{parcelData.gst_amount}</span>
+                                    </div>
+                                    <div className="col-md-3">
+                                        <label className="set_labelData">Bilty Charges</label>
+                                        <span>{parcelData.bilty_charge}</span>
+                                    </div>
+                                </div>
+                                <div className="row mb-3">
+
+
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Print Payable Amount</label>
+                                        <span>{parcelData.print_payable_amount}</span>
+                                    </div>
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Print Paid Amount</label>
+                                        <span>{parcelData.print_paid_amount}</span>
+                                    </div>
+
+                                    <div className="col-lg-3">
+                                        <label className="set_labelData">Print Balance Amount</label>
+                                        <span>{parcelData.print_bal_amount} </span>
+                                    </div>
+                                </div>
+
+                                <div className="row mb-3">
+                                    <div className="col-lg-6">
+                                        <label className="set_labelData">Particulars</label>
+                                        <span>{parcelData.particulars} </span>
+                                    </div>
+                                </div>
+
+
+                                {parcelData.payment_details && parcelData.payment_details.length > 0 && parcelData.payment_details[0].id && (
+                                    <>
+                                        <div className="row mt-4">
+                                            <div className="col-md-6">
+                                                <h5>Payment Details:</h5>
+                                            </div>
+
+                                            <hr />
+                                        </div>
+
+                                        <div className="row mb-3">
+                                            {parcelData.payment_status && (
+                                                <div className="col-lg-3 col-sm-6">
+                                                    <label style={{ fontWeight: "bold" }} className="form-label">Payment Status : </label>
+                                                    <span
+                                                        style={{
+                                                            fontWeight: "bold",
+                                                            color: parcelData.payment_status === "paid" ? "green" : "red"
+                                                        }}
+                                                    >
+                                                        {parcelData.payment_status}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+
+
+                                        {parcelData.payment_details.map((paymentDetail: any, index: any) => (
+                                            <div className="row mb-3" key={index}>
+                                                {paymentDetail.payment_method && (
+                                                    <div className="col-lg-3 col-sm-6">
+                                                        <label className="form-label">Payment Method:</label>
+                                                        <span> {paymentDetail.payment_method}</span>
+                                                    </div>
+                                                )}
+
+                                                {paymentDetail.total_amount && (
+                                                    <div className="col-lg-3">
+                                                        <label className="form-label">Total  Amount:</label>
+                                                        <span> {paymentDetail.total_amount}</span>
+                                                    </div>
+                                                )}
+
+
+                                                {paymentDetail.actual_amount && (
+                                                    <div className="col-lg-3">
+                                                        <label className="form-label">Actual  Amount:</label>
+                                                        <span> {paymentDetail.actual_amount}</span>
+                                                    </div>
+                                                )}
+                                                {paymentDetail.paid_amount && (
+                                                    <div className="col-lg-3">
+                                                        <label className="form-label">Total Paid Amount:</label>
+                                                        <span> {paymentDetail.paid_amount}</span>
+                                                    </div>
+                                                )}
+                                                {paymentDetail.payment_details && (
+                                                    <div className="col-lg-3 col-sm-6">
+                                                        <label className="form-label">Payment Details:</label>
+                                                        <span> {paymentDetail.payment_details}</span>
+                                                    </div>
+                                                )}
+
+                                            </div>
+                                        ))}
+                                    </>
+                                )}
+                            </div>
+                        )}
+
+                    </form>
 
                 </div >
 
+
+
             </div >
+
+
 
 
 

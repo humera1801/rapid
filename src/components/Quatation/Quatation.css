@@ -1,0 +1,91 @@
+/* Quotation Component Styles */
+.quote-container-fluid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.quote-card {
+    background-color: #FFFFFF;
+    border-radius: 5px;
+    box-shadow: 0 0 15px rgba(51, 51, 51, 0.1);
+    margin-bottom: 20px;
+    padding: 20px;
+}
+
+.quote-card-header {
+    background-color: #eceaea; /* Navy Blue */
+    color: rgb(37, 33, 33);
+    padding: 10px;
+    border-radius: 5px 5px 0 0;
+    margin: -20px -20px 20px -20px;
+    text-align: center;
+}
+
+.quote-header-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.quote-card-body {
+    padding: 20px;
+}
+
+.quote-form-label {
+    margin-bottom: 5px;
+    display: block;
+    color: #07080a; /* Navy Blue */
+}
+
+.quote-select,
+.quote-form-control {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #B0BEC5; /* Cool Gray */
+    border-radius: 5px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+.quote-form-control:focus,
+.quote-select:focus {
+    border-color: #101013; /* Navy Blue */
+    outline: none;
+    box-shadow: 0 0 5px rgba(6, 6, 7, 0.5);
+}
+
+.quote-checkbox {
+    margin-right: 5px;
+}
+
+.quote-checkbox-label {
+    color: #333333; /* Charcoal Grey */
+    margin-left: 5px;
+}
+
+.quote-submit-button {
+    background-color: #eceaea; /* Steel Blue */
+    color: rgb(14, 11, 11);
+    font-weight: bold;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.quote-submit-button:hover {
+    background-color: #1a237e; /* Navy Blue */
+}
+
+.quote-client-details-title {
+    color: #1a237e; /* Navy Blue */
+    font-weight: bold;
+    font-size: 18px;
+}
+
+input[type="text"]:read-only {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}

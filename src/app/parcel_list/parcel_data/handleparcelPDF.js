@@ -1,10 +1,14 @@
-import * as html2pdf from 'html2pdf.js';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export const handleparcelPDF = async (row) => {
 
     console.log("parcel", row.token);
 
     try {
+
+        const margin = 10; // Margin in mm
+        const pageWidth = 200; // A4 width in mm
         const totalRate = Number(row.gst_amount) + Number(row.print_total);
         const finalRate = totalRate + Number(row.total_demurrage_charges) + Number(row.pic_charge) + Number(row.dis_charge) + Number(row.bilty_charge);
 
@@ -36,7 +40,7 @@ export const handleparcelPDF = async (row) => {
 
         const combinedInvoiceInfo = `${totalInvoiceAmount}, ${invoiceNos}`;
 
-        const htmlTemplate = `
+        const html = `
             <html>
                 <head>
                     <style>
@@ -194,37 +198,43 @@ export const handleparcelPDF = async (row) => {
             </html>
         `;
 
-        const pdf = await html2pdf().from(htmlTemplate).toPdf().output('blob');
-        const url = URL.createObjectURL(pdf);
-        window.open(url, '_blank');
+        const tempElement = document.createElement('div');
+        tempElement.style.position = 'absolute';
+        tempElement.style.left = '-9999px';
+        tempElement.innerHTML = html;
+        document.body.appendChild(tempElement);
+
+        const canvas = await html2canvas(tempElement, {
+            scrollY: -window.scrollY,
+            scrollX: -window.scrollX,
+            useCORS: true,
+        });
+
+        document.body.removeChild(tempElement);
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', margin, 10, pageWidth - 2 * margin, canvas.height * (pageWidth - 2 * margin) / canvas.width);
+
+
+                pdf.save('parcel.pdf');
+
+
+        const pdfBlob = pdf.output('blob');
+
+        const pdfUrl = URL.createObjectURL(pdfBlob);
+
+        const message = `Here is your invoice: ${pdfUrl}`;
+        const whatsappUrl = `https://wa.me/${row.sender_whatsapp_no}?text=${encodeURIComponent(message)}`;
+
+        window.open(whatsappUrl, '_blank');
+
+        URL.revokeObjectURL(pdfUrl);
+
+
     } catch (error) {
         console.error('Error generating PDF:', error);
     }
-
-
-//     const pdf = await html2pdf().from(htmlTemplate).toPdf().output('blob');
-//     const blobUrl = URL.createObjectURL(pdf);
-    
-//     // Download the PDF instead of opening in a new window
-//     const a = document.createElement('a');
-//     a.href = blobUrl;
-//     a.download = 'parcel_document.pdf'; // Specify filename if needed
-//     a.click();
-    
-// } catch (error) {
-//     console.error('Error generating PDF:', error);
-// }
-
-
-
-
-
-
-
-
-
-
-
 
 
 

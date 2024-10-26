@@ -37,13 +37,14 @@ interface User {
   paid_amount: number;
   remaining_amount: number;
   mobile: string;
+  client_mobileNo:any;
+  client_firstName:any;
 }
 
 export const exportToExcel = (data: User[]) => {
   // Format data for Excel
   const formattedData = data.map(row => ({
-    'ID': row.id,
-    'Token': row.token,
+    
     'Ticket No': row.tkt_no,
     'From State': row.from_state_name,
     'To State': row.to_state_name,
@@ -54,8 +55,8 @@ export const exportToExcel = (data: User[]) => {
     'Final Total Amount': row.final_total_amount,
     'Print Final Total Amount': row.print_final_total_amount,
     'Added By': row.added_by_name,
-    'Name': row.name,
-    'Mobile No': row.mobile_no,
+    'Name': row.client_firstName,
+    'Mobile No': row.client_mobileNo,
     'Company Mobile': row.cmp_mobile,
     'Bus Type': row.bus_type,
     'Bus Name': row.bus_name,
@@ -73,9 +74,6 @@ export const exportToExcel = (data: User[]) => {
     'EX Rate': row.ex_rate,
     'SLR Rate': row.slr_rate,
     'ST Rate': row.st_rate,
-    'Paid Amount': row.paid_amount,
-    'Remaining Amount': row.remaining_amount,
-    'Mobile': row.mobile
   }));
 
   // Convert data to worksheet

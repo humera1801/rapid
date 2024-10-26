@@ -29,7 +29,7 @@ const Page: React.FC = () => {
       //   const userData: { user_id: number } = JSON.parse(storedData); // Define type for userData
 
       const response = await axios.post<{ status: number; message: string }>(
-        'http://localhost:3000/auth/user_change_password',
+        'http://192.168.0.105:3001/auth/user_change_password',
         {
           user_id: storedData,
           // old_password:'',
@@ -106,7 +106,7 @@ const Page: React.FC = () => {
                 <div className="row">
                   <div className="col-md-3"></div>
                   <div className="col-md-8">
-                    <button type="button" onClick={handleChangePassword} className="btn btn-primary">
+                    <button type="button" onClick={handleChangePassword} className="btn btn-success btn-sm" >
                       Submit
                     </button>
                     {changePasswordError && <div className="text-danger mt-2">{changePasswordError}</div>}

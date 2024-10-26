@@ -558,7 +558,7 @@ const FireData = () => {
 
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.100:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
+            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
                 generateInvoicePDF(res.data.data);
                 router.push("/Fire/Fire-List")
                 console.log("res", res.data.data);
@@ -575,7 +575,7 @@ const FireData = () => {
 
     const submitNewClientFormData = async (formData: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.100:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
+            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
                 ;
                 // generateInvoicePDF(res.data.data[0]);
                 router.push("/Fire/Fire-List")
@@ -1108,8 +1108,7 @@ const FireData = () => {
 
                             <div className="row mt-4">
                                 <div className="col-md-12">
-                                    <h5>Client Details:</h5>
-                                </div>
+      <h6>Client Details:</h6>                                </div>
                                 <hr />
                             </div>
                             <div className="row mb-3">
@@ -1299,7 +1298,7 @@ const FireData = () => {
 
                             <div className="row mb-3">
                                 <div className="col-12">
-                                    <button type="submit" className="btn btn-primary">Submit</button>
+                                    <button type="submit" className="btn btn-success btn-sm" >Submit</button>
                                 </div>
                             </div>
                         </form>

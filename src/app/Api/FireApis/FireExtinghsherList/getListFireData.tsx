@@ -1,13 +1,12 @@
 import axios, { AxiosResponse } from 'axios';
 import { baseURL } from '../BrandApi/DeleteBrand';
 
-// Dev URL
-// const baseURL = 'http://192.168.0.114:3001';
+
 
 interface FireListResponse {
   status: number;
   message: string;
-  data: any[]; // You can define a more specific type for 'data' based on your API response structure
+  data: any[]; 
 }
 
 export default {
@@ -18,19 +17,18 @@ export default {
         {
           headers: {
             'Accept': 'application/json',
-            // 'Content-Type': 'application/json', // You typically don't need to set Content-Type for GET requests
           },
         }
       );
 
       if (response.data.status === 1) {
-        return response.data.data; // Return the 'data' array from the response
+        return response.data.data; 
       } else {
-        throw new Error(response.data.message); // Throw an error with the API message
+        throw new Error(response.data.message);
       }
     } catch (error) {
       console.error('Error in data fetch:', error);
-      throw error; // Rethrow the error to propagate it up the call stack
+      throw error; 
     }
   },
 };
