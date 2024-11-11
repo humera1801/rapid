@@ -1,4 +1,5 @@
 "use client"
+import Footer from '@/components/Dashboard/Footer'
 import Header from '@/components/Dashboard/Header'
 import EditParcelData from '@/components/Parcel/EditParcelData'
 import React from 'react'
@@ -11,6 +12,8 @@ const page = () => {
     {/* <ParcelDetails/> */}
     
     <EditParcelData/>
+    <Footer/>
+
     </>
   )
 }

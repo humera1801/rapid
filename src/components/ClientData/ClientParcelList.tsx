@@ -107,7 +107,7 @@ const ClientParcelList: React.FC<UserListProps> = ({ title, data }) => {
             getUserProfile(e_id)
                 .then((userData) => {
                     setUserName(userData.e_name);
-                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                    return axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
                 })
                 .then((roleResponse) => {
                     const rolesData = roleResponse.data.data;
@@ -132,7 +132,7 @@ const ClientParcelList: React.FC<UserListProps> = ({ title, data }) => {
         e.preventDefault();
         const formData = { receipt_no };
         try {
-            await axios.post(`http://192.168.0.105:3001/user/delete`, formData);
+            await axios.post(`http://192.168.0.106:3001/user/delete`, formData);
             window.location.reload();
         } catch (error) {
             console.error('Error deleting user:', error);

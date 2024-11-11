@@ -137,7 +137,7 @@ const RoleForm: React.FC<RoleFormProps> = () => {
     console.log('Form submitted:', formData);
 
     try {
-      const response = await axios.post('http://192.168.0.105:3001/employee/create_role', formData);
+      const response = await axios.post('http://192.168.0.106:3001/employee/create_role', formData);
       console.log('Data submitted successfully:', response.data);
       window.location.reload();
     } catch (error) {

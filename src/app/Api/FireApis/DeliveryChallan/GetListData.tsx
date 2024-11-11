@@ -1,8 +1,9 @@
 import axios, { AxiosResponse } from 'axios';
 import { baseURL } from '../BrandApi/DeleteBrand';
+import { DetailsResponse } from '../DataFilter/date';
 
 export default {
-    async getDeliveryChallanFilterdate(startdate?: string, enddate?: string): Promise<any> {
+    async getDeliveryChallanFilterdate(startdate?: string, enddate?: string): Promise<DetailsResponse> {
         try {
             const response: AxiosResponse = await axios.post(baseURL + '/challan/get_date_filter_fire_extingusher_delivery_challan_data', {
                 startdate: startdate || '',  
@@ -24,7 +25,7 @@ export default {
         }
     },
 
-    async GetChallanBookingId(id: string): Promise<any> {
+    async GetChallanBookingId(id: string): Promise<DetailsResponse> {
         try {
           const response: AxiosResponse = await axios.post(baseURL + '/challan/get_single_fire_extingusher_delivery_challan_data', {
             q_quotation_no: id,

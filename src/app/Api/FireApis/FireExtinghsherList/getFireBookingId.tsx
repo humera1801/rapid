@@ -1,12 +1,13 @@
 import axios, { AxiosResponse } from 'axios';
 import { baseURL } from '../BrandApi/DeleteBrand';
+import { DetailsResponse } from '../DataFilter/date';
 
 ;
 
 
 
 export default {
-    async GetFireBookingId(id: string): Promise<any> {
+    async GetFireBookingId(id: string): Promise<DetailsResponse> {
         try {
           const response: AxiosResponse = await axios.post(baseURL + '/booking/get_fire_extingusher_booking_detail', {
             q_quotation_no: id,

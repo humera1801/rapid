@@ -4,7 +4,7 @@ import CabbookingList from '@/app/Api/CabBooking/CabbookingList';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { generateCabPaymentReceiptPrint } from '../CabBooking/CabbookingPdf/cabpaymentreceipt'
+import { generateTicketPaymentPrint } from '../Ticket/PaymentPrint/genrateTicketPayment.js'
 import EditTicketData from '@/app/Api/EditTicketData';
 
 interface FormData {
@@ -22,7 +22,7 @@ interface FormData {
     payment_status: string;
     booking_type: string;
     actual_amount: any;
-    client_id:any;
+    client_id: any;
     total_paid_amount: any;
 }
 
@@ -50,23 +50,23 @@ const TicketPayment: React.FC<TicketPaymentProps> = ({ paymentinitialData, Payme
                 if (ticketToken) {
                     const response = await EditTicketData.getEditTicktetData(ticketToken);
                     const data = response.data[0];
-                    
+
                     setticketData(data);
-                  
+
 
                     setValue("total_amount", data.final_total_amount);
 
                     if (data.paymentDetails && data.paymentDetails.length > 0) {
                         const lastPaymentDetail = data.paymentDetails[data.paymentDetails.length - 1];
                         setValue("total_paid_amount", data.total_paid);
-                      
+
 
                     } else {
                         // setValue("actual_amount", data.endJourneyDetails.pending_balance);
                     }
 
                     setValue("name", data.client_firstName);
-                    setValue("client_id" , data.client_id)
+                    setValue("client_id", data.client_id)
                     setError('');
                 } else {
                     setError('Id not found.');
@@ -97,7 +97,7 @@ const TicketPayment: React.FC<TicketPaymentProps> = ({ paymentinitialData, Payme
 
 
 
-    
+
 
 
 
@@ -112,16 +112,18 @@ const TicketPayment: React.FC<TicketPaymentProps> = ({ paymentinitialData, Payme
 
         console.log("Form Data:", dataToSubmit);
         try {
-            const response = await axios.post('http://192.168.0.105:3001/payment/add_new_payment', dataToSubmit);
+            const response = await axios.post('http://192.168.0.106:3001/payment/add_new_payment', dataToSubmit);
             console.log('Data submitted successfully:', response.data);
-            if (ticketData?.id) {
-                const id = ticketData.id;
+            if (ticketData.ticket_token != "") {
+                const ticketToken = ticketData.token;
+                console.log("------------", ticketToken);
+
                 try {
-                    const getTDetail = await EditTicketData.getEditTicktetData(id);
+                    const getTDetail = await EditTicketData.getEditTicktetData(ticketToken);
                     console.log("Fetched details:", getTDetail.data[0]);
                     const value = getTDetail.data[0]
-                    const lastPaymentDetail = value.payment_details[value.payment_details.length - 1];
-                    generateCabPaymentReceiptPrint(lastPaymentDetail)
+                    const lastPaymentDetail = value.paymentDetails[value.paymentDetails.length - 1];
+                    generateTicketPaymentPrint(lastPaymentDetail)
                     window.location.reload();
                 } catch (error) {
                     console.error('Error fetching ticket data:', error);
@@ -193,7 +195,7 @@ const TicketPayment: React.FC<TicketPaymentProps> = ({ paymentinitialData, Payme
 
                     </div>
                 </div>
-           
+
 
                 <div className="row mt-4">
                     <div className="col-md-12">
@@ -207,12 +209,12 @@ const TicketPayment: React.FC<TicketPaymentProps> = ({ paymentinitialData, Payme
                     <div className="col-lg-4">
                         <label className="form-label">Payment Method</label>
                         <select
-                            {...register('payment_method' ,{
-                                required:true
+                            {...register('payment_method', {
+                                required: true
                             })}
                             value={selectedPaymentMethod}
                             onChange={handlePaymentMethodChange}
-                            className="form-control"
+                            className="form-control form-control-sm"
                         >
                             <option value="">--Select--</option>
                             <option value="cash">Cash</option>
@@ -223,13 +225,13 @@ const TicketPayment: React.FC<TicketPaymentProps> = ({ paymentinitialData, Payme
                             <option value="cheque">Cheque</option>
                             {/* <option value="credit">Credit</option> */}
                         </select>
-                        {(selectedPaymentMethod === 'gpay' || selectedPaymentMethod === 'phonepay' || selectedPaymentMethod === 'paytm' || selectedPaymentMethod === 'cheq') && (
+                        {(selectedPaymentMethod === 'gpay' || selectedPaymentMethod === 'phonepay' || selectedPaymentMethod === 'paytm' || selectedPaymentMethod === 'cheque') && (
                             <div className="mt-2">
                                 <label className="form-label">Payment Details</label>
                                 <input
                                     {...register('payment_details')}
                                     type="text"
-                                    className="form-control"
+                                    className="form-control form-control-sm"
                                     placeholder="Enter transaction ID"
                                 // Use appropriate handler or register here if using form libraries
                                 />

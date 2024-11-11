@@ -1,12 +1,13 @@
 import axios, { AxiosResponse } from 'axios';
+import { DetailsResponse } from './FireApis/DataFilter/date';
 
 // Dev URL
-const baseURL = 'http://192.168.0.105:3001';
+const baseURL = 'http://192.168.0.106:3001';
 
 
 
 export default {
-  async getEditTicktetData(tickettoken: string): Promise<any> {
+  async getEditTicktetData(tickettoken: string): Promise<DetailsResponse> {
    
     
     try {
@@ -15,7 +16,6 @@ export default {
         
         headers: {
           'Accept': 'application/json',
-          // 'Content-Type': 'application/json',
         },
       });
 
@@ -25,7 +25,7 @@ export default {
         throw new Error('Response status is not 1');
       }
     } catch (error) {
-      console.error('Error in getAllStateListApi:', error);
+      console.error('Error in list:', error);
       throw error;
     }
   },

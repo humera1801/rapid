@@ -129,7 +129,7 @@ const ChallanList: React.FC = () => {
             getUserProfile(e_id)
                 .then((userData) => {
                     setUserName(userData.e_name);
-                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                    return axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
                 })
                 .then((roleResponse) => {
                     const rolesData = roleResponse.data.data;
@@ -274,6 +274,24 @@ const ChallanList: React.FC = () => {
                 name: "Challan No",
                 selector: (row: User) => row.ferc_challan_no,
                 sortable: true,
+                cell: (row: any) => (
+                    <Link
+                    href={`ViewList?id=${row.q_quotation_no}`}
+                        style={{
+                            textDecoration: 'none',
+                            color: 'inherit',
+                            backgroundColor: 'transparent',
+                            padding: '5px',
+                        }}
+                    >
+                        {row.ferc_challan_no}
+                    </Link>
+                ),
+                style: {
+                    minWidth: '50px',
+                    whiteSpace: 'nowrap',
+                    fontSize:"12px"
+                },
             },
             visibleColumns.includes('Quotation No') && {
                 name: "Quotation No",

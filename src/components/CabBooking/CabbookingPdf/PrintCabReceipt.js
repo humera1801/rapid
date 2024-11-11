@@ -12,10 +12,10 @@ export const generateCabReceiptPrint = (formData) => {
 
 
 
-        const productRows = formData.extra_charges.map((product, index) => `
+        const productRows = formData.extraCharges.map((product, index) => `
      <div class="kms-info1 section">
-            <div>EXTRA CHARGES: <span class="underline-text" style="width: 290px;">${product.charge}</span></div>
-            <div>RS : <span class="underline-text" style="width: 145px;">${product.rate}</span></div>
+            <div>EXTRA CHARGES: <span class="underline-text" style="width: 290px;">${product.extra_charges}</span></div>
+            <div>RS : <span class="underline-text" style="width: 145px;">${product.extra_charges_rate}</span></div>
         </div >
  `).join('');
 
@@ -276,38 +276,33 @@ export const generateCabReceiptPrint = (formData) => {
 
         <div class="kms-info1 section">
             <div>EXTRA KMS: <span class="underline-text" style="width: 170px;">${endJourneyDetails.extra_kms || ''}</span> @ <span class="underline-text"
-                    style="width: 142px;">${endJourneyDetails.extra_km_rate || ''}</span>RS : <span class="underline-text" style="width: 146px;">${endJourneyDetails.extra_km_total_rate || ''}</span>
+                    style="width: 142px;">${endJourneyDetails.cb_extra_km_charges || ''}</span>RS : <span class="underline-text" style="width: 146px;">${endJourneyDetails.extra_km_total_rate || ''}</span>
             </div>
         </div>
         <div class="kms-info1 section">
             <div>EXTRA HRS: <span class="underline-text" style="width: 170px;">${endJourneyDetails.extra_hrs || ''}</span> @ <span class="underline-text"
-                    style="width: 142px;">${endJourneyDetails.extra_hrs_rate || ''}</span>RS : <span class="underline-text" style="width: 146px;">${endJourneyDetails.extra_hrs_total_rate || ''}</span>
+                    style="width: 142px;">${endJourneyDetails.cb_extra_hrs_charges || ''}</span>RS : <span class="underline-text" style="width: 146px;">${endJourneyDetails.extra_hrs_total_rate || ''}</span>
             </div>
         </div>
          ${productRows}
         <div class="kms-info1 section">
             <div class="rate-row">DRIVER ALLOWANCE: <span class="underline-text" style="width: 115px;">${endJourneyDetails.driver_allowance || ''}</span> @ <span
-                    class="underline-text" style="width: 142px;">${endJourneyDetails.driver_allowance_rate || ''}</span>RS : <span class="underline-text"
+                    class="underline-text" style="width: 142px;">${endJourneyDetails.driver_allowance_charge || ''}</span>RS : <span class="underline-text"
                     style="width: 146px;">${endJourneyDetails.driver_allowance_total_rate || ''}</span>
 
             </div>
         </div>
 
         <div class="kms-info1 section">
-            <div class="rate-row">NIGHT CHARGES: <span class="underline-text" style="width: 137px;">${endJourneyDetails.night_charges || '' }</span> @ <span
-                    class="underline-text" style="width: 142px;">${endJourneyDetails.night_charges_rate || ''}</span>RS : <span class="underline-text"
+            <div class="rate-row">NIGHT CHARGES: <span class="underline-text" style="width: 137px;">${endJourneyDetails.total_night || '' }</span> @ <span
+                    class="underline-text" style="width: 142px;">${endJourneyDetails.night_charge || ''}</span>RS : <span class="underline-text"
                     style="width: 146px;">${endJourneyDetails.night_charges_total_rate || '' }</span>
             </div>
         </div>
 
-        <div class="engaged-by section" style="margine-right:5px";>TOTAL AMOUNT: <span class="underline-text" style="width: 488px;">${endJourneyDetails.total_amount || ''}</span>
+        <div class="engaged-by section" style="margine-right:5px";>TOTAL AMOUNT: <span class="underline-text" style="width: 488px;">${formData.final_total || ''}</span>
         </div>
 
-        <div class="engaged-by section">ADVANCE RS: <span class="underline-text" style="width: 495px;">${endJourneyDetails.advance_paid || ''}</span>
-        </div>
-        <div class="engaged-by section">BALANCE RS: <span class="underline-text" style="width: 495px;">${endJourneyDetails.pending_balance || ''}</span>
-        </div>
-       
 
 
 

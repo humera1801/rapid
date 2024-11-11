@@ -94,7 +94,7 @@ export const generatePaymentReceiptPdf = (formData) => {
              
                 <div class="row mb-3">
                    <div class="engaged-by section col-lg-3" style="padding-right: 0;">Received with thanks from M/s:</div>
-                   <span class="underline-text col-lg-9" style="padding-left: 0;">${formData.firstName}</span>
+                   <span class="underline-text col-lg-9" style="padding-left: 0;">${formData.name}</span>
                 </div>
                    <div class="row mb-3">
                    <div class="engaged-by section col-lg-2" style="padding-right: 0;">Booking Of:</div>

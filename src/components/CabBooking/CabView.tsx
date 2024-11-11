@@ -12,6 +12,7 @@ import { generateCabPaymentReceiptPrint } from "../CabBooking/CabbookingPdf/cabp
 import Link from 'next/link';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import VendorCabModel from './VendorPayment/CabVendorpayModel';
 
 interface FormData {
     cb_id: any;
@@ -95,6 +96,13 @@ interface Client {
     client_pincode: string;
 }
 
+
+interface Vehicle {
+    v_id: any;
+    v_type: any;
+    rate_12_hrs: any;
+    rate_8_hrs: any;
+}
 
 
 
@@ -222,6 +230,29 @@ const CabView = () => {
     });
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     const handlePrintPayment = async (cb_id: string) => {
         try {
             const getTDetail = await CabbookingList.GetcabBookingId(cb_id);
@@ -240,7 +271,8 @@ const CabView = () => {
             cb_id: cb_id
         }
         try {
-            const response = await axios.post(`http://192.168.0.105:3001/cabbooking/delete_cab_booking`, formData);
+            const response = await axios.post(`http://192.168.0.106:3001/cabbooking/delete_cab_booking`, formData);
+            alert("are you sure?  delete this booking?")
             console.log('Cab booking deleted successfully:', response.data);
             router.push("/CabBooking/CabList")
         } catch (error) {
@@ -283,7 +315,7 @@ const CabView = () => {
 
 
             if (response.data[0].startJourneyDetails && response.data[0].startJourneyDetails.cb_id) {
-                
+
                 const response = await GetJourneryStratId.getJourneyEnd(cb_id.toString());
                 setEndId(response.data[0].cb_id);
                 setJourneyEnd(response.data[0])
@@ -306,7 +338,7 @@ const CabView = () => {
 
 
 
-    
+
     //-----------------------------------------------------------------------------------------------------------
 
 
@@ -328,8 +360,32 @@ const CabView = () => {
             console.error('Error handling journey start:', error);
         }
     };
-   
 
+
+
+    const [MakepaymentModel, setMakepaymentModel] = useState(false);
+    const [MakepaymentId, setMakepaymentId] = useState<number | null>(null);
+    const [Makepaymentdata, setMakepaymentdata] = useState<any[]>([]);
+
+    const handleMakePayment = async (cb_id: number) => {
+        try {
+            const response = await CabbookingList.GetcabBookingId(cb_id.toString());
+
+
+
+            setPaymentId(response.data[0].cb_id);
+            setMakepaymentdata(response.data[0]);
+            setMakepaymentModel(true);
+
+
+
+
+
+        } catch (error) {
+            console.error('Error handling journey start:', error);
+            alert('Error occurred while handling payment journey.');
+        }
+    };
 
     //-----------------------------------------------------------------------------------------------------------
     return (
@@ -339,8 +395,9 @@ const CabView = () => {
                 <h4>View Cab Booking Details </h4>
                 <div style={{ fontSize: "12px" }}>
                     {/* <Link href="/CabBooking/JourneyEnd" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Journey End</Link> */}
+                    <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "10px", fontSize: "12px" }} onClick={() => handleMakePayment(fireData.cb_id)}>Make Payment</Button>
 
-                    <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px", fontSize: "12px" }} onClick={() => handleJourneyPayment(fireData.cb_id)}>Payment</Button>
+                    <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px", fontSize: "12px" }} onClick={() => handleJourneyPayment(fireData.cb_id)}>Receive Payment</Button>
 
                     <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px", fontSize: "12px" }} onClick={() => handleJourneyEnd(fireData.cb_id)}>Journey End</Button>
 
@@ -374,6 +431,14 @@ const CabView = () => {
                         handleClose={() => setpaymentModel(false)}
                         paymentinitialData={Paymentdata}
                         PaymentId={PaymentId} />
+
+
+                    <VendorCabModel
+                        show={MakepaymentModel}
+                        handleClose={() => setMakepaymentModel(false)}
+                        paymentinitialData={Makepaymentdata}
+                        PaymentId={MakepaymentId}
+                    />
                 </div>
             </div>
             <br />
@@ -483,7 +548,7 @@ const CabView = () => {
                         <div className="row mb-3">
                             <div className="col-lg-2 col-sm-6 mb-2">
                                 <label className="form-label" htmlFor="vehicleNo">Vehicle Type:</label>
-                                <span> {fireData.vehicle_type}</span>                                </div>
+                                <span> {fireData.v_type}</span>                                </div>
 
                             <div className="col-lg-2 col-sm-6 mb-2">
                                 <label className="form-label" htmlFor="vehicleNo">Engaged By:</label>
@@ -562,10 +627,10 @@ const CabView = () => {
                                 </div>
 
                                 <div className="row mb-3">
-                                    {fireData.startJourneyDetails.vehicle_type && (
+                                    {fireData.startJourneyDetails.v_type && (
                                         <div className="col-lg-3 col-sm-6 mb-3">
                                             <label className="form-label" htmlFor="vehicleNo">Vehicle Type:</label>
-                                            <span> {fireData.startJourneyDetails.vehicle_type}</span>
+                                            <span> {fireData.startJourneyDetails.v_type}</span>
                                         </div>
                                     )}
                                     {fireData.startJourneyDetails.journey_start_time && (
@@ -715,7 +780,7 @@ const CabView = () => {
                                     <div className="col-md-6">
                                         <h5>Payment Details:</h5>
                                     </div>
-                                    <div className="col-md-6" style={{ textAlign: "right" }}>
+                                    {/* <div className="col-md-6" style={{ textAlign: "right" }}>
                                         <Button
                                             variant="primary"
                                             size="sm"
@@ -725,7 +790,7 @@ const CabView = () => {
                                         >
                                             Print
                                         </Button>
-                                    </div>
+                                    </div> */}
                                     <hr />
                                 </div>
 

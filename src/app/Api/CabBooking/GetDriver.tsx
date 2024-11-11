@@ -8,8 +8,13 @@ interface Driver {
     d_name: string;
 }
 
+interface DriverDetailsResponse {
+  status: string;
+  data: any;
+}
+
 export default {
-  async getAddDriver(): Promise<any> {
+  async getAddDriver(): Promise<DriverDetailsResponse> {
     try {
       const response: AxiosResponse = await axios.get(baseURL + '/cabbooking/get_driver_list', {
         headers: {
@@ -18,9 +23,8 @@ export default {
         },
       });
 
-      if (response.data.status === 1) {
-        const driver: Driver[] = response.data.data;
-        return driver;
+     if (response.data.status === 1) {
+        return response.data.data;
       } else {
         throw new Error('Response status is not 1');
       }

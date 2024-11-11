@@ -4,7 +4,7 @@ import CabbookingList from '@/app/Api/CabBooking/CabbookingList';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
-import { generateCabPaymentReceiptPrint } from '../CabBooking/CabbookingPdf/cabpaymentreceipt'
+import { generateTicketPaymentPrint } from '../Ticket/PaymentPrint/genrateTicketPayment.js'
 import EditTicketData from '@/app/Api/EditTicketData';
 import EditParcelDataList from '@/app/Api/EditParcelDataList';
 
@@ -113,7 +113,7 @@ const PArcelPayment: React.FC<PArcelPaymentProps> = ({ paymentinitialData, Payme
 
         console.log("Form Data:", dataToSubmit);
         try {
-            const response = await axios.post('http://192.168.0.105:3001/payment/add_new_payment', dataToSubmit);
+            const response = await axios.post('http://192.168.0.106:3001/payment/add_new_payment', dataToSubmit);
             console.log('Data submitted successfully:', response.data);
             if (ParcelData?.id) {
                 const id = ParcelData.id;
@@ -122,7 +122,7 @@ const PArcelPayment: React.FC<PArcelPaymentProps> = ({ paymentinitialData, Payme
                     console.log("Fetched details:", getTDetail.data[0]);
                     const value = getTDetail.data[0]
                     const lastPaymentDetail = value.payment_details[value.payment_details.length - 1];
-                    generateCabPaymentReceiptPrint(lastPaymentDetail)
+                    generateTicketPaymentPrint(lastPaymentDetail)
                     window.location.reload();
                 } catch (error) {
                     console.error('Error fetching ticket data:', error);
@@ -135,10 +135,7 @@ const PArcelPayment: React.FC<PArcelPaymentProps> = ({ paymentinitialData, Payme
 
     return (
         <div className='container'>
-
-            <br />
-
-            <form onSubmit={handleSubmit(onSubmit)}>
+                <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="row mb-3">
                     <div className="col-lg-5 col-sm-6">
                         <label className="form-label" htmlFor="name">Name</label>
@@ -212,7 +209,7 @@ const PArcelPayment: React.FC<PArcelPaymentProps> = ({ paymentinitialData, Payme
                             })}
                             value={selectedPaymentMethod}
                             onChange={handlePaymentMethodChange}
-                            className="form-control"
+                            className="form-control form-control-sm"
                         >
                             <option value="">--Select--</option>
                             <option value="cash">Cash</option>
@@ -223,13 +220,13 @@ const PArcelPayment: React.FC<PArcelPaymentProps> = ({ paymentinitialData, Payme
                             <option value="cheque">Cheque</option>
                             {/* <option value="credit">Credit</option> */}
                         </select>
-                        {(selectedPaymentMethod === 'gpay' || selectedPaymentMethod === 'phonepay' || selectedPaymentMethod === 'paytm' || selectedPaymentMethod === 'cheq') && (
+                        {(selectedPaymentMethod === 'gpay' || selectedPaymentMethod === 'phonepay' || selectedPaymentMethod === 'paytm' || selectedPaymentMethod === 'cheque') && (
                             <div className="mt-2">
                                 <label className="form-label">Payment Details</label>
                                 <input
                                     {...register('payment_details')}
                                     type="text"
-                                    className="form-control"
+                                    className="form-control form-control-sm"
                                     placeholder="Enter transaction ID"
                                 // Use appropriate handler or register here if using form libraries
                                 />

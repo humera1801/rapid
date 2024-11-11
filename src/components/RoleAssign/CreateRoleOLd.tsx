@@ -176,7 +176,7 @@ const CreateRole: React.FC = () => {
         console.log(finalData);
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/employee/create_employee_role', finalData);
+            const response = await axios.post('http://192.168.0.106:3001/employee/create_employee_role', finalData);
             console.log('Data submitted successfully:', response.data);
             // window.location.reload();
         } catch (error) {

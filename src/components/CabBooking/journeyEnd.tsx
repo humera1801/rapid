@@ -418,9 +418,9 @@ const JourneyEnd: React.FC<JourneryEndProps> = ({ endinitialData, EndId }) => {
         console.log(" Form Data:", formData);
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/cabbooking/add_cab_booking_end_journey_details', formData);
+            const response = await axios.post('http://192.168.0.106:3001/cabbooking/add_cab_booking_end_journey_details', formData);
             console.log('Data submitted successfully:', response.data);
-            // window.location.reload();
+            window.location.reload();
         } catch (error) {
             console.error('Error updating data:', error);
         }
@@ -623,7 +623,7 @@ const JourneyEnd: React.FC<JourneryEndProps> = ({ endinitialData, EndId }) => {
                     </div>
 
                     {fields.map((field, index) => (
-                        <div>
+                       
                             <div key={field.id} className="row mb-3">
                                 <div className="col-lg-12 col-sm-5 line" style={{ display: "flex", gap: "15px" }}>
 
@@ -663,7 +663,7 @@ const JourneyEnd: React.FC<JourneryEndProps> = ({ endinitialData, EndId }) => {
                             </div>
 
 
-                        </div>
+                       
 
                     ))}
 

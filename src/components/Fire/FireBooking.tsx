@@ -36,14 +36,10 @@ interface ClientData {
     id_proof_url: any;
 
 }
-
-
-
 interface employee {
     e_id: string,
     e_name: string
 }
-
 interface Ingredient {
     feit_id: any;
     feit_name: string;
@@ -53,12 +49,10 @@ interface Ingredient {
     feit_sgst: any;
     feit_cgst: any;
 }
-
 interface Brand {
     feb_id: number;
     feb_name: string;
 }
-
 interface ProductData {
 
     qty: any;
@@ -74,7 +68,6 @@ interface ProductData {
     feb_id: string;
     febd_sr_no: any;
 }
-
 export interface FormData {
     febking_total_sgst: string;
     febking_total_cgst: string;
@@ -125,10 +118,10 @@ const FireData = () => {
     const [imageName, setImageName] = useState<string>('');
 
     const handleMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/[^\d]/g, ''); // Remove non-digit characters
-        if (value.length <= 10) { // Restrict to 10 digits
+        const value = e.target.value.replace(/[^\d]/g, ''); 
+        if (value.length <= 10) { 
             setMobileNoValue(value);
-            setValue("mobileNo", value); // Update form value
+            setValue("mobileNo", value); 
         }
     };
 
@@ -507,7 +500,7 @@ const FireData = () => {
         formData.append("client_id", clientId.toString());
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/booking/upload_client_id_proof', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -522,7 +515,7 @@ const FireData = () => {
 
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
+            const response = await axios.post('http://192.168.0.106:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
                 console.log("form data", res.data);
                 generateInvoicePDF(res.data.data);
                 router.push("/Fire/Fire-List")
@@ -539,7 +532,7 @@ const FireData = () => {
 
     const submitNewClientFormData = async (formData: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData);
+            const response = await axios.post('http://192.168.0.106:3001/booking/add_fire_extingusher_booking_data', formData);
 
             console.log('Form data submitted successfully for new client.', response.data.data[0]);
             console.log('Server response:', response.data.data[0]);

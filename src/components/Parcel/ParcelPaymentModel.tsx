@@ -24,7 +24,6 @@ const PArcelPaymentModel: React.FC<PArcelPaymentModelProps> = ({ show, handleClo
             </Modal.Header>
             <Modal.Body>
             <PArcelPayment paymentinitialData={paymentinitialData} PaymentId={PaymentId}  />
-
             </Modal.Body>
             
         </Modal>

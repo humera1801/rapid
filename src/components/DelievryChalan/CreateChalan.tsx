@@ -325,7 +325,7 @@ const CreateChalan = () => {
 
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/challan/add_fire_extingusher_delivery_challan_data', formData).then((res: any) => {
+            const response = await axios.post('http://192.168.0.106:3001/challan/add_fire_extingusher_delivery_challan_data', formData).then((res: any) => {
                 console.log("form data", res.data);
                 generateDeliveryChallanPDF(res.data.data);
                 router.push("/DeliveryChallan/ListOfChallan")
@@ -342,7 +342,7 @@ const CreateChalan = () => {
 
     const submitNewClientFormData = async (formData: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/challan/add_fire_extingusher_delivery_challan_data', formData);
+            const response = await axios.post('http://192.168.0.106:3001/challan/add_fire_extingusher_delivery_challan_data', formData);
 
             console.log('Form data submitted successfully for new client.', response.data.data[0]);
             console.log('Server response:', response.data.data[0]);

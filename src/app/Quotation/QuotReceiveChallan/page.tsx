@@ -1,4 +1,5 @@
 "use client"
+import Footer from '@/components/Dashboard/Footer'
 import Header from '@/components/Dashboard/Header'
 import ReceivedChallan from '@/components/Quatation/RecievedChallan'
 import RecievedChallan from '@/components/Quatation/RecievedChallan'
@@ -11,7 +12,8 @@ const page = () => {
     <Header/>
     <ReceivedChallan/>
     
-    
+    <Footer/>
+
     
     </>
   )

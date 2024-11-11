@@ -42,12 +42,12 @@ type FormData = {
     sender_proof_detail: string;
     reciver_proof_detail: string
     pic_delivery_type: string;
-    pic_charge: number;
+    pic_office_charge: number;
     is_client_send_or_rec: any;
     pic_office_detail: string;
     actual_paid_amount: number;
     dis_delivery_type: string;
-    dis_charge: number;
+    dis_office_charge: number;
     bus_no: string;
     driver_no: string;
     transport_charge: string;
@@ -59,14 +59,8 @@ type FormData = {
     user_id: any;
     sender_whatsapp_no: any;
     receiver_whatsapp_no: any;
-    pic_address: {
-        pickup_client_address: string;
-        pickup_office_address: string;
-    }[];
-    dis_address: {
-        dispatch_client_address: string;
-        dispatch_office_address: string;
-    }[];
+    pic_address: { pickup_client_address: string; pickup_office_address: string; pickup_charge: any; pic_hamali_charge: any, pic_other_charge: any }[];
+    dis_address: { dispatch_client_address: string; dispatch_office_address: string; dispatch_charge: any, dis_hamali_charge: any, dis_other_charge: any }[];
     payment_method: string;
     actual_total: number;
     print_total: number;
@@ -94,11 +88,14 @@ type FormData = {
     client_pincode: string;
     email: string;
     client_id: any
-
+    total_pickup_charge: any;
+    total_dispatch_charge: any;
+    delivery: Delivery[];
     mobileNo: string;
     address: any;
     client_id_proof: any;
-
+    sender_id_proof: any;
+    receiver_id_proof: any
 };
 
 interface ParcelBillDetail {
@@ -119,6 +116,12 @@ interface ParcelDetail {
     print_rate: number;
     total_print_rate: number;
     QTYtotal: number;
+}
+
+interface Delivery {
+    id: any;
+    lr_no: any; bus_no: any; driver_no: any;
+    other_charge: any;
 }
 
 interface ClientData {
@@ -173,16 +176,19 @@ const EditParcelData = () => {
 
     const [parcelData, setParcelData] = useState<any>("");
     const [parcelDetail, setparcelDetail] = useState<ParcelDetail[]>([]);
+    const [delievery, setdelivery] = useState<Delivery[]>([]);
     const [error, setError] = useState<string>('');
     const [EwayFields, setEwayFields] = useState<ParcelBillDetail[]>([]);
     const [addressFields, setAddressFields] = useState<{
         pic_address: {
             pickup_client_address: string;
             pickup_office_address: string;
+            pickup_charge: any; pic_hamali_charge: any, pic_other_charge: any
         }[];
         dis_address: {
             dispatch_client_address: string;
             dispatch_office_address: string;
+            dispatch_charge: any, dis_hamali_charge: any, dis_other_charge: any
         }[];
     }>({
         pic_address: [],
@@ -206,17 +212,19 @@ const EditParcelData = () => {
                         console.log("BILLDetail", response.data[0].parcel_bill_detail);
 
                         if (fetchedBillDetail) {
-                            setEwayFields([...fetchedBillDetail]); // Populate EwayFields with fetched data
+                            setEwayFields([...fetchedBillDetail]);
                         } else {
                             setError('No parcel bill details found.');
                         }
-                        // Filter delivery details based on del_type
                         const picAddresses = response.data[0].delivery_detail
                             .filter((detail: any) => detail.del_type === 1)
                             .map((detail: any) => ({
                                 parcel_id: detail.parcel_id || '',
                                 pickup_client_address: detail.pic_start_point || '',
                                 pickup_office_address: detail.pic_end_point || '',
+                                pickup_charge: detail.pickup_charge || '',
+                                pic_hamali_charge: detail.pic_hamali_charge || '',
+                                pic_other_charge: detail.pic_other_charge || '',
                             }));
                         const disAddresses = response.data[0].delivery_detail
                             .filter((detail: any) => detail.del_type === 2)
@@ -224,6 +232,9 @@ const EditParcelData = () => {
                                 parcel_id: detail.parcel_id || '',
                                 dispatch_client_address: detail.dis_start_point || '',
                                 dispatch_office_address: detail.dis_end_point || '',
+                                dispatch_charge: detail.dispatch_charge || '',
+                                dis_hamali_charge: detail.dis_hamali_charge || '',
+                                dis_other_charge: detail.dis_other_charge || ''
                             }));
 
                         setAddressFields({
@@ -234,6 +245,22 @@ const EditParcelData = () => {
 
                         const fetchedParcelImages = response.data[0]?.parcel_imgs || [];
                         setParcelImages(fetchedParcelImages);
+
+                        const fetchdeliverydata = response.data[0]?.delivery || []
+                        if (fetchdeliverydata) {
+                            const transformedDeliveryDetail: Delivery[] = fetchdeliverydata.map((item: any, index: number) => ({
+                                id: index + 1,
+                                lr_no: item.lr_no || '',
+                                bus_no: (item.bus_no) || '',
+                                driver_no: Number(item.driver_no) || '',
+
+                            }));
+                            setdelivery(transformedDeliveryDetail);
+                            console.log("delivery", transformedDeliveryDetail);
+
+                        } else {
+                            setError('No delivery details found.');
+                        }
 
                         const fetchedParcelDetail = response.data[0]?.parcel_detail;
                         if (fetchedParcelDetail) {
@@ -251,7 +278,6 @@ const EditParcelData = () => {
                         } else {
                             setError('No parcel details found.');
                         }
-                        // Assuming parcel_bill_detail is an array in your response
 
 
                         setError('');
@@ -273,8 +299,8 @@ const EditParcelData = () => {
 
                 else {
 
-
-                    setparcelDetail([]); // Clear parcel data if no token is present
+                    setdelivery([]);
+                    setparcelDetail([]);
                     setError('Ticket token not found.');
                 }
             } catch (error) {
@@ -293,14 +319,11 @@ const EditParcelData = () => {
             }
         };
 
-        // Initial fetch
         fetchData();
 
-        // Event listener for URL change
         window.addEventListener('popstate', handleURLChange);
         handleURLChange();
 
-        // Clean up event listener
         return () => {
             window.removeEventListener('popstate', handleURLChange);
         };
@@ -312,8 +335,8 @@ const EditParcelData = () => {
     const getTicketDetail = async (ticketToken: string) => {
         try {
             const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);
-            console.log(getTDetail.data[0]);
-            
+            console.log("data", getTDetail.data[0]);
+
             const { from_state, book_from, to_state, book_to } = getTDetail.data[0];
             setSelectedFromStateId(from_state);
             setSelectedToStateId(to_state);
@@ -352,8 +375,6 @@ const EditParcelData = () => {
             setClientDetails(getTDetail.data[0].client_id)
             setError("");
             console.log("fgdjg", senderDetails);
-
-
         } catch (error) {
             setError("Error fetching ticket data. Please try again later.");
             console.error("Error fetching ticket data:", error);
@@ -375,21 +396,16 @@ const EditParcelData = () => {
 
                 receipt_no: '',
                 actual_total: 0,
-
-               
                 sender_proof_type: '',
                 reciver_proof_type: '',
-                pic_delivery_type: '',
-                pic_charge: 0,
+                pic_office_charge: 0,
                 qty_total: 0,
                 print_total: 0,
                 print_payable_amount: 0,
                 print_gst_amount: 0,
                 print_bal_amount: 0,
                 print_paid_amount: 0,
-                // pic_address: [{ pickup_client_address: '', pickup_office_address: '' }],
-                // dis_address: [{ dispatch_client_address: '', dispatch_office_address: '' }],
-                dis_charge: 0,
+                dis_office_charge: 0,
                 bus_no: '',
                 driver_no: '',
                 transport_charge: '',
@@ -404,13 +420,12 @@ const EditParcelData = () => {
                 payment_method: '',
                 parcel_detail: [],
                 bill_detail: [],
-                // parcel_detail: [{ parcel_type: '', weight: 0, qty: 0, rate: 0, total_amount: 0, print_rate: 0, total_print_rate: 0 }],
                 bilty_charge: 20,
-                lr_no: 0,
                 actual_payable_amount: 0,
                 user_id: storedData,
                 last_updated_by: storedData,
-
+                pic_address: [{ pickup_client_address: '', pickup_office_address: '', pickup_charge: '', pic_hamali_charge: "", pic_other_charge: '' }],
+                dis_address: [{ dispatch_client_address: '', dispatch_office_address: '', dispatch_charge: '', dis_hamali_charge: '', dis_other_charge: '' }],
 
 
 
@@ -424,58 +439,34 @@ const EditParcelData = () => {
     setValue("actual_bal_amount", parcelData.actual_bal_amount)
     setValue("book_from", parcelData.book_from)
     setValue("book_to", parcelData.book_to)
-    // setValue("sender_name", parcelData.sender_name)
     setValue("particulars", parcelData.particulars)
     setValue("rec_name", parcelData.rec_name)
-    // setValue("send_add", parcelData.send_add)
-    // setValue("send_mob", parcelData.send_mob)
-    // setValue("rec_mob", parcelData.rec_mob)
-    // setValue("rec_add", parcelData.rec_add)
     setValue("sender_proof_type", parcelData.sender_proof_type)
     setValue("pic_delivery_type", parcelData.pic_delivery_type)
-    setValue("pic_charge", parcelData.pic_charge)
+    setValue("pic_office_charge", parcelData.pic_office_charge)
     setValue("dis_delivery_type", parcelData.dis_delivery_type)
-    setValue("bus_no", parcelData.bus_no)
-    setValue("driver_no", parcelData.driver_no)
     setValue("transport_charge", parcelData.transport_charge)
     setValue("from_state", parcelData.from_state)
     setValue("to_state", parcelData.to_state)
     setValue("dispatch_date", parcelData.dispatch_date)
-    // setValue("total_print_rate",parcelData.total_print_rate)
     setValue("reciver_proof_detail", parcelData.reciver_proof_detail)
     setValue("dis_office_detail", parcelData.dis_office_detail)
     setValue("pic_office_detail", parcelData.pic_office_detail)
-    // setValue("payment_method", parcelData.payment_method)
+    setValue("total_dispatch_charge", parcelData.total_dispatch_charge)
+    setValue("total_pickup_charge", parcelData.total_pickup_charge)
     setValue("actual_total", parcelData.actual_total)
     setValue("print_total", parcelData.print_total)
     setValue("print_payable_amount", parcelData.print_payable_amount)
     setValue("print_gst_amount", parcelData.print_gst_amount)
     setValue("print_bal_amount", parcelData.print_bal_amount)
     setValue("actual_payable_amount", parcelData.actual_payable_amount)
-    setValue("dis_charge", parcelData.dis_charge)
+    setValue("dis_office_charge", parcelData.dis_office_charge)
     setValue("sender_proof_detail", parcelData.sender_proof_detail)
     setValue("reciver_proof_type", parcelData.reciver_proof_type)
-    setValue("lr_no", parcelData.lr_no)
     setValue("demurrage_charges", parcelData.demurrage_charges)
     setValue("demurrage_days", parcelData.demurrage_days)
     setValue("total_demurrage_charges", parcelData.total_demurrage_charges)
     setValue("is_demurrage", parcelData.is_demurrage)
-    const paymentMethod = watch('payment_method');
-
-
-    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
-
-
-    useEffect(() => {
-        if (parcelData) {
-            setSelectedPaymentMethod(parcelData.payment_method);
-            setValue('payment_method', parcelData.payment_method);
-            setValue('transection_id', parcelData.transection_id || '');
-        }
-    }, [parcelData, setValue]);
-
-
-
 
     //=========================================================================================================================   
 
@@ -483,40 +474,150 @@ const EditParcelData = () => {
 
         setAddressFields({
             ...addressFields,
-            pic_address: [...addressFields.pic_address, { pickup_client_address: '', pickup_office_address: '' }],
+            pic_address: [...addressFields.pic_address, { pickup_client_address: '', pickup_office_address: '', pickup_charge: '', pic_hamali_charge: ' ', pic_other_charge: '' }],
         });
     };
 
     const removePicAddress = (index: number) => {
         const newAddresses = [...addressFields.pic_address];
         newAddresses.splice(index, 1);
+
+        const newTotalPickupCharge = calculateTotalPickupCharge(newAddresses, 0);
+
+        const totalDispatchCharge = calculateTotalDispatchCharge(addressFields.dis_address, parcelData.dis_office_charge);
+
+        const totalTransportCharge = totalDispatchCharge + newTotalPickupCharge;
+
+        const sumTotalAmount = parcelDetail.reduce((acc, item) => acc + (item.total_amount || 0), 0);
+        const formattedSumAmount = sumTotalAmount.toFixed(2);
+
+        const sumPrintTotalAmount = parcelDetail.reduce((acc, item) => acc + (item.total_print_rate || 0), 0);
+        const formattedPrintSumAmount = sumPrintTotalAmount.toFixed(2);
+        const totalAmountWithTransport = sumTotalAmount + totalTransportCharge;
+        const gstAmount = totalAmountWithTransport * 0.05;
+        const formattedGstAmount = gstAmount.toFixed(2);
+
+        const printTotalAmountWithTransport = sumPrintTotalAmount + totalTransportCharge;
+        const printGstAmount = printTotalAmountWithTransport * 0.05;
+        const printFormattedGstAmount = printGstAmount.toFixed(2);
+
+        let runningQtyTotal = 0;
+        const recalculatedFields = parcelDetail.map(item => {
+            runningQtyTotal += Number(item.qty || 0);
+            return {
+                ...item,
+                QTYtotal: runningQtyTotal
+            };
+        });
+
+        const blityCharge = Number(parcelData.bilty_charge);
+        const demurragedays = Number(parcelData.demurrage_days);
+        const demurrageCharges = Number(parcelData.demurrage_charges);
+
+        const totalDemurrageCharges = demurragedays * demurrageCharges * runningQtyTotal;
+
+        const actualPayableAmount = sumTotalAmount + gstAmount + blityCharge + totalTransportCharge + totalDemurrageCharges;
+        const actualPrintPayableAmount = sumPrintTotalAmount + printGstAmount + blityCharge + totalTransportCharge + totalDemurrageCharges;
+
         setAddressFields({
             ...addressFields,
             pic_address: newAddresses,
         });
+
+        setParcelData((prevState: any) => ({
+            ...prevState,
+            total_pickup_charge: newTotalPickupCharge,
+            transport_charge: totalTransportCharge.toString(),
+            actual_total: formattedSumAmount,
+            print_total: formattedPrintSumAmount,
+            gst_amount: formattedGstAmount,
+            print_gst_amount: printFormattedGstAmount,
+            actual_payable_amount: actualPayableAmount,
+            print_payable_amount: actualPrintPayableAmount,
+            total_demurrage_charges: totalDemurrageCharges,
+            actual_bal_amount: (actualPayableAmount - (parseFloat(prevState.actual_paid_amount) || 0)).toFixed(2),
+            print_bal_amount: (actualPrintPayableAmount - (parseFloat(prevState.print_paid_amount) || 0)).toFixed(2),
+        }));
+
         setValue('pic_address', newAddresses);
+        setValue('total_pickup_charge', newTotalPickupCharge);
+        console.log('New Total Transport Charge:', totalTransportCharge);
     };
+
 
     const appendDisAddress = () => {
         setAddressFields({
             ...addressFields,
-            dis_address: [...addressFields.dis_address, { dispatch_client_address: '', dispatch_office_address: '' }],
+            dis_address: [...addressFields.dis_address, { dispatch_client_address: '', dispatch_office_address: '', dispatch_charge: '', dis_hamali_charge: '', dis_other_charge: '' }],
         });
     };
 
     const removeDisAddress = (index: number) => {
         const newAddresses = [...addressFields.dis_address];
         newAddresses.splice(index, 1);
+
+        const newTotalDispatchCharge = calculateTotalDispatchCharge(newAddresses, 0);
+        const newTotalPickupCharge = calculateTotalPickupCharge(addressFields.pic_address, parcelData.pic_office_charge);
+
+        const totalTransportCharge = newTotalDispatchCharge + newTotalPickupCharge;
+
+        const sumTotalAmount = parcelDetail.reduce((acc, item) => acc + (item.total_amount || 0), 0);
+        const formattedSumAmount = sumTotalAmount.toFixed(2);
+
+        const sumPrintTotalAmount = parcelDetail.reduce((acc, item) => acc + (item.total_print_rate || 0), 0);
+        const formattedPrintSumAmount = sumPrintTotalAmount.toFixed(2);
+
+        const totalAmountWithTransport = sumTotalAmount + totalTransportCharge;
+        const gstAmount = totalAmountWithTransport * 0.05;
+        const formattedGstAmount = gstAmount.toFixed(2);
+
+        const printTotalAmountWithTransport = sumPrintTotalAmount + totalTransportCharge;
+        const printGstAmount = printTotalAmountWithTransport * 0.05;
+        const printFormattedGstAmount = printGstAmount.toFixed(2);
+
+        let runningQtyTotal = 0;
+        const recalculatedFields = parcelDetail.map(item => {
+            runningQtyTotal += Number(item.qty || 0);
+            return {
+                ...item,
+                QTYtotal: runningQtyTotal
+            };
+        });
+        const blityCharge = Number(parcelData.bilty_charge);
+        const demurragedays = Number(parcelData.demurrage_days);
+        const demurrageCharges = Number(parcelData.demurrage_charges);
+        const totalDemurrageCharges = demurragedays * demurrageCharges * runningQtyTotal;
+        const actualPayableAmount = sumTotalAmount + gstAmount + blityCharge + totalTransportCharge + totalDemurrageCharges;
+        const actualPrintPayableAmount = sumPrintTotalAmount + printGstAmount + blityCharge + totalTransportCharge + totalDemurrageCharges;
+
+
         setAddressFields({
             ...addressFields,
             dis_address: newAddresses,
         });
+
+        setParcelData((prevState: any) => ({
+            ...prevState,
+            total_dispatch_charge: newTotalDispatchCharge,
+            transport_charge: totalTransportCharge.toString(),
+            actual_total: formattedSumAmount,
+            print_total: formattedPrintSumAmount,
+            gst_amount: formattedGstAmount,
+            print_gst_amount: printFormattedGstAmount,
+            actual_payable_amount: actualPayableAmount,
+            print_payable_amount: actualPrintPayableAmount,
+            total_demurrage_charges: totalDemurrageCharges,
+            actual_bal_amount: (actualPayableAmount - (parseFloat(prevState.actual_paid_amount) || 0)).toFixed(2),
+            print_bal_amount: (actualPrintPayableAmount - (parseFloat(prevState.print_paid_amount) || 0)).toFixed(2),
+        }));
+
         setValue('dis_address', newAddresses);
+        setValue('total_dispatch_charge', newTotalDispatchCharge);
+        console.log('New Total Dispatch Charge:', newTotalDispatchCharge);
+        console.log('New Total Transport Charge:', (newTotalDispatchCharge + newTotalPickupCharge).toString());
     };
 
     /********************************************parcel_bill_details*******************************************************/
-
-
     const handleEwayChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, field: keyof ParcelBillDetail) => {
         const updatedFields = [...EwayFields];
         updatedFields[index] = {
@@ -547,16 +648,6 @@ const EditParcelData = () => {
             }
         ]);
     };
-
-    // const handleWMobileNoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     const value = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
-    //     setParcelData({ ...parcelData, whatsapp_no: value });
-
-    // };
-
-
-
-
     const handleSelectChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
         index: number,
@@ -617,7 +708,9 @@ const EditParcelData = () => {
         }
 
 
-
+        const newTotalDispatchCharge = calculateTotalDispatchCharge(addressFields.dis_address, parcelData.dis_office_charge);
+        const newTotalPickupCharge = calculateTotalPickupCharge(addressFields.pic_address, parcelData.pic_office_charge);
+        const totalTransportCharge = newTotalDispatchCharge + newTotalPickupCharge
 
 
         // Update actual_total and print_total
@@ -632,7 +725,9 @@ const EditParcelData = () => {
         const formattedPrintSumAmount = sumPrintTotalAmount.toFixed(2);
 
         console.log("print_total", formattedPrintSumAmount);
-        const totaltransportcharge = Number(parcelData.pic_charge) + Number(parcelData.dis_charge)
+
+
+        const totaltransportcharge = totalTransportCharge
 
 
 
@@ -704,30 +799,84 @@ const EditParcelData = () => {
 
     };
 
+    //------------------------------------------------------------------------------------------------------------------------------
+    const calculateTotalDispatchCharge = (addresses: any, officeCharge: any) => {
+        const addressTotal = addresses.reduce((total: any, field: any) => {
+            return total + (parseFloat(field.dispatch_charge) || 0) +
+                (parseFloat(field.dis_hamali_charge) || 0) +
+                (parseFloat(field.dis_other_charge) || 0);
+        }, 0);
+
+        return parcelData.dis_delivery_type === "1" ? addressTotal + (parseFloat(officeCharge) || 0) : addressTotal;
+    };
+
+    const calculateTotalPickupCharge = (addresses: any, officeCharge: any) => {
+        const addresspictotal = addresses.reduce((total: any, field: any) => {
+            return total + (parseFloat(field.pickup_charge) || 0) +
+                (parseFloat(field.pic_hamali_charge) || 0) +
+                (parseFloat(field.pic_other_charge) || 0);
+        }, 0);
+
+        return parcelData.pic_delivery_type === "1" ? addresspictotal + (parseFloat(officeCharge) || 0) : addresspictotal;
+    };
+    //---------------------------------------------------------------------------------------------------------------------------------------
+
     const handleFieldChange = (fieldName: string, value: string) => {
-        // Update parcelData state with the new value for the specified field
         const updatedParcelData = { ...parcelData, [fieldName]: value };
 
-        // Handle specific calculations based on field name
         if (fieldName === 'pic_charge' || fieldName === 'dis_charge') {
             const picCharge = parseFloat(updatedParcelData.pic_charge) || 0;
             const disCharge = parseFloat(updatedParcelData.dis_charge) || 0;
             updatedParcelData.transport_charge = (picCharge + disCharge).toString();
         }
 
-        // Calculate totals
+        // if (fieldName === 'pic_delivery_type') {
+        //     if (value === "1") {
+        //         // Clear pic_address but keep the structure, adding back an empty object
+        //         setAddressFields({
+        //             pic_address: [{
+        //                 pickup_client_address: '',
+        //                 pickup_office_address: '',
+        //                 pickup_charge: '',
+        //                 pic_hamali_charge: '',
+        //                 pic_other_charge: ''
+        //             }],
+        //             dis_address: addressFields.dis_address // Keep dis_address intact
+        //         });
+        //     }
+        //     // You can handle the case for value "2" if needed
+        // }
+
+        // console.log(">>>>>", addressFields.pic_address);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        const totalDispatchCharge = calculateTotalDispatchCharge(addressFields.dis_address, updatedParcelData.dis_office_charge);
+        const totalPickupCharge = calculateTotalPickupCharge(addressFields.pic_address, updatedParcelData.pic_office_charge);
+
+        updatedParcelData.transport_charge = totalDispatchCharge + totalPickupCharge;
+
         const sumTotalAmount = parcelDetail.reduce((acc, item) => acc + (item.total_amount || 0), 0);
         const formattedSumAmount = sumTotalAmount.toFixed(2);
-
-
-
-        // const sumPrintTotalAmount = parcelDetail.reduce((acc, item) => acc + (item.total_print_rate || 0), 0);
-        // const formattedPrintSumAmount = sumPrintTotalAmount.toFixed(2);
 
         const sumPrintTotalAmount = parcelDetail.reduce((acc, item) => acc + (item.total_print_rate || 0), 0);
         const formattedPrintSumAmount = sumPrintTotalAmount.toFixed(2);
 
-        const totaltransportcharge = Number(updatedParcelData.pic_charge) + Number(updatedParcelData.dis_charge);
+        const totaltransportcharge = updatedParcelData.transport_charge;
 
         const totalAmountWithTransport = sumTotalAmount + totaltransportcharge;
         const gstAmount = totalAmountWithTransport * 0.05;
@@ -737,16 +886,16 @@ const EditParcelData = () => {
         const pritngstAmount = printtotalAmountWithTransport * 0.05;
         const printformattedGstAmount = pritngstAmount.toFixed(2);
 
-        const blityCharge = Number(updatedParcelData.bilty_charge); // Assuming blityCharge is fetched from parcelData
+        const blityCharge = Number(updatedParcelData.bilty_charge);
         const demurragedays = Number(updatedParcelData.demurrage_days);
         const demurrageCharges = Number(updatedParcelData.demurrage_charges);
 
         let runningQtyTotal = 0;
         const updatedFields = parcelDetail.map(item => {
-            runningQtyTotal += Number(item.qty || 0); // Accumulate qty values
+            runningQtyTotal += Number(item.qty || 0);
             return {
                 ...item,
-                QTYtotal: runningQtyTotal // Update QTYtotal for each item
+                QTYtotal: runningQtyTotal
             };
         });
 
@@ -754,8 +903,6 @@ const EditParcelData = () => {
 
         const actualPayableAmount = sumTotalAmount + gstAmount + blityCharge + totaltransportcharge + totalDemurrageCharges;
         const actualPrintPaybleamount = sumPrintTotalAmount + pritngstAmount + blityCharge + totaltransportcharge + totalDemurrageCharges;
-        console.log("dghhtrregrreergdfgfj ", actualPrintPaybleamount);
-        // Calculate actual balance amount
         const actualPaidAmount = parseFloat(updatedParcelData.actual_paid_amount) || 0;
         const actualbalamount = actualPayableAmount - actualPaidAmount;
 
@@ -763,10 +910,11 @@ const EditParcelData = () => {
         const actualprintbalamount = actualPrintPaybleamount - actualPrintPaidAmount;
 
 
-        // Update state with updatedParcelData, actual_total, print_total, and gst_amount
         setParcelData((prevState: any) => ({
             ...prevState,
             ...updatedParcelData,
+
+
             actual_total: formattedSumAmount,
             print_total: formattedPrintSumAmount,
             gst_amount: formattedGstAmount,
@@ -774,32 +922,35 @@ const EditParcelData = () => {
             actual_payable_amount: actualPayableAmount,
             print_payable_amount: actualPrintPaybleamount,
             total_demurrage_charges: totalDemurrageCharges,
-            transport_charge: totaltransportcharge,
             actual_bal_amount: actualbalamount.toFixed(2),
-            print_bal_amount: actualprintbalamount.toFixed(2)// Update actual_bal_amount with calculated value
+            print_bal_amount: actualprintbalamount.toFixed(2),
+            total_pickup_charge: totalPickupCharge,
+            total_dispatch_charge: totalDispatchCharge
         }));
 
-        // Update parcelDetail state with updatedFields
         setparcelDetail(updatedFields);
 
-        // Update form values for react-hook-form if needed
-        // setValue('parcel_detail', updatedFields); // Uncomment if using react-hook-form
+
     };
 
 
+
+
     const removeParcelDetail = (index: number) => {
-        // Step 1: Remove the item from parcelDetail
         const updatedFields = [...parcelDetail];
         updatedFields.splice(index, 1);
 
-        // Step 2: Recalculate totals and other values
         const sumTotalAmount = updatedFields.reduce((acc, item) => acc + (item.total_amount || 0), 0);
         const formattedSumAmount = sumTotalAmount.toFixed(2);
 
         const sumPrintTotalAmount = updatedFields.reduce((acc, item) => acc + (item.total_print_rate || 0), 0);
         const formattedPrintSumAmount = sumPrintTotalAmount.toFixed(2);
 
-        const totaltransportcharge = Number(parcelData.pic_charge) + Number(parcelData.dis_charge);
+        const newTotalDispatchCharge = calculateTotalDispatchCharge(addressFields.dis_address, parcelData.dis_office_charge);
+        const newTotalPickupCharge = calculateTotalPickupCharge(addressFields.pic_address, parcelData.pic_office_charge);
+        const totalTransportCharge = newTotalDispatchCharge + newTotalPickupCharge
+
+        const totaltransportcharge = totalTransportCharge;
 
         const totalAmountWithTransport = sumTotalAmount + totaltransportcharge;
         const gstAmount = totalAmountWithTransport * 0.05;
@@ -809,17 +960,16 @@ const EditParcelData = () => {
         const pritngstAmount = printtotalAmountWithTransport * 0.05;
         const printformattedGstAmount = pritngstAmount.toFixed(2);
 
-        // Recalculate QTYtotal for remaining items
         let runningQtyTotal = 0;
         const recalculatedFields = updatedFields.map(item => {
-            runningQtyTotal += Number(item.qty || 0); // Accumulate qty values
+            runningQtyTotal += Number(item.qty || 0);
             return {
                 ...item,
-                QTYtotal: runningQtyTotal // Update QTYtotal for each item
+                QTYtotal: runningQtyTotal
             };
         });
 
-        const blityCharge = Number(parcelData.bilty_charge); // Assuming blityCharge is fetched from parcelData
+        const blityCharge = Number(parcelData.bilty_charge);
         const demurragedays = Number(parcelData.demurrage_days);
         const demurrageCharges = Number(parcelData.demurrage_charges);
 
@@ -828,14 +978,11 @@ const EditParcelData = () => {
         const actualPayableAmount = sumTotalAmount + gstAmount + blityCharge + totaltransportcharge + totalDemurrageCharges;
         const actualPrintPaybleamount = sumPrintTotalAmount + pritngstAmount + blityCharge + totaltransportcharge + totalDemurrageCharges;
 
-        // Calculate actual balance amount
         const actualPaidAmount = parseFloat(parcelData.actual_paid_amount) || 0;
         const actualbalamount = actualPayableAmount - actualPaidAmount;
 
         const actualPrintPaidAmount = parseFloat(parcelData.print_paid_amount) || 0;
         const actualprintbalamount = actualPrintPaybleamount - actualPrintPaidAmount;
-
-        // Step 3: Update state with recalculated values
         setparcelDetail(recalculatedFields);
         setParcelData((prevState: any) => ({
             ...prevState,
@@ -851,10 +998,8 @@ const EditParcelData = () => {
             print_bal_amount: actualprintbalamount.toFixed(2)
         }));
 
-        // Update form values for react-hook-form if needed
         setValue('parcel_detail', recalculatedFields);
     };
-
 
     const addParcelField = () => {
         const newId = parcelDetail.length > 0 ? parcelDetail[parcelDetail.length - 1].id + 1 : 1;
@@ -874,21 +1019,38 @@ const EditParcelData = () => {
         ]);
     };
 
+    const adddeliveryField = () => {
+        const newId = delievery.length > 0 ? delievery[delievery.length - 1].id + 1 : 1;
+        setdelivery([
+            ...delievery,
+            {
+                id: newId,
+                lr_no: '',
+                bus_no: '',
+                driver_no: '',
+                other_charge: ''
+            }
+        ]);
+    };
 
 
+    const removerDelivery = (index: number) => {
+        const updatedFields = [...delievery];
+        updatedFields.splice(index, 1);
+        setdelivery(updatedFields);
+
+        setValue('delivery', updatedFields);
+    };
 
 
-
-
-
-
-
-
-
-
-
-
-
+    const handledeliberyChange = (e: React.ChangeEvent<HTMLInputElement>, index: number, field: keyof Delivery) => {
+        const updatedFields = [...delievery];
+        updatedFields[index] = {
+            ...updatedFields[index],
+            [field]: e.target.value
+        };
+        setdelivery(updatedFields);
+    };
 
     //-------------------------------------------------------Api fetch---------------------------------------------------------------------
 
@@ -945,9 +1107,6 @@ const EditParcelData = () => {
             fetchCities(stateId, false);
         }
     };
-
-
-
 
     const [showCustomCityInput, setShowCustomCityInput] = useState(false);
     const [customCity, setCustomCity] = useState('');
@@ -1033,7 +1192,6 @@ const EditParcelData = () => {
         }
     };
 
-
     const [SenderMobileValue, setSenderMobileValue] = useState<string>('');
 
     const handleSenderMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1043,7 +1201,6 @@ const EditParcelData = () => {
             setValue("sender_whatsapp_no", value); // Update form value
         }
     };
-
 
     const [WmobileNoValue, setWMobileNoValue] = useState<string>('');
 
@@ -1128,14 +1285,6 @@ const EditParcelData = () => {
             setImageName(fileProof)
 
             console.log(fileProof);
-
-            // if (typeof fileProof === 'string') {
-            //     setSelectedFile(null);
-            //     setImageName(''); 
-            // } else {
-            //     setSelectedFile(fileProof);
-            //     setImageName(fileProof.name); 
-            // }
             if (selectedClient) {
                 setClientDetails(selectedClient);
             }
@@ -1149,7 +1298,6 @@ const EditParcelData = () => {
         setIsAddingNewClient(true);
         setInputValue('');
         setFilteredClients([]);
-        // Clear existing form values
         setValue("firstName", '');
         setValue("address", '');
         setValue("email", '');
@@ -1166,36 +1314,17 @@ const EditParcelData = () => {
 
     //------------------------------------------------------------------------------------------------------------------------
     const onSubmit: SubmitHandler<FormData> = async (formData: any) => {
-        
-    if (senderOption === 'sender') {
-        parcelData.sender_name = senderDetails.sender_name;
-        parcelData.send_mob = senderDetails.send_mob;
-        parcelData.send_add = senderDetails.send_add;
-
-    } else if (senderOption === 'receiver') {
-        parcelData.rec_name = receiverDetails.rec_name;
-        parcelData.rec_mob = receiverDetails.rec_mob;
-        parcelData.rec_add = receiverDetails.rec_add;
-
-    }
-
-
-    // if (senderOption === 'sender') {
-    //     formData.sender_name = senderDetails.sender_name;
-    //     formData.send_mob = senderDetails.send_mob;
-    //     formData.send_add = senderDetails.send_add;
-
-    // } else if (senderOption === 'receiver') {
-    //     formData.rec_name = receiverDetails.rec_name;
-    //     formData.rec_mob = receiverDetails.rec_mob;
-    //     formData.rec_add = receiverDetails.rec_add;
-
-    // }
-       
-
+        if (senderOption === 'sender') {
+            parcelData.sender_name = senderDetails.sender_name;
+            parcelData.send_mob = senderDetails.send_mob;
+            parcelData.send_add = senderDetails.send_add;
+        } else if (senderOption === 'receiver') {
+            parcelData.rec_name = receiverDetails.rec_name;
+            parcelData.rec_mob = receiverDetails.rec_mob;
+            parcelData.rec_add = receiverDetails.rec_add;
+        }
 
         console.log('Submitting:', senderOption);
-
         console.log(">>>>>>>>>>>>>>>>", formData);
 
         try {
@@ -1234,9 +1363,9 @@ const EditParcelData = () => {
             formData.from_city_name = fromCityName;
             formData.to_city_name = toCityName;
 
-            // Handle custom city input if needed
+            // Handle custom cities if needed
             if (showCustomCityInput && customCity) {
-                const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+                const response = await axios.post('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
                     city_name: customCity,
                     state_id: selectedFromStateId,
                 });
@@ -1244,26 +1373,20 @@ const EditParcelData = () => {
             }
 
             if (showCustomToCityInput && customToCity) {
-                const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+                const response = await axios.post('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
                     city_name: customToCity,
                     state_id: selectedToStateId,
                 });
                 formData.book_to = response.data.city_id;
             }
 
-
-            formData.from_state = selectedFromStateIdStr;
-            formData.to_state = selectedToStateIdStr;
             formData.remove_files = removedFileNames;
-
 
             const finalData: FormData = {
                 ...formData,
-                
             };
 
             let clientId: number | undefined;
-
 
             if (isAddingNewClient) {
                 finalData.client_id = "";
@@ -1285,49 +1408,119 @@ const EditParcelData = () => {
                     throw new Error('Failed to create parcel data');
                 }
                 const parcelData = await parcelDataResponse.json();
-                console.log("images" , parcelData.token);
-                // console.log("images" , parcelData.parcel_token);
-
-
+                console.log("images", parcelData.parcel_token);
 
                 if (parcelData.status == 1) {
                     console.log("formData", formData);
 
-                    if (formData.parcel_imgs && formData.parcel_imgs.length > 0) {
-                        const formDataImages = new FormData();
-                        formDataImages.append("parcel_token", parcelData.token);
+                    // if (parcelData.status == 1) {
+                    //     console.log("formData0", formData);
+        
+                    //     if (formData.parcel_imgs && formData.parcel_imgs.length > 0) {
+                    //         const formDataImages = new FormData();
+                    //         formDataImages.append("parcel_token", parcelData.parcel_token);
+        
+                    //         for (const file of formData.parcel_imgs) {
+                    //             formDataImages.append("parcel_imgs", file);
+                    //         }
+        
+                    //         console.log('FormData prepared for images:', formDataImages);
+        
+                    //         try {
+                    //             const uploadResponse = await axios.post("http://192.168.0.106:3001/parcel/upload_parcel_image", formDataImages, {
+                    //                 headers: {
+                    //                     'Content-Type': 'multipart/form-data'
+                    //                 }
+                    //             });
+        
+                    //             const uploadResult = uploadResponse.data;
+                    //             console.log('Image upload response:', uploadResult);
+        
+                    //             if (uploadResult.status === "1") {
+                    //                 console.log("Images added successfully");
+                    //             } else {
+                    //                 console.log("Failed to upload images");
+                    //             }
+                    //         } catch (uploadError) {
+                    //             console.error("Error uploading images:", uploadError);
+                    //             alert("Failed to upload images");
+                    //         }
+                    //     } else {
+                    //         console.log("No images to upload");
+                    //     }
+        
+                    //     // if (parcelData.parcel_token) {
+                    //     //     try {
+                    //     //         const parcelDetailResponse = await EditParcelDataList.getEditParcelData(parcelData.data.parcel_token);
+                    //     //         console.log("Parcel data:", parcelDetailResponse.data[0]);
+                    //     //         handleParcelPrint(parcelDetailResponse.data[0]);
+                    //     //         router.push("/parcel_list");
+                    //     //     } catch (fetchError) {
+                    //     //         console.error('Error fetching parcel data:', fetchError);
+                    //     //     }
+                    //     // }
+        
+                    // } else {
+                    //     console.log("Failed to update parcel details");
+                    // }
 
-                        for (const file of formData.parcel_imgs) {
-                            formDataImages.append("parcel_imgs", file);
+                    if (formData.sender_id_proof || formData.receiver_id_proof) {
+                        const idProofData = new FormData();
+                        idProofData.append("parcel_token", parcelData.parcel_token);
+
+                        if (formData.sender_id_proof && formData.sender_id_proof.length > 0) {
+                            for (const file of formData.sender_id_proof) {
+                                idProofData.append("sender_id_proof", file);
+                            }
                         }
 
-                        console.log('FormData prepared for images:', formDataImages);
+                        // Check if receiver ID proof exists and append to the FormData
+                        if (formData.receiver_id_proof && formData.receiver_id_proof.length > 0) {
+                            for (const file of formData.receiver_id_proof) {
+                                idProofData.append("receiver_id_proof", file);
+                            }
+                        }
 
                         try {
-                            const uploadResponse = await axios.post("http://192.168.0.105:3001/parcel/upload_parcel_image", formDataImages, {
-                                headers: {
-                                    'Content-Type': 'multipart/form-data'
-                                }
+                            const response = await fetch("http://192.168.0.106:3001/parcel/upload_id_proof", {
+                                method: "POST",
+                                body: idProofData,
                             });
-
-                            const uploadResult = uploadResponse.data;
-                            console.log('Image upload response:', uploadResult);
-
-                            if (uploadResult.status === "1") {
-                                console.log("Images added successfully");
+                            const result = await response.json();
+                            if (result.status === "1") {
+                                console.log("ID proofs uploaded successfully");
                             } else {
-                                console.log("Failed to upload images");
+                                console.log("Failed to upload ID proofs");
                             }
-                        } catch (uploadError) {
-                            console.error("Error uploading images:", uploadError);
-                            alert("Failed to upload images");
+                        } catch (error) {
+                            console.error("Error uploading ID proofs:", error);
                         }
                     } else {
-                        console.log("No images to upload");
+                        console.log("No sender ID proofs to upload");
                     }
-                    if (parcelData.token) {
+
+                    if (formData.client_id_proof && formData.client_id_proof.length > 0) {
+                        const file = formData.client_id_proof[0];
+
+                        // Only upload if a new file is provided
+                        console.log("New image uploaded:", {
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                        });
+
+                        if (clientId !== undefined) {
+                            await uploadClientProofId(file, clientId);
+                        } else {
+                            console.error('Client ID is undefined; cannot upload image.');
+                        }
+                    } else {
+                        console.log("No new image selected; skipping upload.");
+                    }
+
+                    if (parcelData.parcel_token) {
                         try {
-                            const parcelDetailResponse = await EditParcelDataList.getEditParcelData(parcelData.token);
+                            const parcelDetailResponse = await EditParcelDataList.getEditParcelData(parcelData.parcel_token);
                             console.log("Parcel data:", parcelDetailResponse.data[0]);
                             handleParcelPrint(parcelDetailResponse.data[0]);
                             router.push("/parcel_list");
@@ -1335,7 +1528,6 @@ const EditParcelData = () => {
                             console.error('Error fetching parcel data:', fetchError);
                         }
                     }
-
                 } else {
                     console.log("Failed to update parcel details");
                 }
@@ -1345,57 +1537,18 @@ const EditParcelData = () => {
                 return;
             }
 
-
-
-            if (formData.client_id_proof && formData.client_id_proof.length > 0) {
-                const file = formData.client_id_proof[0];
-
-                // Only upload if a new file is provided
-                console.log("New image uploaded:", {
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                });
-
-                if (clientId !== undefined) {
-                    await uploadClientProofId(file, clientId);
-                } else {
-                    console.error('Client ID is undefined; cannot upload image.');
-                }
-            } else {
-                console.log("No new image selected; skipping upload.");
-            }
-
-
-
-
-            // const response = await axios.post('http://192.168.0.105:3001/parcel/update_parcel_detail_data', formData);
-
-            // console.log('Form submitted successfully:', response.data);
-
-
-
-
-
-
-
-
-
-
-
         } catch (error) {
             console.error('Error submitting form:', error);
-
         }
     };
 
     const uploadClientProofId = async (file: File, clientId: number) => {
         const formData = new FormData();
-        formData.append("client_id_proof", file); // Append the single file
+        formData.append("client_id_proof", file);
         formData.append("client_id", clientId.toString());
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/booking/upload_client_id_proof', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -1407,9 +1560,8 @@ const EditParcelData = () => {
         }
     }
 
-
     async function submitFormData(formData: FormData, clientId: number | undefined) {
-        const response = await fetch('http://192.168.0.105:3001/parcel/update_parcel_detail_data', {
+        const response = await fetch('http://192.168.0.106:3001/parcel/update_parcel_detail_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1422,9 +1574,9 @@ const EditParcelData = () => {
 
     async function submitNewClientFormData(formData: FormData) {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/parcel/update_parcel_detail_data', formData);
+            const response = await axios.post('http://192.168.0.106:3001/parcel/update_parcel_detail_data', formData);
             console.log('Form data submitted successfully for new client.', response.data);
-            return response.data; // Ensure this returns the data with client_id
+            return response.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 console.error('Axios Error Details:', {
@@ -1440,9 +1592,6 @@ const EditParcelData = () => {
         }
     }
 
-
-
-
     //------------------------------------------------------------------------------------------------------------------------
 
     const handleShowCustomCityInput = () => {
@@ -1453,14 +1602,25 @@ const EditParcelData = () => {
         setShowCustomToCityInput(true);
     };
 
-
-
-    //*************************************************************************************************************************** */
-
-
-
-
-   
+    useEffect(() => {
+        // If the delivery type is 'Client Location' (2), initialize pic_address with empty fields
+        if (parcelData.pic_delivery_type === "2") {
+            setAddressFields({
+                ...addressFields,
+                pic_address: [{
+                    pickup_client_address: '',
+                    pickup_office_address: '',
+                    pickup_charge: '',
+                    pic_hamali_charge: '',
+                    pic_other_charge: ''
+                }]
+            });
+        }
+        // If the delivery type is 'Office' (1), reset pic_address
+        else if (parcelData.pic_delivery_type === "1") {
+            setAddressFields({ ...addressFields, pic_address: [] });
+        }
+    }, [parcelData.pic_delivery_type]);
 
     //---------------------------------------------------phone validation------------------------------------------------------------
 
@@ -1488,11 +1648,6 @@ const EditParcelData = () => {
 
 
     //----------------------------------------Radio Button---------------------------------------------------------------------
-
-
-
-
-
 
     const aadhaarPattern = /^\d{12}$/;
     const panPattern = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
@@ -1549,8 +1704,6 @@ const EditParcelData = () => {
                 </div>
                 <br />
                 <Card className='cardbox'>
-
-                    {/* {error && <p>{error}</p>} */}
                     {parcelData && (
                         <Card.Body>
                             <form onSubmit={handleSubmit(onSubmit)}>
@@ -1696,7 +1849,7 @@ const EditParcelData = () => {
                                         <label className="form-label" htmlFor="to">Disptach date</label>
                                         <input {...register('dispatch_date')} value={parcelData.dispatch_date} onChange={(e) => handleFieldChange('dispatch_date', e.target.value)} className="form-control form-control-sm" type="date" id="dispatch_date" placeholder="Disptach date" />
                                     </div>
-                                  
+
                                 </div>
 
 
@@ -1707,7 +1860,7 @@ const EditParcelData = () => {
 
 
                                     <div className="col-md-12">
-          <h6>Client Details:</h6>                                    </div>
+                                        <h6>Client Details:</h6>                                    </div>
                                     <hr />
                                 </div>
 
@@ -1862,17 +2015,6 @@ const EditParcelData = () => {
 
 
                                 </div>
-
-
-
-
-
-
-
-
-
-
-
 
 
                                 <div className="row mb-3">
@@ -2157,6 +2299,21 @@ const EditParcelData = () => {
                                 </div>
 
 
+                                <div className="row mb-3">
+                                    <div className="col-lg-6">
+                                        <label className="form-label" htmlFor="particulars">Upload  Sender Id Proof </label>
+                                        <input className="form-control form-control-sm" type="file" {...register("sender_id_proof")} />
+
+                                    </div>
+                                    <div className="col-lg-6">
+                                        <label className="form-label" htmlFor="particulars"> Upload Receiver Id Proof </label>
+                                        <input className="form-control form-control-sm" type="file" {...register("receiver_id_proof")} />
+
+                                    </div>
+
+
+                                </div>
+
                                 <div className="row mt-4">
                                     <div className="col-md-12">
                                         <h5>Parcel Detail</h5>
@@ -2173,7 +2330,7 @@ const EditParcelData = () => {
                                         <div className="col-lg-2">
                                             <label className="form-label" htmlFor={`parcelType_${index}`}>Select Type</label>
                                             <select
-                                                className="form-control"
+                                                className="form-control form-control-sm"
                                                 id={`parcelType_${index}`}
                                                 {...register(`parcel_detail.${index}.parcel_type`)}
 
@@ -2285,10 +2442,6 @@ const EditParcelData = () => {
                                     </button>
                                 </div>
 
-
-
-
-
                                 {/* Bill-details */}
                                 {EwayFields.map((field, index) => (
                                     <div key={index} className="row" id={`bill_row_${index}`}>
@@ -2357,11 +2510,6 @@ const EditParcelData = () => {
                                     </button>
                                 </div>
 
-
-
-
-
-
                                 {/* ---checkbox--- */}
                                 <div className="row mb-3">
                                     <div className="col-lg-6">
@@ -2384,13 +2532,7 @@ const EditParcelData = () => {
                                                         className="parcel-image"
                                                         style={{ cursor: 'pointer' }}
                                                     />
-                                                    <button
-                                                        type='button'
-                                                        className="remove-button"
-                                                        onClick={() => removeImage(imageUrl)}
-                                                    >
-                                                        ✕
-                                                    </button>
+                                                   
                                                 </div>
                                             ))
                                         ) : (
@@ -2398,9 +2540,7 @@ const EditParcelData = () => {
                                         )}
                                     </div>
                                 </div>
-
-
-
+{/* 
                                 <div className="row mb-3" style={{ marginTop: "15px" }}>
                                     <div className="col-lg-6">
                                         <label className="form-label" htmlFor="particulars">Add New Images:</label>
@@ -2408,7 +2548,7 @@ const EditParcelData = () => {
 
                                     </div>
 
-                                </div>
+                                </div> */}
 
 
 
@@ -2429,27 +2569,17 @@ const EditParcelData = () => {
                                                 id="pic_delivery_type"
                                                 {...register("pic_delivery_type")}
                                                 value={parcelData.pic_delivery_type}
-                                                onChange={(e) => handleFieldChange('pic_delivery_type', e.target.value)}
+                                                onChange={(e) => {
+                                                    const picselectedvalue = e.target.value;
+                                                    handleFieldChange('pic_delivery_type', picselectedvalue);
+                                                }}
                                             >
                                                 <option value="">--Select--</option>
                                                 <option value="1">Office</option>
                                                 <option value="2">Client Location</option>
                                             </select>
                                         </div>
-                                        <div className="col-md-4">
-                                            <label className="form-label">Pickup Charge</label>
-                                            <input
-                                                type="number"
-                                                id="pic_charge"
-                                                className="form-control form-control-sm"
-                                                placeholder="Enter Pickup Charge"
-                                                {...register("pic_charge")}
-                                                value={parcelData.pic_charge}
-                                                onChange={(e) => handleFieldChange('pic_charge', e.target.value)}
 
-
-                                            />
-                                        </div>
                                     </div>
                                     <br />
 
@@ -2458,7 +2588,9 @@ const EditParcelData = () => {
                                             {addressFields.pic_address.map((field, index) => (
                                                 <div key={index}>
                                                     <div className="row mt-3">
-                                                        <div className="col-md-4">
+                                                        <div className="col-md-2">
+                                                            <label className="form-label">Client Address</label>
+
                                                             <textarea
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Client Address"
@@ -2468,10 +2600,14 @@ const EditParcelData = () => {
                                                                     const newAddresses = [...addressFields.pic_address];
                                                                     newAddresses[index].pickup_client_address = e.target.value;
                                                                     setAddressFields({ ...addressFields, pic_address: newAddresses });
+
                                                                 }}
                                                             ></textarea>
+
                                                         </div>
-                                                        <div className="col-md-4">
+                                                        <div className="col-md-2">
+                                                            <label className="form-label">Office Address</label>
+
                                                             <textarea
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Office Address"
@@ -2484,31 +2620,83 @@ const EditParcelData = () => {
                                                                 }}
                                                             ></textarea>
                                                         </div>
-                                                        <div className="col-lg-1" style={{ padding: '10px' }}>
+                                                        <div className="col-md-2">
+                                                            <label className="form-label">Pickup Charge</label>
+                                                            <input
+                                                                type="number"
+                                                                className="form-control form-control-sm"
+                                                                placeholder="Enter Pickup Charge"
+                                                                {...register(`pic_address.${index}.pickup_charge`)}
+
+                                                                value={field.pickup_charge}
+
+
+                                                                onChange={(e) => {
+                                                                    const newAddresses = [...addressFields.pic_address];
+                                                                    newAddresses[index].pickup_charge = e.target.value;
+                                                                    setAddressFields({ ...addressFields, pic_address: newAddresses });
+                                                                    handleFieldChange('pickup_charge', e.target.value);
+                                                                }}
+                                                            />
+                                                        </div>
+                                                        <div className="col-md-2">
+                                                            <label className="form-label">Hamali Charge</label>
+
+                                                            <input
+                                                                className="form-control form-control-sm"
+                                                                placeholder="Hamali Charges"
+                                                                {...register(`pic_address.${index}.pic_hamali_charge`)}
+                                                                value={field.pic_hamali_charge}
+                                                                onChange={(e) => {
+                                                                    const newAddresses = [...addressFields.pic_address];
+                                                                    newAddresses[index].pic_hamali_charge = e.target.value;
+                                                                    setAddressFields({ ...addressFields, pic_address: newAddresses });
+                                                                    handleFieldChange('pic_hamali_charge', e.target.value);
+                                                                }}
+                                                            ></input>
+                                                        </div>
+                                                        <div className="col-md-2">
+                                                            <label className="form-label">Other Charge</label>
+
+                                                            <input
+                                                                className="form-control form-control-sm"
+                                                                placeholder="Other Charges"
+                                                                {...register(`pic_address.${index}.pic_other_charge`)}
+                                                                value={field.pic_other_charge}
+                                                                onChange={(e) => {
+                                                                    const newAddresses = [...addressFields.pic_address];
+                                                                    newAddresses[index].pic_other_charge = e.target.value;
+                                                                    setAddressFields({ ...addressFields, pic_address: newAddresses });
+                                                                    handleFieldChange('pic_other_charge', e.target.value);
+                                                                }}
+                                                            ></input>
+                                                        </div>
+                                                        <div className="col-lg-1 " style={{ padding: '10px', marginTop: "8px" }}>
 
                                                             <button type="button"
-                                                                className="btn btn-danger remove_pickup_row"
+                                                                className="btn btn-danger btn-sm remove_pickup_row"
                                                                 onClick={() => removePicAddress(index)}>
                                                                 <FontAwesomeIcon icon={faMinusCircle} />
                                                             </button>
 
                                                         </div>
-                                                        <div className="col-md" style={{ marginTop: "8px" }}>
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-primary add_more_pickup_row"
-                                                                onClick={appendPicAddress}
-                                                            >
-                                                                <FontAwesomeIcon icon={faPlusCircle} />
-                                                            </button>
-                                                        </div>
-                                                    </div>
 
+                                                    </div>
 
                                                 </div>
                                             ))}
+                                            <div className="col-md data" style={{ marginTop: "8px" }}>
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-primary btn-sm add_more_pickup_row"
+                                                    onClick={appendPicAddress}
+                                                >
+                                                    <FontAwesomeIcon icon={faPlusCircle} />
+                                                </button>
+                                            </div>
 
                                         </div>
+
                                     )}
 
 
@@ -2525,11 +2713,106 @@ const EditParcelData = () => {
                                                         placeholder="Office Detail"
                                                     ></textarea>
                                                 </div>
+                                                <div className="col-md-3">
+                                                    <label className="form-label">Pickup Charge</label>
+                                                    <input
+                                                        type="number"
+                                                        id="pic_office_charge"
+                                                        className="form-control form-control-sm"
+                                                        placeholder="Enter Pickup Charge"
+                                                        {...register("pic_office_charge")}
+                                                        value={parcelData.pic_office_charge}
+                                                        onChange={(e) => handleFieldChange('pic_office_charge', e.target.value)}
+
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     )}
                                     <br />
 
+                                    <div className="row">
+                                        <div className="col-md-12">
+                                            <h5>Add Delivery Detail</h5>
+
+                                        </div>
+                                        <hr />
+                                    </div>
+
+                                    {delievery.map((field, index) => (
+                                        <div key={field.id} className="row mt-3">
+                                            <div className="col-md-3">
+                                                <label className="form-label">LR No.</label>
+                                                <input
+                                                    {...register(`delivery.${index}.lr_no`)}
+                                                    type="text"
+                                                    value={field.lr_no}
+                                                    onChange={(e) => handledeliberyChange(e, index, 'lr_no')}
+                                                    className="form-control form-control-sm"
+                                                    placeholder="LR No."
+                                                />
+                                            </div>
+                                            <div className="col-md-3">
+                                                <label className="form-label">Bus No.</label>
+                                                <input
+                                                    {...register(`delivery.${index}.bus_no`)}
+                                                    type="text"
+                                                    value={field.bus_no}
+                                                    onChange={(e) => handledeliberyChange(e, index, 'bus_no')}
+                                                    className="form-control form-control-sm"
+                                                    placeholder="Bus No."
+                                                />
+                                            </div>
+                                            <div className="col-md-3">
+                                                <label className="form-label">Driver Phone No.</label>
+                                                <input
+                                                    {...register(`delivery.${index}.driver_no`, { required: true, minLength: 10 })}
+                                                    type="number"
+                                                    value={field.driver_no}
+                                                    onChange={(e) => handledeliberyChange(e, index, 'driver_no')}
+                                                    className="form-control form-control-sm"
+                                                    placeholder="Phone No."
+                                                />
+                                            </div>
+                                            <div className="col-md-2">
+                                                <label className="form-label">Other Charges.</label>
+                                                <input
+                                                    {...register(`delivery.${index}.other_charge`, { required: true, minLength: 10 })}
+                                                    type="number"
+                                                    value={field.driver_no}
+                                                    onChange={(e) => handledeliberyChange(e, index, 'other_charge')}
+                                                    className="form-control form-control-sm"
+                                                    placeholder='charges'
+                                                />
+                                            </div>
+                                            <div className="col-lg-1" style={{ padding: '10px', marginTop: "10px" }}>
+                                                {index > 0 && (
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-danger btn-sm remove_pickup_row"
+                                                        onClick={() => removerDelivery(index)}
+                                                    >
+                                                        <FontAwesomeIcon icon={faMinusCircle} />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                        </div>
+                                    ))}
+                                    <div className="col-lg-12 data" style={{ marginTop: "12px" }}>
+                                        <button
+                                            type="button"
+                                            style={{ marginRight: '4.4%', float: "right" }}
+                                            className="btn btn-primary btn-sm add_more_pickup_row "
+                                            onClick={adddeliveryField}
+                                        >
+                                            <FontAwesomeIcon icon={faPlusCircle} />
+                                        </button>
+                                    </div>
+
+
+
+                                    <br />
                                     <div className="row">
                                         <div className="col-md-12">
                                             <h5>Dispatch Detail</h5>
@@ -2553,20 +2836,7 @@ const EditParcelData = () => {
                                                 <option value="2">Client Location</option>
                                             </select>
                                         </div>
-                                        <div className="col-md-4">
-                                            <label className="form-label">Dispatch Charge</label>
-                                            <input
-                                                type="number"
-                                                id="dis_charge"
-                                                className="form-control form-control-sm"
-                                                placeholder="Enter dispatch Charge"
-                                                {...register("dis_charge")}
-                                                value={parcelData.dis_charge}
-                                                onChange={(e) => handleFieldChange('dis_charge', e.target.value)}
 
-
-                                            />
-                                        </div>
                                     </div>
                                     <br />
 
@@ -2576,7 +2846,9 @@ const EditParcelData = () => {
                                                 <div key={index}>
 
                                                     <div className="row mt-3">
-                                                        <div className="col-md-4">
+                                                        <div className="col-md-2">
+                                                            <label className="form-label">Client Address</label>
+
                                                             <textarea
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Client Address"
@@ -2586,10 +2858,13 @@ const EditParcelData = () => {
                                                                     const newAddresses = [...(addressFields.dis_address || [])];
                                                                     newAddresses[index].dispatch_client_address = e.target.value;
                                                                     setAddressFields({ ...addressFields, dis_address: newAddresses });
+
                                                                 }}
                                                             ></textarea>
                                                         </div>
-                                                        <div className="col-md-4">
+                                                        <div className="col-md-2">
+                                                            <label className="form-label">Office Address</label>
+
                                                             <textarea
                                                                 className="form-control form-control-sm"
                                                                 placeholder="Office Address"
@@ -2602,29 +2877,89 @@ const EditParcelData = () => {
                                                                 }}
                                                             ></textarea>
                                                         </div>
-                                                        <div className="col-lg-1" style={{ padding: '10px' }}>
+                                                        <div className="col-md-2">
+                                                            <label className="form-label">Dispatch Charge</label>
+                                                            <input
+                                                                type="number"
+                                                                className="form-control form-control-sm"
+                                                                placeholder="Enter dispatch Charge"
+                                                                {...register(`dis_address.${index}.dispatch_charge`)}
+                                                                value={field.dispatch_charge}
+
+                                                                onChange={(e) => {
+                                                                    const newAddresses = [...(addressFields.dis_address || [])];
+                                                                    newAddresses[index].dispatch_charge = e.target.value;
+                                                                    setAddressFields({ ...addressFields, dis_address: newAddresses })
+                                                                    handleFieldChange('dispatch_charge', e.target.value);
+                                                                }}
+
+                                                            />
+                                                        </div>
+                                                        <div className="col-md-2">
+                                                            <label className="form-label">Hamali Charges</label>
+                                                            <input
+                                                                type="number"
+                                                                className="form-control form-control-sm"
+                                                                placeholder="Enter Hamali Charge"
+                                                                {...register(`dis_address.${index}.dis_hamali_charge`)}
+                                                                value={field.dis_hamali_charge}
+
+                                                                onChange={(e) => {
+                                                                    const newAddresses = [...(addressFields.dis_address || [])];
+                                                                    newAddresses[index].dis_hamali_charge = e.target.value;
+                                                                    setAddressFields({ ...addressFields, dis_address: newAddresses });
+                                                                    handleFieldChange('dis_hamali_charge', e.target.value);
+
+
+                                                                }}
+
+                                                            />
+                                                        </div>
+                                                        <div className="col-md-2">
+                                                            <label className="form-label">Other Charges</label>
+                                                            <input
+                                                                type="number"
+                                                                className="form-control form-control-sm"
+                                                                placeholder="Enter Other Charge"
+                                                                {...register(`dis_address.${index}.dis_other_charge`)}
+                                                                value={field.dis_other_charge}
+
+                                                                onChange={(e) => {
+                                                                    const newAddresses = [...(addressFields.dis_address || [])];
+                                                                    newAddresses[index].dis_other_charge = e.target.value;
+                                                                    setAddressFields({ ...addressFields, dis_address: newAddresses });
+                                                                    handleFieldChange('dis_other_charge', e.target.value);
+
+                                                                }}
+
+                                                            />
+                                                        </div>
+                                                        <div className="col-lg-1" style={{ padding: '10px', marginTop: "8px" }}>
 
                                                             <button type="button"
-                                                                className="btn btn-danger remove_pickup_row"
+                                                                className="btn btn-danger btn-sm remove_pickup_row"
                                                                 onClick={() => removeDisAddress(index)}>
                                                                 <FontAwesomeIcon icon={faMinusCircle} />
                                                             </button>
 
                                                         </div>
-                                                        <div className="col-md" style={{ marginTop: "8px" }}>
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-primary add_more_pickup_row"
-                                                                onClick={appendDisAddress}>
-                                                                <FontAwesomeIcon icon={faPlusCircle} />
-                                                            </button>
-                                                        </div>
+
                                                     </div>
 
 
-
                                                 </div>
+
                                             ))}
+                                            <div className="col-lg-12 data" style={{ marginTop: "8px" }}>
+                                                <button
+                                                    type="button"
+                                                    style={{ marginRight: '9.20%', float: "right" }}
+                                                    className="btn btn-primary btn-sm add_more_pickup_row"
+                                                    onClick={appendDisAddress}>
+                                                    <FontAwesomeIcon icon={faPlusCircle} />
+                                                </button>
+                                            </div>
+
                                         </div>
                                     )}
 
@@ -2641,6 +2976,19 @@ const EditParcelData = () => {
                                                         placeholder="Office Detail"
                                                     ></textarea>
                                                 </div>
+                                                <div className="col-md-4">
+                                                    <label className="form-label">Dispatch Charge</label>
+                                                    <input
+                                                        type="number"
+
+                                                        className="form-control form-control-sm"
+                                                        placeholder="Enter dispatch Charge"
+                                                        {...register("dis_office_charge")}
+                                                        value={parcelData.dis_office_charge}
+                                                        onChange={(e) => handleFieldChange('dis_office_charge', e.target.value)}
+                                                    />
+
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -2648,51 +2996,41 @@ const EditParcelData = () => {
                                     <br />
 
 
-                                    <div className="row">
-                                        <div className="col-md-12">
-                                            <h5>Add Delivery Detail</h5>
-
-                                        </div>
-                                        <hr />
-                                    </div>
-                                    <div className="row">
-                                        <div className="col-md-3">
-                                            <label className="form-label">LR No.</label>
-                                            <input {...register('lr_no')}
-                                                value={parcelData.lr_no}
-                                                onChange={(e) => handleFieldChange('lr_no', e.target.value)}
-                                                type="text" className="form-control form-control-sm" placeholder="LR No." />
-                                        </div>
-                                        <div className="col-md-3">
-                                            <label className="form-label">Bus No.</label>
-                                            <input {...register('bus_no')}
-                                                value={parcelData.bus_no}
-                                                onChange={(e) => handleFieldChange('bus_no', e.target.value)}
-                                                type="text" name="bus_no" className="form-control form-control-sm" placeholder="Bus No." />
-                                        </div>
-                                        <div className="col-md-3">
-                                            <label className="form-label">Driver Phone No.</label>
-                                            <input type="text"
-                                                {...register("driver_no", {
-                                                    minLength: 10,
-
-
-                                                })} value={parcelData.driver_no} maxLength={10}
-                                                onChange={handleDriverPhone} className="form-control form-control-sm" name="driver_no" id="driver_no" placeholder="Enter Company Mobile No" />
-                                            {errors.driver_no?.type === "required" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
-                                            {errors?.driver_no?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
-
-                                        </div>
-                                        <div className="col-md-3">
-                                            <label className="form-label">Transport Charge</label>
-                                            <input {...register('transport_charge')}
-                                                onChange={(e) => handleFieldChange('transport_charge', e.target.value)}
-                                                value={parcelData.transport_charge} type="number" id="transport_charge" className="form-control form-control-sm" placeholder="Transport Charge" />
-                                        </div>
-                                    </div>
 
 
                                 </div>
+
+                                <div className="row mt-4">
+                                    <div className="col-md-12">
+                                        <h5>Transport Detail</h5>
+
+                                    </div>
+                                    <hr />
+                                </div>
+                                <div className="row mb-3">
+
+                                    <div className="col-md-2">
+                                        <label className="form-label">Total Pickup Charge</label>
+                                        <input {...register('total_pickup_charge')}
+                                            value={parcelData.total_pickup_charge} type="number" disabled readOnly className="form-control form-control-sm" placeholder="Transport Charge" />
+                                    </div>
+
+
+                                    <div className="col-md-2">
+                                        <label className="form-label">Total dispatch Charge</label>
+                                        <input {...register('total_dispatch_charge')}
+                                            value={parcelData.total_dispatch_charge} type="number" disabled readOnly className="form-control form-control-sm" placeholder="Transport Charge" />
+                                    </div>
+
+                                    <div className="col-md-3">
+                                        <label className="form-label">Transport Charge</label>
+                                        <input {...register('transport_charge')}
+                                            onChange={(e) => handleFieldChange('transport_charge', e.target.value)}
+                                            value={parcelData.transport_charge} type="number" id="transport_charge" className="form-control form-control-sm" placeholder="Transport Charge" />
+                                    </div>
+                                </div>
+
+
 
 
                                 {/* ---Payment Details--- */}
@@ -2748,7 +3086,7 @@ const EditParcelData = () => {
                                         <input {...register('bilty_charge')}
                                             value={parcelData.bilty_charge}
                                             onChange={(e) => handleFieldChange('bilty_charge', e.target.value)}
-                                            defaultValue="20" className="form-control" type="number" id="bilty_charge" placeholder="Blity Charge" />
+                                            defaultValue="20" className="form-control form-control-sm" type="number" id="bilty_charge" placeholder="Blity Charge" />
                                     </div>
 
                                     <div className="col-md-3">
@@ -2762,12 +3100,12 @@ const EditParcelData = () => {
 
                                             <div className="col-md-3">
                                                 <label className="form-label">Demurrage Charges</label>
-                                                <input  {...register('demurrage_charges')} value={parcelData.demurrage_charges} onChange={(e) => handleFieldChange('demurrage_charges', e.target.value)} type="number" id="demurrage_charges" className="form-control" defaultValue="10" />
+                                                <input  {...register('demurrage_charges')} value={parcelData.demurrage_charges} onChange={(e) => handleFieldChange('demurrage_charges', e.target.value)} type="number" id="demurrage_charges" className="form-control form-control-sm" defaultValue="10" />
                                             </div>
 
                                             <div className="col-md-3">
                                                 <label className="form-label">Demurrage Days</label>
-                                                <input  {...register('demurrage_days')} value={parcelData.demurrage_days} onChange={(e) => handleFieldChange('demurrage_days', e.target.value)} type="number" id="demurrage_days" className="form-control" placeholder="Enter days" />
+                                                <input  {...register('demurrage_days')} value={parcelData.demurrage_days} onChange={(e) => handleFieldChange('demurrage_days', e.target.value)} type="number" id="demurrage_days" className="form-control form-control-sm" placeholder="Enter days" />
                                             </div>
                                             <div className="col-md-3">
                                                 <label className="form-label">Total Demurrage Charges</label>

@@ -139,3 +139,7 @@
 
 
 
+.duplicate-row {
+  background-color: red !important;
+  color: white !important;
+}

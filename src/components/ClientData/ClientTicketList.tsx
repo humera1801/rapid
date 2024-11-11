@@ -94,7 +94,7 @@ const ClientTicketList: React.FC<BusTicketListProps> = ({ title, data }) => {
             getUserProfile(e_id)
                 .then((userData) => {
                     setUserName(userData.e_name);
-                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                    return axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
                 })
                 .then((roleResponse) => {
                     const rolesData = roleResponse.data.data;
@@ -119,7 +119,7 @@ const ClientTicketList: React.FC<BusTicketListProps> = ({ title, data }) => {
         e.preventDefault();
         const formData = { tkt_no };
         try {
-            await axios.post(`http://192.168.0.105:3001/busticket/delete`, formData);
+            await axios.post(`http://192.168.0.106:3001/busticket/delete`, formData);
             window.location.reload();
         } catch (error) {
             console.error('Error deleting ticket:', error);
@@ -132,6 +132,7 @@ const ClientTicketList: React.FC<BusTicketListProps> = ({ title, data }) => {
                 name: "Ticket No",
                 selector: (row: BusTicket) => row.tkt_no,
                 sortable: true,
+                
             },
             {
                 name: "Passenger Name",

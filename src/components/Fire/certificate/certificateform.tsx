@@ -221,16 +221,16 @@ const Certificate = () => {
 
           Object.entries(response.data[0].service_data).forEach(([fest_id, items]) => {
             setValue(`service_data.${fest_id}`, items as ProductData[]);
-        });
+          });
 
-        const fetchedVisibleFields = new Set(Object.keys(response.data[0].service_data).map(id => parseInt(id)));
-        setVisibleFields(fetchedVisibleFields);
+          const fetchedVisibleFields = new Set(Object.keys(response.data[0].service_data).map(id => parseInt(id)));
+          setVisibleFields(fetchedVisibleFields);
 
 
-        const isNewSupplyChecked = Array.from(fetchedVisibleFields).some(id =>
+          const isNewSupplyChecked = Array.from(fetchedVisibleFields).some(id =>
             services.find(service => service.fest_id === id)?.fest_name === 'New Supply'
-        );
-        setShowSrNo(isNewSupplyChecked);
+          );
+          setShowSrNo(isNewSupplyChecked);
 
 
         }
@@ -373,15 +373,15 @@ const Certificate = () => {
   const onSubmit: SubmitHandler<FormData> = async (data) => {
 
 
-    const updatedData = { 
-      ...data, 
-      date: fireData.febking_created_at, 
-      febking_certificate_no: fireData.febking_certificate_no, 
+    const updatedData = {
+      ...data,
+      date: fireData.febking_created_at,
+      febking_certificate_no: fireData.febking_certificate_no,
       febking_invoice_no: fireData.febking_invoice_no,
-       
-     };
-    console.log(updatedData);
 
+    };
+    console.log(updatedData);
+    router.push('/Fire/Fire-List')
 
     handlecertificateprint(updatedData)
 
@@ -459,9 +459,9 @@ const Certificate = () => {
               {errors.duedate?.type === "required" && <span id="show_mobile_err" className="error">This field is required</span>}
 
             </div>
-          
 
-           
+
+
 
             {/* {fields.map((field, index) => (
               <tbody style={{ display: "none" }}>
@@ -473,7 +473,7 @@ const Certificate = () => {
               </tbody>
             ))} */}
             <div className="text-center">
-              <button className="btn btn-success btn-sm"  type="submit" id="save_ticket" name="save_form" >
+              <button className="btn btn-success btn-sm" type="submit" id="save_ticket" name="save_form" >
                 Create certificate
               </button>
             </div>

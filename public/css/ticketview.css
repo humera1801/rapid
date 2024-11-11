@@ -7,3 +7,15 @@
     font-weight: 600;
     margin-right: 15px;
 }
+
+.info-container {
+}
+
+.info-item {
+  
+}
+
+.set_labelData {
+    font-weight: bold;
+    margin-bottom: 5px; /* Space between label and value */
+}

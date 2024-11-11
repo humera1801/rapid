@@ -1,12 +1,15 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Dev URL
-const baseURL = 'http://192.168.0.105:3001';
+const baseURL = 'http://192.168.0.106:3001';
 
-
+interface EmpDetailsResponse {
+  status: string;
+  data: any;
+}
 
 export default {
-  async GetEmpList(): Promise<any>{
+  async GetEmpList(): Promise<EmpDetailsResponse>{
     try {
       const response: AxiosResponse = await axios.get(baseURL + '/employee/get_employee_list', {
         headers: {
@@ -27,7 +30,7 @@ export default {
   },
 
 
-  async GetEmpId(id: string): Promise<any> {
+  async GetEmpId(id: string): Promise<EmpDetailsResponse> {
     try {
       const response: AxiosResponse = await axios.post(baseURL + '/employee/get_employee_details', {
         e_id: id,
@@ -51,7 +54,7 @@ export default {
   },
 
 
-  async GetRoleId(id: string): Promise<any> {
+  async GetRoleId(id: string): Promise<EmpDetailsResponse> {
     try {
       const response: AxiosResponse = await axios.post(baseURL + '/employee/get_role_employee', {
         e_id: id,

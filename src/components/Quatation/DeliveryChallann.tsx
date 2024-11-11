@@ -939,31 +939,7 @@ const DeliveryChallan = () => {
     const currentDate = new Date().toISOString().split('T')[0];
 
     //---------------------------------------------------------------------------------------------------------------------
-    // const onSubmit = async (formData: any) => {
-    //     const finalData = {
-    //         ...formData,
-    //     };
-    //     console.log("Filtered Form Data:", finalData);
-    //     try {
-    //         const response = await axios.post('http://192.168.0.105:3001/challan/add_fire_extingusher_delivery_challan_data', finalData);
-    //         console.log('Data submitted successfully:', response.data);
-    //         console.log(fireData.fedc_id);
-    //         if (fireData?.fedc_id) {
-    //             const fedc_id = fireData.fedc_id;
-    //             try {
-    //                 const getTDetail = await GetListData.GetChallanBookingId(fedc_id);
-    //                 console.log("Fetched details:", getTDetail.data[0]);
-    //                 generateEditDeliveryChallanPDF(getTDetail.data[0])
-
-    //             } catch (error) {
-    //                 console.error('Error fetching ticket data:', error);
-    //             }
-    //         }
-    //     } catch (error) {
-    //         console.error('Error updating data:', error);
-    //     }
-    // };
-
+    
     const onSubmit = async (formData: any) => {
         const updatedServiceData = Object.entries(getValues('service_data')).reduce<{ [key: string]: ProductData[] }[]>((acc, [serviceId, productData]) => {
             const serviceIdNum = parseInt(serviceId);
@@ -985,7 +961,7 @@ const DeliveryChallan = () => {
         try {
             let response;
             if (fireData.ferc_id) {
-                response = await axios.post('http://192.168.0.105:3001/challan/add_fire_extingusher_delivery_challan_data', finalData);
+                response = await axios.post('http://192.168.0.106:3001/challan/add_fire_extingusher_delivery_challan_data', finalData);
                 console.log('with Q_id Data submitted successfully:', response.data.q_id, response.data);
                 if (fireData?.q_quotation_no) {
                     const q_quotation_no = fireData.q_quotation_no;
@@ -993,6 +969,8 @@ const DeliveryChallan = () => {
                         const getTDetail = await GetListData.GetChallanBookingId(q_quotation_no);
                         console.log("Fetched details:", getTDetail.data[0]);
                         generateEditDeliveryChallanPDF(getTDetail.data[0]);
+                        router.push("/DeliveryChallan/ListOfChallan")
+
                     } catch (error) {
                         console.error('Error fetching ticket data:', error);
                     }
@@ -1000,7 +978,7 @@ const DeliveryChallan = () => {
             } else {
 
 
-                response = await axios.post('http://192.168.0.105:3001/challan/edit_fire_extingusher_delivery_challan_data', finalData);
+                response = await axios.post('http://192.168.0.106:3001/challan/edit_fire_extingusher_delivery_challan_data', finalData);
                 console.log('new Data submitted successfully:', response.data);
                 if (fireData?.q_quotation_no) {
                     const q_quotation_no = fireData.q_quotation_no;
@@ -1008,11 +986,12 @@ const DeliveryChallan = () => {
                         const getTDetail = await GetListData.GetChallanBookingId(q_quotation_no);
                         console.log("Fetched details:", getTDetail.data[0]);
                         generateEditDeliveryChallanPDF(getTDetail.data[0]);
+                        router.push("/DeliveryChallan/ListOfChallan")
+
                     } catch (error) {
                         console.error('Error fetching ticket data:', error);
                     }
                 }
-                router.push("/Quotation/QuotationList")
             }
 
 
@@ -1037,7 +1016,7 @@ const DeliveryChallan = () => {
                     <div>
 
 
-                        <Link href="/Quotation/QuotationList" className="btn btn-sm btn-primary">
+                        <Link href="/Quotation/ViewQuotation" className="btn btn-sm btn-primary">
                             Back
                         </Link>
                     </div>

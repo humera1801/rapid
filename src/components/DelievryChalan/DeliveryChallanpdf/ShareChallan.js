@@ -99,7 +99,7 @@ export const generateDeliveryChallanShare = async (formData, bankDetails) => {
             </head>
             <body>
                 <div class="header">
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSqnO1HM_-07vaM2q4SJRFqYEwxOh6QPvP0GA&s" alt="Logo" class="logo">
+                    <img src="\img\logo_page-0001-removebg-preview.png" alt="Logo" class="logo">
                     <div class="header-info">
                         <div>8866396939 , 910607741</div>
                         <div>rapidgroupbaroda@gmail.com</div>

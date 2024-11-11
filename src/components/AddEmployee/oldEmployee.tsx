@@ -31,7 +31,7 @@ const CreateEmployee = () => {
         };
     
         try {
-            const response = await axios.post('http://192.168.0.105:3001/employee/add_employee', finalData);
+            const response = await axios.post('http://192.168.0.106:3001/employee/add_employee', finalData);
             console.log('Data submitted successfully:', response.data);
     
             const E_Id = response.data.id; // Assuming the response contains the new employee's ID
@@ -76,7 +76,7 @@ const CreateEmployee = () => {
         formData.append("e_id", E_Id.toString()); // Append E_Id
     
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/booking/upload_client_id_proof', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

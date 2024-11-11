@@ -29,7 +29,7 @@ const Page: React.FC = () => {
       const { email, password, device_id, device_type, fcm_token } = formData;
   
       const response = await axios.post<{ status: number; message: string; data: any }>(
-        'http://192.168.0.105:3001/auth/user_login',
+        'http://192.168.0.106:3001/auth/user_login',
         {
           email,
           password,
@@ -80,9 +80,9 @@ const Page: React.FC = () => {
             <div className="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
             
               
-                  {/* <img src="\img\logo_page-0001-removebg-preview.png" alt="" height={"80%"} width={"100%"}  /> */}
+                  <img src="\img\logo_page-0001-removebg-preview.png" alt="" height={"30%"} width={"50%"}  />
                
-               <h1 style={{color:"#51781f",fontSize:"50px",fontWeight:"800"}}>RAPID GROUP</h1>
+               {/* <h1 style={{color:"#51781f",fontSize:"50px",fontWeight:"800"}}>RAPID GROUP</h1> */}
           
               <div className="mb-3" style={{width:"100%"}}>
                 <div className="card-body">

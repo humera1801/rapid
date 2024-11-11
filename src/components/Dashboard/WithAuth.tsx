@@ -1,9 +1,8 @@
-// hoc/withRoleProtection.js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const withRoleProtection = (WrappedComponent:any, requiredRole:any) => {
-  return (props:any) => {
+const withRoleProtection = (WrappedComponent: any, requiredRole: any) => {
+  const WithRoleProtection = (props: any) => {
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [hasAccess, setHasAccess] = useState(false);
@@ -24,7 +23,7 @@ const withRoleProtection = (WrappedComponent:any, requiredRole:any) => {
       }
 
       setLoading(false);
-    }, [requiredRole, router]);
+    }, [router]); // Removed requiredRole from dependencies
 
     if (loading) {
       return <div>Loading...</div>; // Loading state
@@ -32,6 +31,11 @@ const withRoleProtection = (WrappedComponent:any, requiredRole:any) => {
 
     return hasAccess ? <WrappedComponent {...props} /> : null;
   };
+
+  // Set display name for easier debugging
+  WithRoleProtection.displayName = `WithRoleProtection(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
+
+  return WithRoleProtection;
 };
 
 export default withRoleProtection;

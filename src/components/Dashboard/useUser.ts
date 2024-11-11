@@ -14,7 +14,7 @@ const useUser = () => {
       getUserProfile(e_id)
         .then((userData) => {
           setUserName(userData.e_name);
-          return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+          return axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
         })
         .then((roleResponse) => {
           const rolesData = roleResponse.data.data;

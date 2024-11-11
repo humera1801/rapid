@@ -1,5 +1,6 @@
 "use client";
 
+import Footer from '@/components/Dashboard/Footer';
 import Header from '@/components/Dashboard/Header';
 import CreateQuotation from '@/components/Quatation/CreateQuotation'
 import React from 'react'
@@ -11,6 +12,7 @@ const page = () => {
               <Header/>
             <CreateQuotation />
 
+            <Footer/>
 
 
         </>

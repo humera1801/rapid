@@ -700,7 +700,7 @@ const EditChallan = () => {
         console.log("Filtered Form Data:", finalData);
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/challan/edit_fire_extingusher_delivery_challan_data', finalData);
+            const response = await axios.post('http://192.168.0.106:3001/challan/edit_fire_extingusher_delivery_challan_data', finalData);
             console.log('Data submitted successfully:', response.data);
             console.log(fireData.fedc_id);
 

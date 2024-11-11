@@ -192,8 +192,7 @@ const EditCabBooking = () => {
                         setValue("journey_start_date", response.data[0].journey_start_date);
                         setValue("journey_end_date", response.data[0].journey_end_date);
                         setValue("place_visit", response.data[0].place_visit);
-                        setValue("vehicle_type", response.data[0].vehicle_type);
-                        setvehicles(response.data[0].vehicle_type)
+
                         setValue("cb_extra_km_charges", response.data[0].cb_extra_km_charges);
                         setValue("cb_extra_hrs_charges", response.data[0].cb_extra_hrs_charges);
                         setValue("night_charge", response.data[0].night_charge);
@@ -204,21 +203,24 @@ const EditCabBooking = () => {
                         setValue("engaged_by", response.data[0].engaged_by);;
                         setValue("advance_amount", response.data[0].advance_amount);
                         setSelectedRate(response.data[0].rate); // Set selected rate
-                        setValue("rate_text",response.data[0].rate_text);
+                        setValue("rate_text", response.data[0].rate_text);
 
 
                         setMobileNoValue(response.data[0].mobileNo);
-                        const newselectedVehicleId = response.data[0].vehicle_type ;
+
+                        setValue("vehicle_type", response.data[0].vehicle_type);
+                        // setvehicles(response.data[0].vehicle_type)
+                        const newselectedVehicleId = response.data[0].vehicle_type;
                         const response2 = await CabbookingList.getVehicleIdData(newselectedVehicleId);
-                        console.log("response2.data[0]",response2.data[0]);
-                        
+                        console.log("response2.data[0]", response2.data[0]);
+
                         const selectedVehicle = response2.data[0];
-                    
+
                         if (selectedVehicle) {
                             setVRate8hrs(selectedVehicle.rate_8_hrs);
                             setVRate12hrs(selectedVehicle.rate_12_hrs);
-                    
-                         
+
+
                         } else {
                             console.warn('No vehicle found for the selected ID');
                             setVRate8hrs('');
@@ -261,8 +263,8 @@ const EditCabBooking = () => {
             window.removeEventListener('popstate', handleURLChange);
         };
 
-        
-    
+
+
 
     }, []);
 
@@ -480,6 +482,8 @@ const EditCabBooking = () => {
                 console.log("No new image selected; skipping upload.");
             }
 
+         
+            router.push("/CabBooking/CabList")
 
         } catch (error) {
             console.error('Error submitting form data:', error);
@@ -492,7 +496,7 @@ const EditCabBooking = () => {
         formData.append("client_id", clientId.toString());
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/booking/upload_client_id_proof', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -507,10 +511,8 @@ const EditCabBooking = () => {
 
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/cabbooking/edit_cab_booking_details', formData);
+            const response = await axios.post('http://192.168.0.106:3001/cabbooking/edit_cab_booking_details', formData);
             console.log("Form data submitted successfully:", response.data);
-            window.location.reload()
-            router.push("/CabBooking/CabList")
 
         } catch (error) {
             console.error('Error submitting form data:', error);
@@ -519,7 +521,7 @@ const EditCabBooking = () => {
 
     const submitNewClientFormData = async (formData: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/cabbooking/edit_cab_booking_details', formData);
+            const response = await axios.post('http://192.168.0.106:3001/cabbooking/edit_cab_booking_details', formData);
             console.log('Form data submitted successfully for new client.', response.data);
             // window.location.reload()
             return response.data;
@@ -551,22 +553,29 @@ const EditCabBooking = () => {
     const fetchvehicleList = async () => {
         try {
             const response = await CabbookingList.getVehicleList();
-            setvehicles(response.data);
+            console.log('Vehicle API Response:', response.data); // Check the structure here
+            if (Array.isArray(response.data)) {
+                setvehicles(response.data);
+            } else {
+                console.error('Expected an array but got:', response.data);
+                setvehicles([]);
+            }
         } catch (error) {
             console.error('Error fetching vehicle:', error);
         }
     };
 
+
     const [vRate8hrs, setVRate8hrs] = useState('');
     const [vRate12hrs, setVRate12hrs] = useState('');
-    
+
 
     const handleVehicleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedVehicleId = Number(event.target.value);
         console.log('Selected Vehicle ID:', selectedVehicleId);
 
-      
-        
+
+
 
         const selectedVehicle = vehicles.find(vehicle => vehicle.v_id === selectedVehicleId);
         console.log('Selected Vehicle:', selectedVehicle);
@@ -590,13 +599,13 @@ const EditCabBooking = () => {
         setSelectedRate(newRate);
 
         if (newRate === 'Other') {
-            setValue("rate_text", ''); 
+            setValue("rate_text", '');
         } else if (newRate === '8 Hrs/80 KMs') {
             setValue("rate_text", vRate8hrs);
         } else {
             setValue("rate_text", vRate12hrs);
         }
-       
+
     };
 
 
@@ -823,8 +832,8 @@ const EditCabBooking = () => {
                                         >
                                             <option value="">--Select--</option>
                                             {vehicles.map((vehicle: any) => (
-                                            <option key={vehicle.v_id} value={vehicle.v_id}>{vehicle.v_type}</option>
-                                        ))}
+                                                <option key={vehicle.v_id} value={vehicle.v_id}>{vehicle.v_type}</option>
+                                            ))}
                                         </select>
                                     </div>
 
@@ -856,24 +865,24 @@ const EditCabBooking = () => {
                                                 <label htmlFor="rate_80kms" className="form-check-label ms-2">12 Hrs/300 KMs</label>
                                             </div>
                                             <div className="form-check">
-                                            <input
-                                                type="radio"
-                                                id="rate_80kms"
-                                                {...register("rate", { required: true })}
-                                                value="Other"
-                                                checked={selectedRate === 'Other'}
-                                                onChange={handleRateChange}
-                                                className="form-check-input"
-                                            />
-                                            <label htmlFor="rate_80kms" className="form-check-label ms-2">Other</label>
-                                        </div>  
+                                                <input
+                                                    type="radio"
+                                                    id="rate_80kms"
+                                                    {...register("rate", { required: true })}
+                                                    value="Other"
+                                                    checked={selectedRate === 'Other'}
+                                                    onChange={handleRateChange}
+                                                    className="form-check-input"
+                                                />
+                                                <label htmlFor="rate_80kms" className="form-check-label ms-2">Other</label>
+                                            </div>
                                         </div>
                                         {selectedRate === '8 Hrs/80 KMs' && (
                                             <div className="mt-3">
                                                 <input
                                                     type="text"
                                                     {...register('rate_text')}
-                                                  
+
                                                     className="form-control form-control-sm"
                                                     id="rate_8hrs_input"
                                                     placeholder="Rate for 8 hrs/80Kms"
@@ -885,7 +894,7 @@ const EditCabBooking = () => {
                                                 <input
                                                     {...register('rate_text')}
                                                     type="text"
-                                               
+
                                                     className="form-control form-control-sm"
                                                     id="rate_80kms_input"
                                                     placeholder="Rate for 12 hrs/300Kms"
@@ -912,7 +921,7 @@ const EditCabBooking = () => {
                                     </div>
 
 
-                                  
+
 
 
                                     <div className="col-lg-2 col-sm-6 mb-3">

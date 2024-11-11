@@ -102,7 +102,7 @@ const PaymentDataView = () => {
             cb_id: cb_id
         }
         try {
-            const response = await axios.post(`http://192.168.0.105:3001/cabbooking/delete_cab_booking`, formData);
+            const response = await axios.post(`http://192.168.0.106:3001/cabbooking/delete_cab_booking`, formData);
             console.log('Cab booking deleted successfully:', response.data);
             router.push("/CabBooking/CabList")
         } catch (error) {
@@ -117,11 +117,11 @@ const PaymentDataView = () => {
 
     //-----------------------------------------------------------------------------------------------------------
     return (
-        <div className="container-fluid">
-
-            <div className="card mb-3" style={{ width: "auto" }} >
-                <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
-                    <h3>View Payment Details </h3>
+        <>
+            <br />
+            <div className="container">
+                <div  style={{ display: "flex", justifyContent: "space-between" }}>
+                    <h5>View Payment Details </h5>
                     <div style={{ fontSize: "12px" }}>
                         {/* <Link href="/CabBooking/JourneyEnd" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px" }}>Journey End</Link> */}
 
@@ -136,85 +136,88 @@ const PaymentDataView = () => {
 
                     </div>
                 </div>
+                <br />
+
+                <div className="card cardbox mb-3" style={{ width: "auto" }} >
+
+
+                    {paymentData && (
+                        <div className="card-body" style={{ fontSize: "12px" }}>
+                            <div className=" d-flex flex-wrap">
+                                <div className="col-lg-4">
+                                    <label className="">Receipt no : </label><span> {paymentData.receipt_no}</span>
+                                </div>
+                                <div className="col-lg-4">
+                                    <label className="">Payment by : </label><span> {paymentData.name}</span>
+                                </div>
+                                <div className="col-lg-3 col-sm-6">
+                                    <label className="form-label" htmlFor="bdate">Booking Type: </label>
+                                    <span> {paymentData.booking_type}</span>
+                                </div>
+                            </div>
 
 
 
-                {paymentData && (
-                    <div className="card-body" style={{ fontSize: "12px" }}>
-                        <div className=" d-flex flex-wrap">
-                            <div className="col-lg-4">
-                                <label className="">Receipt no : </label><span> {paymentData.receipt_no}</span>
+
+                            <div className="row mt-4">
+                                <div className="col-md-12">
+                                    <h5>Payment Details:</h5>
+                                </div>
+                                <hr />
+
                             </div>
-                            <div className="col-lg-4">
-                                <label className="">Payment by : </label><span> {paymentData.name}</span>
+                            <div className="row mb-3">
+
+                                <div className="col-lg-2 col-sm-6">
+                                    <label className="form-label" htmlFor="bdate">Total Amount: </label>
+                                    <span> {paymentData.total_amount}</span>
+
+                                </div>
+
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="Place_visit">paid amount:</label>
+                                    <span> {paymentData.paid_amount}</span>
+                                </div>
+
+
+
+
+
+
+
+                                <div className="col-lg-2">
+                                    <label className="form-label" htmlFor="Place_visit">Payment Method:</label>
+                                    <span> {paymentData.payment_method}</span>
+                                </div>
+                                <div className="col-lg-2 col-sm-6 mb-2">
+                                    <label className="form-label" htmlFor="vehicleNo">Payment Details:</label>
+                                    <span> {paymentData.payment_details}</span>                                </div>
+
+                                <div className="col-lg-2 col-sm-6 mb-2">
+                                    <label className="form-label" htmlFor="vehicleNo">Created By:</label>
+                                    <span> {paymentData.created_by_name}</span>                                </div>
+
+
                             </div>
-                            <div className="col-lg-3 col-sm-6">
-                                <label className="form-label" htmlFor="bdate">Booking Type: </label>
-                                <span> {paymentData.booking_type}</span>
-                            </div>
+
+
+
+
+
+
+
                         </div>
 
 
+                    )}
 
 
-                        <div className="row mt-4">
-                            <div className="col-md-12">
-                                <h5>Payment Details:</h5>
-                            </div>
-                            <hr />
-
-                        </div>
-                        <div className="row mb-3">
-
-                            <div className="col-lg-2 col-sm-6">
-                                <label className="form-label" htmlFor="bdate">Total Amount: </label>
-                                <span> {paymentData.total_amount}</span>
-
-                            </div>
-
-                            <div className="col-lg-2">
-                                <label className="form-label" htmlFor="Place_visit">paid amount:</label>
-                                <span> {paymentData.paid_amount}</span>
-                            </div>
+                </div>
 
 
 
-
-
-
-
-                            <div className="col-lg-2">
-                                <label className="form-label" htmlFor="Place_visit">Payment Method:</label>
-                                <span> {paymentData.payment_method}</span>
-                            </div>
-                            <div className="col-lg-2 col-sm-6 mb-2">
-                                <label className="form-label" htmlFor="vehicleNo">Payment Details:</label>
-                                <span> {paymentData.payment_details}</span>                                </div>
-
-                            <div className="col-lg-2 col-sm-6 mb-2">
-                                <label className="form-label" htmlFor="vehicleNo">Created By:</label>
-                                <span> {paymentData.created_by_name}</span>                                </div>
-
-
-                        </div>
-
-
-
-
-
-
-
-                    </div>
-
-
-                )}
-
-
-            </div>
-
-
-
-        </div >
+            </div >
+        </>
     );
 };
 

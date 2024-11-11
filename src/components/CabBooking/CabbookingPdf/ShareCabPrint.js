@@ -10,12 +10,12 @@ export const generateCabReceiptShare = async (formData) => {
         const endJourneyDetails = formData.endJourneyDetails || {};
         const startJourneyDetails = formData.startJourneyDetails || {};
 
-        const productRows = formData.extra_charges.map((product, index) => `
-     <div class="kms-info1 section">
-            <div>EXTRA CHARGES: <span class="underline-text" style="width: 280px;">${product.charge}</span></div>
-            <div>RS : <span class="underline-text" style="width: 145px;">${product.rate}</span></div>
-        </div >
- `).join('');
+        const productRows = formData.extraCharges.map((product, index) => `
+        <div class="kms-info1 section">
+               <div>EXTRA CHARGES: <span class="underline-text" style="width: 290px;">${product.extra_charges}</span></div>
+               <div>RS : <span class="underline-text" style="width: 145px;">${product.extra_charges_rate}</span></div>
+           </div >
+    `).join('');
 
 
         const html = `
@@ -197,13 +197,13 @@ export const generateCabReceiptShare = async (formData) => {
         <div class="address1">G/12, Swastik Chambers, Nr. Makarpura Bus Depot, Makarpura Road, Vadodara-390 010.</div>
         <hr>
 
-        <h3 style="text-align: center;">Cab Receipt</h3>
+        <h3 style="text-align: center;">Cab Booking</h3>
 
         <div class="sr-no section">SR. NO: <span >${formData.cb_serial_no}</span></div>
 
         <div class="vehicle-no section">
-            <div>Vehical No: <span class="underline-text" style="width: 130px;">${startJourneyDetails.vehicle_no || ''}</span></div>
-            <div>Driver: <span class="underline-text" style="width: 150px;">${startJourneyDetails.d_name || ''}</span></div>
+            <div>Vehical No: <span class="underline-text" style="width: 130px;">${startJourneyDetails.vehicle_no || '' }</span></div>
+            <div>Driver: <span class="underline-text" style="width: 150px;">${startJourneyDetails.d_name || '' }</span></div>
             <div>DATE: <span class="underline-text" style="width: 135px;">${formData.booking_date}</span></div>
         </div>
 
@@ -222,18 +222,16 @@ export const generateCabReceiptShare = async (formData) => {
             <div>DATE: <span class="underline-text" style="width: 137px;">${startJourneyDetails.journey_start_date || '' }</span></div>
         </div>
 
-        <div class="kms-info section">
-            <div>CLOSING KMS: <span class="underline-text" style="width: 130px;">${endJourneyDetails.closing_kms || ''}</span></div>
-            <div>TIME: <span class="underline-text" style="width: 125px;">${endJourneyDetails.journey_end_time || '' }</span></div>
-            <div>DATE: <span class="underline-text" style="width: 137.5px;">${endJourneyDetails.journey_end_date || '' }</span></div>
+         <div class="kms-info section">
+            <div>CLOSING KMS: <span class="underline-text" style="width: 130px;">${closingKms}</span></div>
+            <div>TIME: <span class="underline-text" style="width: 125px;">${journeyEndTime}</span></div>
+            <div>DATE: <span class="underline-text" style="width: 137.5px;">${journeyEndDate}</span></div>
         </div>
         
-        <div class="kms-info1 section">
-
+         <div class="kms-info1 section">
             <div>TOTAL USED KMS: <span class="underline-text" style="width: 105px;">${endJourneyDetails.total_used_kms || ''}</span></div>
-            <div>WAITING: <span class="underline-text" style="width: 123px;">${endJourneyDetails.waiting || '' }</span></div>
-            <div>DATE: <span class="underline-text" style="width: 135px;">${endJourneyDetails.journey_end_date || '' }</span></div>
-
+            <div>WAITING: <span class="underline-text" style="width: 123px;">${endJourneyDetails.waiting || ''}</span></div>
+            <div>DATE: <span class="underline-text" style="width: 135px;">${endJourneyDetails.journey_end_date || ''}</span></div>
         </div>
       <div class="kms-info1 section">
     <div>
@@ -266,36 +264,32 @@ export const generateCabReceiptShare = async (formData) => {
 </div>
 
         <div class="kms-info1 section">
-            <div>EXTRA KMS: <span class="underline-text" style="width: 170px;">${endJourneyDetails.extra_kms || '' }</span> @ <span class="underline-text"
-                    style="width: 142px;">${endJourneyDetails.extra_km_rate || '' }</span>RS : <span class="underline-text" style="width: 146px;">${endJourneyDetails.extra_km_total_rate || '' }</span>
+            <div>EXTRA KMS: <span class="underline-text" style="width: 170px;">${endJourneyDetails.extra_kms || ''}</span> @ <span class="underline-text"
+                    style="width: 142px;">${endJourneyDetails.cb_extra_km_charges || ''}</span>RS : <span class="underline-text" style="width: 146px;">${endJourneyDetails.extra_km_total_rate || ''}</span>
             </div>
         </div>
         <div class="kms-info1 section">
-            <div>EXTRA HRS: <span class="underline-text" style="width: 170px;">${endJourneyDetails.extra_hrs || '' }</span> @ <span class="underline-text"
-                    style="width: 142px;">${endJourneyDetails.extra_hrs_rate || '' }</span>RS : <span class="underline-text" style="width: 146px;">${endJourneyDetails.extra_hrs_total_rate || '' }</span>
+            <div>EXTRA HRS: <span class="underline-text" style="width: 170px;">${endJourneyDetails.extra_hrs || ''}</span> @ <span class="underline-text"
+                    style="width: 142px;">${endJourneyDetails.cb_extra_hrs_charges || ''}</span>RS : <span class="underline-text" style="width: 146px;">${endJourneyDetails.extra_hrs_total_rate || ''}</span>
             </div>
         </div>
          ${productRows}
         <div class="kms-info1 section">
-            <div class="rate-row">DRIVER ALLOWANCE: <span class="underline-text" style="width: 115px;">${endJourneyDetails.driver_allowance || '' }</span> @ <span
-                    class="underline-text" style="width: 142px;">${endJourneyDetails.driver_allowance_rate || '' }</span>RS : <span class="underline-text"
-                    style="width: 146px;">${endJourneyDetails.driver_allowance_total_rate || '' }</span>
+            <div class="rate-row">DRIVER ALLOWANCE: <span class="underline-text" style="width: 115px;">${endJourneyDetails.driver_allowance || ''}</span> @ <span
+                    class="underline-text" style="width: 142px;">${endJourneyDetails.driver_allowance_charge || ''}</span>RS : <span class="underline-text"
+                    style="width: 146px;">${endJourneyDetails.driver_allowance_total_rate || ''}</span>
 
             </div>
         </div>
 
         <div class="kms-info1 section">
-            <div class="rate-row">NIGHT CHARGES: <span class="underline-text" style="width: 137px;">${endJourneyDetails.night_charges || '' }</span> @ <span
-                    class="underline-text" style="width: 142px;">${endJourneyDetails.night_charges_rate || '' }</span>RS : <span class="underline-text"
+            <div class="rate-row">NIGHT CHARGES: <span class="underline-text" style="width: 137px;">${endJourneyDetails.total_night || '' }</span> @ <span
+                    class="underline-text" style="width: 142px;">${endJourneyDetails.night_charge || ''}</span>RS : <span class="underline-text"
                     style="width: 146px;">${endJourneyDetails.night_charges_total_rate || '' }</span>
             </div>
         </div>
 
-        <div class="engaged-by section">ADVANCE RS: <span class="underline-text" style="width: 495px;">${endJourneyDetails.advance_paid || '' }</span>
-        </div>
-        <div class="engaged-by section">BALANCE RS: <span class="underline-text" style="width: 495px;">${endJourneyDetails.pending_balance || '' }</span>
-        </div>
-         <div class="engaged-by section">TOTAL AMOUNT: <span class="underline-text" style="width: 495px;">${endJourneyDetails.total_amount || '' }</span>
+        <div class="engaged-by section" style="margine-right:5px";>TOTAL AMOUNT: <span class="underline-text" style="width: 488px;">${formData.final_total || ''}</span>
         </div>
 
 

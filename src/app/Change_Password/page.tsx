@@ -29,7 +29,7 @@ const Page: React.FC = () => {
       //   const userData: { user_id: number } = JSON.parse(storedData); // Define type for userData
 
       const response = await axios.post<{ status: number; message: string }>(
-        'http://192.168.0.105:3001/auth/user_change_password',
+        'http://192.168.0.106:3001/auth/user_change_password',
         {
           user_id: storedData,
           // old_password:'',

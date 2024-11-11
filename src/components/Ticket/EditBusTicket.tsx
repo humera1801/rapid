@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { debounce } from 'lodash';
 import GetClientList from '@/app/Api/FireApis/FireExtinghsherList/GetClientList';
 import handlePrint from '@/app/ticket_list/Ticket_data/printUtils';
+import Footer from '../Dashboard/Footer';
 
 
 
@@ -36,6 +37,7 @@ type FormData = {
     is_duplicate: boolean;
     is_extra: boolean;
     rep_date: any
+    added_by_name: any;
     slr: number;
     slr_rate: number;
     slr_total_amount: number;
@@ -83,6 +85,7 @@ type FormData = {
     client_pincode: string;
     email: string;
     client_id: any
+    driver_no: any;
 
     mobileNo: string;
     address: any;
@@ -200,7 +203,7 @@ function EditForm() {
             setValue("client_city", getTDetail.data[0].client_city);
             setValue("client_state", getTDetail.data[0].client_state);
             setValue("client_pincode", getTDetail.data[0].client_pincode);
-
+            setValue("driver_no", getTDetail.data[0].driver_no)
             setImageName(getTDetail.data[0].id_proof_urls)
 
 
@@ -513,6 +516,8 @@ function EditForm() {
             let toCityName = '';
 
             const tkt_no = formData.ticket_no;
+            const added_by_name = ticketData.added_by_name;
+            console.log(added_by_name);
 
             const selectedFromStateIdStr = String(selectedFromStateId);
             const selectedToStateIdStr = String(selectedToStateId);
@@ -538,7 +543,7 @@ function EditForm() {
             }
 
             if (showCustomCityInput && customCity) {
-                const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+                const response = await axios.post('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
                     city_name: customCity,
                     state_id: selectedFromStateIdStr,
                 });
@@ -547,7 +552,7 @@ function EditForm() {
             }
 
             if (showCustomToCityInput && customToCity) {
-                const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+                const response = await axios.post('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
                     city_name: customToCity,
                     state_id: selectedToStateIdStr,
                 });
@@ -563,12 +568,16 @@ function EditForm() {
             formData.to_city_name = toCityName;
 
             formData.tkt_no = tkt_no;
+            formData.added_by_name = added_by_name;
+            console.log(added_by_name);
 
             const finalData: FormData = {
+
                 ...formData,
             };
 
             let clientId: number | undefined;
+            console.log(finalData);
 
 
             if (isAddingNewClient) {
@@ -661,7 +670,7 @@ function EditForm() {
         formData.append("client_id", clientId.toString());
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/booking/upload_client_id_proof', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -675,7 +684,7 @@ function EditForm() {
 
 
     async function submitFormData(formData: FormData, clientId: number | undefined) {
-        const response = await fetch('http://192.168.0.105:3001/ticket/update_ticket_detail_data', {
+        const response = await fetch('http://192.168.0.106:3001/ticket/update_ticket_detail_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -688,7 +697,7 @@ function EditForm() {
 
     async function submitNewClientFormData(formData: FormData) {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/ticket/update_ticket_detail_data', formData);
+            const response = await axios.post('http://192.168.0.106:3001/ticket/update_ticket_detail_data', formData);
             console.log('Form data submitted successfully for new client.', response.data);
             return response.data; // Ensure this returns the data with client_id
         } catch (error) {
@@ -1581,22 +1590,40 @@ function EditForm() {
 
 
                                 <div className="row mb-3">
-                                    <div className="col-lg-6">
+                                    <div className="col-lg-3">
                                         <label className="form-label">Bus Name</label>
                                         <input {...register('bus_name')} value={ticketData.bus_name} onChange={(e) => handleFieldChange('bus_name', e.target.value)} className="form-control form-control-sm" type="text" required />
                                     </div>
-                                    <div className="col-lg-6">
+                                    <div className="col-lg-3">
                                         <label className="form-label">Bus No.</label>
                                         <input {...register('bus_no')} value={ticketData.bus_no} onChange={(e) => handleFieldChange('bus_no', e.target.value)} className="form-control form-control-sm" type="text" />
                                     </div>
-                                </div>
 
-                                <div className="row mb-3">
-                                    <div className="col-lg-6">
+                                    <div className="col-lg-3">
+                                        <label className="form-label">Driver No.</label>
+                                        <input {...register('driver_no', {
+                                            required: true,
+                                        })} minLength={10} maxLength={10} placeholder='Enter driver no' className="form-control form-control-sm" type="text" />
+                                        {errors.driver_no?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
+                                    </div>
+                                    <div className="col-lg-3">
                                         <label className="form-label">Boarding</label>
                                         <input {...register('boarding')} value={ticketData.boarding} onChange={(e) => handleFieldChange('boarding', e.target.value)} className="form-control form-control-sm" type="text" required />
                                     </div>
+                                    <div className="col-lg-3">
+                                        <label className="form-label">Boarding</label>
+                                        <input {...register('boarding')} value={ticketData.boarding} onChange={(e) => handleFieldChange('boarding', e.target.value)} className="form-control form-control-sm" type="text" required />
+                                    </div>
+
+
+
+
                                 </div>
+
+
+
+
                                 <div className="row mb-3">
 
 
@@ -1658,6 +1685,7 @@ function EditForm() {
                 </Card >
 
             </div >
+            <Footer />
 
         </>
     )

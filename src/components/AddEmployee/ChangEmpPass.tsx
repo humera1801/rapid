@@ -58,7 +58,7 @@ const EmpPasswordChange = () => {
     
     try {
       const e_id = fireData.e_id; // Assuming fireData contains employee info
-      await axios.post('http://192.168.0.105:3001/employee/change_password_employee', {
+      await axios.post('http://192.168.0.106:3001/employee/change_password_employee', {
         e_id,
         e_password: newPassword
       });

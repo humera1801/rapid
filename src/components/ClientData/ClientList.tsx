@@ -131,7 +131,7 @@ const ClientList: React.FC = () => {
             getUserProfile(e_id)
                 .then((userData) => {
                     setUserName(userData.e_name);
-                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                    return axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
                 })
                 .then((roleResponse) => {
                     const rolesData = roleResponse.data.data;
@@ -297,7 +297,7 @@ const ClientList: React.FC = () => {
             ticket_id: ticketId
         }
         try {
-            const response = await axios.post(`http://192.168.0.105:3001/ticket/remove_ticket_data`, formData);
+            const response = await axios.post(`http://192.168.0.106:3001/ticket/remove_ticket_data`, formData);
             console.log('Ticket deleted successfully:', response.data);
             window.location.reload();
         } catch (error) {
@@ -367,7 +367,23 @@ const ClientList: React.FC = () => {
             name: "Client Name",
             selector: (row: User) => row.client_firstName,
             sortable: true,
-
+            cell: (row: any) => (
+                <Link
+                    href={`/ClientDetails/ClientView?client_id=${row.client_id}`} style={{
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        backgroundColor: 'transparent',
+                        padding: '5px',
+                    }}
+                >
+                    {row.client_firstName}
+                </Link>
+            ),
+            style: {
+                minWidth: '50px',
+                whiteSpace: 'nowrap',
+                fontSize: "12px"
+            },
             omit: !visibleColumns.includes("Client Name")
         },
         {

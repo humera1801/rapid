@@ -114,7 +114,7 @@ export const FirePdf = async (formData, bankDetails) => {
              <table>
                     <tr><td rowspan=8 class="top-align">To, ${formData.client_firstName}<br>${formData.client_address}<br>${formData.client_city} - ${formData.client_state}<br>${formData.client_pincode}<br>Gst-No:${formData.gst_no}</td><td>Invoice No:</td><td>${formData.febking_invoice_no}</td></tr>
                     <tr><td>Order No:</td><td>${formData.fedc_order_no}</td></tr>
-                    <tr><td>PonNo Date:</td><td>${formData.po_no_date}</td></tr>
+                    <tr><td>Po.No Date:</td><td>${formData.po_no_date}</td></tr>
 
                     <tr><td>Receiver Challan Date:</td><td>${formData.ferc_date}</td></tr>
                     <tr><td>Delivery Challan Date:</td><td>${formData.fedc_date}</td></tr>

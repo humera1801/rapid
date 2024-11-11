@@ -244,7 +244,7 @@ label {
 
      
 
-        <div class="engaged-by section">Received with thanks from M/s: <span class="underline-text" style="width: 70.2%;">${formData.client_firstName}</span>
+        <div class="engaged-by section">Received with thanks from M/s: <span class="underline-text" style="width: 70.2%;">${formData.firstName}</span>
         </div>
 
         <div class="address section">The sum of Rupees: <span class="underline-text" style="width: 79.8%;">${formData.total_amount} 

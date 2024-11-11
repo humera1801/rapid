@@ -952,7 +952,7 @@ const EditParcelData = () => {
 
             // Handle custom city input if needed
             if (showCustomCityInput && customCity) {
-                const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+                const response = await axios.post('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
                     city_name: customCity,
                     state_id: selectedFromStateId,
                 });
@@ -960,7 +960,7 @@ const EditParcelData = () => {
             }
 
             if (showCustomToCityInput && customToCity) {
-                const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+                const response = await axios.post('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
                     city_name: customToCity,
                     state_id: selectedToStateId,
                 });
@@ -973,7 +973,7 @@ const EditParcelData = () => {
 
             formData.remove_files = removedFileNames;
 
-            const response = await axios.post('http://192.168.0.105:3001/parcel/update_parcel_detail_data', formData);
+            const response = await axios.post('http://192.168.0.106:3001/parcel/update_parcel_detail_data', formData);
 
             console.log('Form submitted successfully:', response.data);
 
@@ -991,7 +991,7 @@ const EditParcelData = () => {
                     console.log('FormData prepared for images:', formDataImages);
 
                     try {
-                        const uploadResponse = await axios.post("http://192.168.0.105:3001/parcel/upload_parcel_image", formDataImages, {
+                        const uploadResponse = await axios.post("http://192.168.0.106:3001/parcel/upload_parcel_image", formDataImages, {
                             headers: {
                                 'Content-Type': 'multipart/form-data'
                             }

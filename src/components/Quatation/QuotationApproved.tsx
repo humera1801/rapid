@@ -76,7 +76,7 @@ const QuotationApproved: React.FC<QuotationApprovedProps> = ({ QuotationData, Qu
 
         console.log("Form Data:", dataToSubmit);
         try {
-            const response = await axios.post('http://192.168.0.105:3001/quotation/approve_quatation', dataToSubmit);
+            const response = await axios.post('http://192.168.0.106:3001/quotation/approve_quatation', dataToSubmit);
             console.log('Data submitted successfully:', response.data);
             window.location.reload()
         } catch (error) {

@@ -1,5 +1,6 @@
 .body{
   font-family: Arial, sans-serif;
+  
 }
 .cardbox{
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
@@ -529,7 +530,7 @@ input::-webkit-inner-spin-button {
 }
 
 .first-page-con{
-  background: url(../img/bck_login.jpg);
+  background: url(../img/rapid_back.jpg);
   background-position: center;
   background-repeat: no-repeat;
   background-size: 100%100%;
@@ -543,3 +544,14 @@ input::-webkit-inner-spin-button {
   font-size: 10px !important;
   letter-spacing: 0.05rem !important;
 }
+.nav-color  {
+  font-weight: 12px;
+  color: #ffffff !important;
+  transition: color 0.2s;
+} 
+
+.nav-color a{
+  font-weight: 12px;
+  color: #ffffff !important;
+  transition: color 0.2s;
+} 

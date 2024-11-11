@@ -190,7 +190,7 @@ const CreateCabBooking = () => {
 
             console.log(fileProof);
 
-            
+
             clearErrors([
 
                 "address",
@@ -243,7 +243,7 @@ const CreateCabBooking = () => {
             setVRate8hrs(selectedVehicle.rate_8_hrs);
             setVRate12hrs(selectedVehicle.rate_12_hrs);
 
-             setSelectedRate('')
+            setSelectedRate('')
         } else {
             console.warn('No vehicle found for the selected ID');
             setVRate8hrs('');
@@ -257,15 +257,15 @@ const CreateCabBooking = () => {
     const handleRateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newRate = event.target.value as RateOption;
         setSelectedRate(newRate);
-    
+
         if (newRate === 'Other') {
-            setValue("rate_text", ''); 
+            setValue("rate_text", '');
         } else if (newRate === '8 Hrs/80 KMs') {
             setValue("rate_text", vRate8hrs);
         } else {
             setValue("rate_text", vRate12hrs);
         }
-       
+
     };
 
 
@@ -300,32 +300,39 @@ const CreateCabBooking = () => {
             } else if (selectedClientId) {
                 finalData.client_id = selectedClientId;
                 clientId = selectedClientId;
-                await submitFormData(finalData, clientId);
-                console.log('Form data submitted successfully with selected client id:', clientId);
+                const CabResponceData = await submitFormData(finalData, clientId);
+
+                if (data.client_id_proof && data.client_id_proof.length > 0) {
+                    const file = data.client_id_proof[0];
+
+                    // Only upload if a new file is provided
+                    console.log("New image uploaded:", {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                    });
+
+                    if (clientId !== undefined) { // Check if clientId is defined
+                        await uploadClientProofId(file, clientId);
+                    } else {
+                        console.error('Client ID is undefined; cannot upload image.');
+                    }
+                } else {
+                    console.log("No new image selected; skipping upload.");
+                }
+
+
+
+                // window.location.reload()
+                router.push("/CabBooking/CabList")
+
+
             } else {
                 console.log('Please select a client or add a new client before submitting.');
                 return;
             }
 
 
-            if (data.client_id_proof && data.client_id_proof.length > 0) {
-                const file = data.client_id_proof[0];
-
-                // Only upload if a new file is provided
-                console.log("New image uploaded:", {
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                });
-
-                if (clientId !== undefined) { // Check if clientId is defined
-                    await uploadClientProofId(file, clientId);
-                } else {
-                    console.error('Client ID is undefined; cannot upload image.');
-                }
-            } else {
-                console.log("No new image selected; skipping upload.");
-            }
 
 
         } catch (error) {
@@ -339,7 +346,7 @@ const CreateCabBooking = () => {
         formData.append("client_id", clientId.toString());
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/booking/upload_client_id_proof', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -355,10 +362,9 @@ const CreateCabBooking = () => {
 
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/cabbooking/create_cab_booking', formData);
+            const response = await axios.post('http://192.168.0.106:3001/cabbooking/create_cab_booking', formData);
             console.log("Form data submitted successfully:", response.data);
-            window.location.reload()
-            router.push("/CabBooking/CabList")
+
         } catch (error) {
             console.error('Error submitting form data:', error);
         }
@@ -366,7 +372,7 @@ const CreateCabBooking = () => {
 
     const submitNewClientFormData = async (formData: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/cabbooking/create_cab_booking', formData);
+            const response = await axios.post('http://192.168.0.106:3001/cabbooking/create_cab_booking', formData);
             console.log('Form data submitted successfully for new client.', response.data);
             return response.data; // Ensure this returns the data with client_id
 

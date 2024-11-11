@@ -756,7 +756,7 @@ const ParcelBook: React.FC = () => {
                     console.log('FormData prepared:', data);
 
                     try {
-                        const response = await fetch("http://192.168.0.105:3001/parcel/upload_parcel_image", {
+                        const response = await fetch("http://192.168.0.106:3001/parcel/upload_parcel_image", {
                             method: "POST",
                             body: data,
                         });
@@ -824,7 +824,7 @@ const ParcelBook: React.FC = () => {
 
     async function addNewCity(stateId: string, cityName: string) {
         const requestBody = { city_name: cityName, state_id: stateId };
-        const response = await fetch('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+        const response = await fetch('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -842,7 +842,7 @@ const ParcelBook: React.FC = () => {
 
     async function submitFormData(formData: FormData) {
 
-        const response = await fetch('http://192.168.0.105:3001/parcel/create_parcel_data', {
+        const response = await fetch('http://192.168.0.106:3001/parcel/create_parcel_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

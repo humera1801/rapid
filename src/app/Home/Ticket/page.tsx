@@ -11,8 +11,8 @@ const page = () => {
 
 
             <AuthProvider>
-                <Header />
-                <br />
+                
+             
                 <TicketBook />
             </AuthProvider>
         </>

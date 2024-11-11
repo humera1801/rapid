@@ -708,7 +708,7 @@ const EditQuotation = () => {
         console.log("Filtered Form Data:", finalData);
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/quotation/edit_fire_extingusher_quotation_detail', finalData);
+            const response = await axios.post('http://192.168.0.106:3001/quotation/edit_fire_extingusher_quotation_detail', finalData);
             console.log('Data submitted successfully:', response.data);
             console.log(fireData.q_id);
 
@@ -789,7 +789,7 @@ const EditQuotation = () => {
 
                             <div className="row">
 
-                                <div className="col-lg-3 col-md-6">
+                                {/* <div className="col-lg-3 col-md-6">
                                     <label className="form-label" htmlFor="employee">Select Employees:</label>
                                     <Select
                                         className="form-control-sm"
@@ -802,7 +802,7 @@ const EditQuotation = () => {
                                         placeholder="--Select--"
 
                                     />
-                                </div>
+                                </div> */}
 
 
 

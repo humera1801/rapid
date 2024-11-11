@@ -40,14 +40,16 @@ type FormData = {
     sender_proof_detail: string;
     reciver_proof_detail: string
     pic_delivery_type: string;
-    pic_charge: number;
-    pic_address: { pickup_client_address: string; pickup_office_address: string }[];
-    dis_address: { dispatch_client_address: string; dispatch_office_address: string }[];
+    pic_office_charge: any;
+    pic_address: { pickup_client_address: string; pickup_office_address: string; pickup_charge: any; pic_hamali_charge: any, pic_other_charge: any }[];
+    dis_address: { dispatch_client_address: string; dispatch_office_address: string; dispatch_charge: any, dis_hamali_charge: any, dis_other_charge: any }[];
     pic_office_detail: string;
     actual_paid_amount: any;
     dis_delivery_type: string;
-    dis_charge: number;
+    dis_office_charge: any;
     bus_no: string;
+    total_pickup_charge: any;
+    total_dispatch_charge: any;
     driver_no: string;
     transport_charge: number;
     dis_office_detail: string;
@@ -67,7 +69,6 @@ type FormData = {
     is_demurrage: boolean;
     actual_payable_amount: number;
     print_payable_amount: number;
-    lr_no: number
     print_paid_amount: any;
     actual_bal_amount: any;
     print_bal_amount: any;
@@ -97,7 +98,10 @@ type FormData = {
     vendorCode: string;
     client_id: any;
     client_id_proof: any;
+    sender_id_proof: any;
+    receiver_id_proof: any
     is_client_send_or_rec: any;
+    delivery: { lr_no: any; bus_no: any; driver_no: any; other_charge: any; }[];
 
 };
 
@@ -168,7 +172,7 @@ const ParcelBook: React.FC = () => {
     const storedData = localStorage.getItem('userData');
 
 
-    const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues, clearErrors } = useForm<FormData>(
+    const { register, control, handleSubmit, reset, formState: { errors }, watch, setValue, getValues, clearErrors } = useForm<FormData>(
         {
             defaultValues: {
                 is_delivery: false,
@@ -184,10 +188,10 @@ const ParcelBook: React.FC = () => {
                 sender_proof_type: '',
                 reciver_proof_type: '',
                 pic_delivery_type: '',
-                pic_charge: 0,
+                pic_office_charge: '',
                 pic_office_detail: '',
                 dis_delivery_type: '',
-                dis_charge: 0,
+                dis_office_charge: '',
                 bus_no: '',
                 driver_no: '',
                 transport_charge: 0,
@@ -202,10 +206,11 @@ const ParcelBook: React.FC = () => {
                 payment_method: '',
                 total_print_rate: '',
                 bill_detail: [{ e_way_bill_no: '', p_o_no: '', invoice_no: '', invoice_amount: '' }],
-                pic_address: [{ pickup_client_address: '', pickup_office_address: '' }],
-                dis_address: [{ dispatch_client_address: '', dispatch_office_address: '' }],
+                pic_address: [{ pickup_client_address: '', pickup_office_address: '', pickup_charge: '', pic_hamali_charge: "", pic_other_charge: '' }],
+                dis_address: [{ dispatch_client_address: '', dispatch_office_address: '', dispatch_charge: '', dis_hamali_charge: '', dis_other_charge: '' }],
                 parcel_detail: [{ parcel_type: '', weight: 0, qty: 0, rate: 0, total_amount: 0, print_rate: 0, total_print_rate: 0, QTYtotal: 0 }],
-                lr_no: 0,
+                delivery: [{ lr_no: '', bus_no: "", driver_no: '', other_charge: '' }],
+
                 actual_payable_amount: 0,
                 user_id: storedData,
                 received: 'Get',
@@ -240,8 +245,6 @@ const ParcelBook: React.FC = () => {
 
     const deliveryType = watch("pic_delivery_type");
     const deliveryTypedispatch = watch("dis_delivery_type");
-    const dis_charge = watch('dis_charge');
-    const lr_no = watch('lr_no');
 
     //-----------------------------------------------------  calculation data -------------------------------------------------------------------------------
     const demurrageDays = watch('demurrage_days') || 0;
@@ -254,21 +257,107 @@ const ParcelBook: React.FC = () => {
     });
 
 
-    const parcelDetail = watch('parcel_detail');
-    const picCharge = watch('pic_charge') || 0;
-    const disCharge = watch('dis_charge') || 0;
+    const parcelDetail = watch('parcel_detail') || 0;
+    const picOfficeCharge = parseFloat(watch("pic_office_charge")) || 0;
 
-    // useEffect to handle calculations
+    // Calculate totalPicCharge based on deliveryType
+    const totalPicCharge = deliveryType === "1"
+        ? picOfficeCharge
+        : picAddressFields.reduce((total, field, index) => {
+            const pickupCharge = parseFloat(watch(`pic_address.${index}.pickup_charge`)) || 0;
+            const hamaliCharge = parseFloat(watch(`pic_address.${index}.pic_hamali_charge`)) || 0;
+            const otherCharge = parseFloat(watch(`pic_address.${index}.pic_other_charge`)) || 0;
+            return total + pickupCharge + hamaliCharge + otherCharge;
+        }, 0);
+
+    setValue("total_pickup_charge", totalPicCharge)
+
+    const disOfficeCharge = parseFloat(watch("dis_office_charge")) || 0;
+    const totalDisCharge = deliveryTypedispatch === "1"
+        ? disOfficeCharge
+        : disAddressFields.reduce((total, field, index) => {
+            const dispatchCharge = parseFloat(watch(`dis_address.${index}.dispatch_charge`)) || 0;
+            const hamaliCharge = parseFloat(watch(`dis_address.${index}.dis_hamali_charge`)) || 0;
+            const otherCharge = parseFloat(watch(`dis_address.${index}.dis_other_charge`)) || 0;
+            return total + dispatchCharge + hamaliCharge + otherCharge;
+        }, 0);
+
+    setValue("total_dispatch_charge", totalDisCharge)
+
+
+    const transportCharge = totalPicCharge + totalDisCharge;
+
+
+
+
+    const isDelivery = watch('is_delivery') || 0;
+
     useEffect(() => {
-        const totalCharge = parseFloat(picCharge.toString()) + parseFloat(disCharge.toString());
-        setValue('transport_charge', totalCharge);
+        if (deliveryType === '1') {
+
+            // Clear client address values
+            picAddressFields.forEach((_, index) => {
+                setValue(`pic_address.${index}.pickup_client_address`, '');
+                setValue(`pic_address.${index}.pickup_office_address`, '');
+                setValue(`pic_address.${index}.pickup_charge`, '');
+                setValue(`pic_address.${index}.pic_hamali_charge`, '');
+                setValue(`pic_address.${index}.pic_other_charge`, '');
+            });
+        } else if (deliveryType === '2') {
+            // Clear office fields if switching to Client Location
+            setValue('pic_office_detail', '');
+            setValue('pic_office_charge', '');
+        }
+
+
+
+
+        if (deliveryTypedispatch === '1') {
+            // Clear dispatch address values
+            disAddressFields.forEach((_, index) => {
+                setValue(`dis_address.${index}.dispatch_client_address`, '');
+                setValue(`dis_address.${index}.dispatch_office_address`, '');
+                setValue(`dis_address.${index}.dispatch_charge`, '');
+                setValue(`dis_address.${index}.dis_hamali_charge`, '');
+                setValue(`dis_address.${index}.dis_other_charge`, '');
+            });
+        } else if (deliveryTypedispatch === '2') {
+            // Clear office fields if switching to Client Location
+            setValue('dis_office_detail', '');
+            setValue('dis_office_charge', '');
+        }
+
+
+
+
+
+
+
+        if (!isDelivery) {
+            reset(prev => ({
+                ...prev,
+                dis_delivery_type: "",
+                pic_delivery_type: "",
+            }));
+        }
+    }, [deliveryType, isDelivery, deliveryTypedispatch, reset, watch]);
+
+
+
+
+    useEffect(() => {
+        const transportCharge = totalPicCharge + totalDisCharge;
+        setValue('transport_charge', transportCharge);
+        console.log("....", transportCharge);
+
 
         const newTotalAmount = parcelDetail.reduce((sum, parcel) => sum + parcel.total_amount, 0);
         const formattedNewTotalAmount = newTotalAmount.toFixed(2);
         setValue('actual_total', formattedNewTotalAmount);
 
-        const gstAmount = (newTotalAmount + totalCharge) * 0.05;
+        const gstAmount = (newTotalAmount + transportCharge) * 0.05;
         setValue('gst_amount', gstAmount.toFixed(2));
+        console.log("gst", gstAmount);
 
 
         const totalPrintAmount = parcelDetail.reduce((sum, parcel) => {
@@ -276,11 +365,11 @@ const ParcelBook: React.FC = () => {
             return sum + totalPrintRate;
         }, 0);
 
-        const printGstAmount = (totalPrintAmount + totalCharge) * 0.05;
+        const printGstAmount = (totalPrintAmount + transportCharge) * 0.05;
         setValue('print_gst_amount', printGstAmount.toFixed(2));
 
 
-    }, [picCharge, disCharge, parcelDetail, watch, setValue]);
+    }, [transportCharge, parcelDetail, watch, setValue]);
 
     const calculateAmounts = (index: number) => {
         const qty = watch(`parcel_detail.${index}.qty`);
@@ -326,10 +415,10 @@ const ParcelBook: React.FC = () => {
 
     const paymentMethod = watch('payment_method');
     const actual_total = parseFloat(getValues('actual_total') || '0');
+    const print_total = parseFloat(getValues('print_total') || '0');
+
     const bilty_charge = parseFloat(getValues('bilty_charge') || '0');
-    // const is_demurrage = getValues('is_demurrage');
     const demurrage_charges = parseFloat(getValues('demurrage_charges') || '0');
-    const demurrage_days = parseFloat(getValues('demurrage_days') || '0');
     const actual_paid_amount = parseFloat(getValues('actual_paid_amount') || '0');
     const print_paid_amount = parseFloat(getValues('print_paid_amount') || '0');
 
@@ -349,28 +438,27 @@ const ParcelBook: React.FC = () => {
             setValue('actual_paid_amount', '0');
             setValue('print_paid_amount', '0');
         } else {
-            // Perform calculations based on current values if not 'credit'
-            const print_total = (actual_total + bilty_charge).toFixed(2);
-            const gst_amount = (actual_total * 0.05).toFixed(2); // Assuming 5% GST
-            const total_demurrage_charges = is_demurrage ? (demurrage_charges * demurrage_days) : 0;
-            const actual_payable_amount = (actual_total + parseFloat(gst_amount) + total_demurrage_charges).toFixed(2);
-            const print_payable_amount = parseFloat(actual_payable_amount);
+            const transportCharge = totalPicCharge + totalDisCharge;
+            const gst_amount = (actual_total + transportCharge) * 0.05  // Assuming 5% GST
+            const printGstAmount = (print_total + transportCharge) * 0.05;
+            // const total_demurrage_charges = is_demurrage ? (demurrage_charges * demurrage_days) : 0;
+            const actual_payable_amount = (actual_total + (gst_amount) + transportCharge).toFixed(2);
+            const print_payable_amount = (print_total + (gst_amount) + transportCharge).toFixed(2);
 
             // Update form values
-            setValue('gst_amount', gst_amount);
-            setValue('print_gst_amount', gst_amount);
-            setValue('total_demurrage_charges', total_demurrage_charges);
+            setValue('gst_amount', gst_amount.toFixed(2));
+            setValue('print_gst_amount', printGstAmount.toFixed(2));
             setValue('actual_payable_amount', parseFloat(actual_payable_amount));
-            setValue('print_payable_amount', print_payable_amount);
-
+            setValue('print_payable_amount', parseFloat(print_payable_amount));
+            setValue("demurrage_days", '');
             // Calculate balances
             const actual_bal_amount = (parseFloat(actual_payable_amount) - actual_paid_amount).toFixed(2);
-            const print_bal_amount = (print_payable_amount - print_paid_amount).toFixed(2);
+            const print_bal_amount = (parseFloat(print_payable_amount) - print_paid_amount).toFixed(2);
 
             setValue('actual_bal_amount', parseFloat(actual_bal_amount));
             setValue('print_bal_amount', parseFloat(print_bal_amount));
         }
-    }, [paymentMethod, actual_total, bilty_charge, is_demurrage, demurrage_charges, demurrage_days, actual_paid_amount, print_paid_amount, setValue]);
+    }, [paymentMethod, actual_total, is_demurrage, demurrage_charges, actual_paid_amount, print_paid_amount, setValue, transportCharge]);
 
 
 
@@ -433,16 +521,22 @@ const ParcelBook: React.FC = () => {
 
         setValue(`parcel_detail.${index}.print_rate`, rate);
         setValue(`parcel_detail.${index}.total_print_rate`, totalAmount);
-        const transport_charge = watch('transport_charge') || 0;
-        const totalCharge = parseFloat(picCharge.toString()) + parseFloat(disCharge.toString());
-        setValue('transport_charge', totalCharge);
-        const gstAmount = (newTotalAmount + totalCharge) * 0.05;
+
+
+
+
+        const transportCharge = totalPicCharge + totalDisCharge;
+
+        setValue('transport_charge', transportCharge);
+
+
+        const gstAmount = (newTotalAmount + transportCharge) * 0.05;
         setValue('gst_amount', gstAmount.toFixed(2));
         const totalPrintAmount = watch('parcel_detail').reduce((sum, parcel) => sum + parcel.total_print_rate, 0);
         const formattedNewPrintTotalAmount = totalPrintAmount.toFixed(2);
         setValue('print_total', formattedNewPrintTotalAmount);
 
-        const printGstAmount = (totalPrintAmount + totalCharge) * 0.05;
+        const printGstAmount = (totalPrintAmount + transportCharge) * 0.05;
         setValue('print_gst_amount', printGstAmount.toFixed(2));
 
 
@@ -479,11 +573,14 @@ const ParcelBook: React.FC = () => {
         const totalPrintAmount = watch('parcel_detail').reduce((sum, parcel) => sum + parcel.total_print_rate, 0);
         const formattedNewPrintTotalAmount = totalPrintAmount.toFixed(2);
         setValue('print_total', formattedNewPrintTotalAmount);
-        const totalCharge = parseFloat(picCharge.toString()) + parseFloat(disCharge.toString());
-        setValue('transport_charge', totalCharge);
 
 
-        const printGstAmount = (totalPrintAmount + totalCharge) * 0.05;
+
+        const transportCharge = totalPicCharge + totalDisCharge;
+        setValue('transport_charge', transportCharge);
+
+
+        const printGstAmount = (totalPrintAmount + transportCharge) * 0.05;
         setValue('print_gst_amount', printGstAmount.toFixed(2));
 
         const newPrintRate = printRate === 0 ? 0 : printRate;
@@ -526,36 +623,36 @@ const ParcelBook: React.FC = () => {
 
         const blityCharge = parseFloat(watch('bilty_charge').toString());
 
-        const totalCharge = parseFloat(picCharge.toString()) + parseFloat(disCharge.toString());
-        setValue('transport_charge', totalCharge);
+        const transportCharge = totalPicCharge + totalDisCharge;
+        setValue('transport_charge', transportCharge);
 
 
-        const gstAmount = (newTotalAmount + totalCharge) * 0.05;
+        const gstAmount = (newTotalAmount + transportCharge) * 0.05;
         setValue('gst_amount', gstAmount.toFixed(2));
 
 
-        const printGstAmount = (totalPrintAmount + totalCharge) * 0.05;
+        const printGstAmount = (totalPrintAmount + transportCharge) * 0.05;
         setValue('print_gst_amount', printGstAmount.toFixed(2));
 
-        const actualPayableAmount = newTotalAmount + gstAmount + blityCharge + totalDemurrageCharges + totalCharge;
-        const printPayableAmount = totalPrintAmount + printGstAmount + blityCharge + totalDemurrageCharges + totalCharge;
+        const actualPayableAmount = newTotalAmount + gstAmount + blityCharge + totalDemurrageCharges + transportCharge;
+        const printPayableAmount = totalPrintAmount + printGstAmount + blityCharge + totalDemurrageCharges + transportCharge;
 
-        setValue('actual_payable_amount', actualPayableAmount);
-        setValue('print_payable_amount', printPayableAmount);
-
-
+        setValue('actual_payable_amount', actualPayableAmount || 0);
+        setValue('print_payable_amount', printPayableAmount || 0);
 
 
-        const actual_paid_amount = watch('actual_paid_amount') || 0;
-        const printReceive = watch('print_paid_amount') || 0;
+
+
+        const actual_paid_amount = watch('actual_paid_amount')
+        const printReceive = watch('print_paid_amount')
 
 
         const actualbalamount = actualPayableAmount - actual_paid_amount;
         const printBalance = printPayableAmount - printReceive;
 
 
-        setValue('actual_bal_amount', actualbalamount);
-        setValue('print_bal_amount', printBalance);
+        setValue('actual_bal_amount', actualbalamount || 0);
+        setValue('print_bal_amount', printBalance || 0);
 
 
 
@@ -568,7 +665,7 @@ const ParcelBook: React.FC = () => {
             const qty = watch(`parcel_detail.${index}.qty`);
             updateTotalDemurrageCharges(qty);
         });
-    }, [watch('parcel_detail'), watch('bilty_charge'), watch('demurrage_days'), watch('demurrage_charges')]);
+    }, [watch('parcel_detail'), watch('bilty_charge'), watch('demurrage_days'), watch('demurrage_charges'), transportCharge]);
 
 
 
@@ -943,47 +1040,52 @@ const ParcelBook: React.FC = () => {
     });
 
 
-    const handlesenderOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleSenderOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedOption = e.target.value;
         setSenderOption(selectedOption);
 
-        if (selectedOption === 'sender' && clientDetails) {
-            setSenderDetails({
-                sender_name: clientDetails.client_firstName,
-                send_mob: clientDetails.client_mobileNo,
-                send_add: clientDetails.client_address,
-            });
-            setReceiverDetails({
-                rec_name: '',
-                rec_mob: '',
-                rec_add: "",
-            });
-        } else if (selectedOption === 'receiver' && clientDetails) {
-            setReceiverDetails({
-                rec_name: clientDetails.client_firstName,
-                rec_mob: clientDetails.client_mobileNo,
-                rec_add: clientDetails.client_address,
-            });
-            setSenderDetails({
-                sender_name: '',
-                send_mob: '',
-                send_add: "",
-            });
-        }
-        else if (selectedOption === 'other_data') {
-            setSenderDetails({
-                sender_name: '',
-                send_mob: '',
-                send_add: "",
-            });
-            setReceiverDetails({
-                rec_name: '',
-                rec_mob: '',
-                rec_add: "",
-            });
-        };
+        if (clientDetails) {
+            if (selectedOption === 'sender') {
+                const newSenderDetails = {
+                    sender_name: clientDetails.client_firstName,
+                    send_mob: clientDetails.client_mobileNo,
+                    send_add: clientDetails.client_address,
+                };
+                setSenderDetails(newSenderDetails);
+                console.log(newSenderDetails.sender_name); // Use the new sender details here
 
-    }
+                setReceiverDetails({
+                    rec_name: '',
+                    rec_mob: '',
+                    rec_add: "",
+                });
+            } else if (selectedOption === 'receiver') {
+                const newReceiverDetails = {
+                    rec_name: clientDetails.client_firstName,
+                    rec_mob: clientDetails.client_mobileNo,
+                    rec_add: clientDetails.client_address,
+                };
+                setReceiverDetails(newReceiverDetails);
+                setSenderDetails({
+                    sender_name: '',
+                    send_mob: '',
+                    send_add: "",
+                });
+            } else if (selectedOption === 'other_data') {
+                setSenderDetails({
+                    sender_name: '',
+                    send_mob: '',
+                    send_add: "",
+                });
+                setReceiverDetails({
+                    rec_name: '',
+                    rec_mob: '',
+                    rec_add: "",
+                });
+            }
+        }
+    };
+
 
     //-------------------------------------Form submit -----------------------------------
 
@@ -1021,7 +1123,10 @@ const ParcelBook: React.FC = () => {
         try {
 
             const finalData: FormData = {
+
                 ...formData,
+                total_pickup_charge: totalPicCharge,
+                total_dispatch_charge: totalDisCharge,
             };
 
             let clientId: number | undefined;
@@ -1043,69 +1148,130 @@ const ParcelBook: React.FC = () => {
                     throw new Error('Failed to create parcel data');
                 }
                 const parcelData = await parcelDataResponse.json();
-                console.log("datadata", parcelData)
+                console.log("datadata", parcelData.parcel_token)
 
                 if (parcelData.status == 1) {
                     console.log("formData0", formData);
-                    if (formData.parcel_imgs.length > 0) {
-                        const data = new FormData();
-                        data.append("parcel_token", parcelData.parcel_token);
-                        for (const file of formData.parcel_imgs) {
-                            data.append("parcel_imgs", file);
+
+                    if (parcelData.status == 1) {
+                        console.log("formData0", formData);
+
+                        if (formData.parcel_imgs.length > 0) {
+                            const data = new FormData();
+                            data.append("parcel_token", parcelData.parcel_token);
+                            for (const file of formData.parcel_imgs) {
+                                data.append("parcel_imgs", file);
+                            }
+                            try {
+                                const response = await fetch("http://192.168.0.106:3001/parcel/upload_parcel_image", {
+                                    method: "POST",
+                                    body: data,
+                                });
+                                const result = await response.json();
+                                if (result.status === "1") {
+                                    console.log("parcel images Added successfully");
+
+                                } else {
+                                    console.log("failed to upload");
+                                }
+                            } catch (error) {
+                                console.error("Error:", error);
+
+                            }
+                            if (parcelData.parcel_token != "") {
+                                const parcelToken = parcelData.parcel_token;
+                                try {
+                                    const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
+
+
+                                    console.log("get data", getTDetail.data[0]);
+                                    handleParcelPrint(getTDetail.data[0]);
+                                    router.push("/parcel_list")
+
+                                } catch (error) {
+
+                                    console.error('Error fetching parcel data:', error);
+                                }
+
+                            };
                         }
+                        else {
+                            console.log("No images to upload");
+                        }
+        
+                    } else {
+                        console.log("Failed to update parcel details");
+                    }
+                    console.log("sender image", parcelData.parcel_token)
+
+                    if (formData.sender_id_proof || formData.receiver_id_proof) {
+                        const idProofData = new FormData();
+                        idProofData.append("parcel_token", parcelData.parcel_token);
+
+                        if (formData.sender_id_proof && formData.sender_id_proof.length > 0) {
+                            for (const file of formData.sender_id_proof) {
+                                idProofData.append("sender_id_proof", file);
+                            }
+                        }
+
+                        // Check if receiver ID proof exists and append to the FormData
+                        if (formData.receiver_id_proof && formData.receiver_id_proof.length > 0) {
+                            for (const file of formData.receiver_id_proof) {
+                                idProofData.append("receiver_id_proof", file);
+                            }
+                        }
+
                         try {
-                            const response = await fetch("http://192.168.0.105:3001/parcel/upload_parcel_image", {
+                            const response = await fetch("http://192.168.0.106:3001/parcel/upload_id_proof", {
                                 method: "POST",
-                                body: data,
+                                body: idProofData,
                             });
                             const result = await response.json();
                             if (result.status === "1") {
-                                console.log("parcel images Added successfully");
-
+                                console.log("ID proofs uploaded successfully");
                             } else {
-                                console.log("failed to upload");
+                                console.log("Failed to upload ID proofs");
                             }
                         } catch (error) {
-                            console.error("Error:", error);
-
+                            console.error("Error uploading ID proofs:", error);
                         }
-                        if (parcelData.parcel_token != "") {
-                            const parcelToken = parcelData.parcel_token;
-                            try {
-                                const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
-
-
-                                console.log("get data", getTDetail.data[0]);
-                                // handleParcelPrint(getTDetail.data[0]);
-                                // router.push("/parcel_list")
-
-                            } catch (error) {
-
-                                console.error('Error fetching parcel data:', error);
-                            }
-
-                        };
                     } else {
-                        if (parcelData.parcel_token != "") {
-                            const parcelToken = parcelData.parcel_token;
-                            try {
-                                const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
-
-
-                                console.log("get data", getTDetail.data[0]);
-                                handleParcelPrint(getTDetail.data[0]);
-                                // handleparcelPDF(getTDetail.data[0])
-                                router.push("/parcel_list")
-
-                            } catch (error) {
-
-                                console.error('Error fetching parcel data:', error);
-                            }
-
-                        };
-                        console.log("No images to upload");
+                        console.log("No sender ID proofs to upload");
                     }
 
+
+                    if (formData.client_id_proof && formData.client_id_proof.length > 0) {
+                        const file = formData.client_id_proof[0];
+
+                        console.log("New image uploaded:", {
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                        });
+
+                        if (clientId !== undefined) {
+                            await uploadClientProofId(file, clientId);
+                        } else {
+                            console.error('Client ID is undefined; cannot upload image.');
+                        }
+                    } else {
+                        console.log("No new image selected; skipping upload.");
+                    }
+
+
+                    if (parcelData.parcel_token != "") {
+                        const parcelToken = parcelData.parcel_token;
+                        try {
+                            const getTDetail = await EditParcelDataList.getEditParcelData(parcelToken);
+
+                            console.log("Parcel data:", getTDetail.data[0]);
+                            handleParcelPrint(getTDetail.data[0]);
+                            router.push("/parcel_list");
+
+                        } catch (error) {
+                            console.error('Error fetching parcel data:', error);
+                        }
+                    }
 
                 }
                 console.log('Form data submitted successfully with selected client id:', clientId);
@@ -1116,23 +1282,6 @@ const ParcelBook: React.FC = () => {
             }
 
 
-            if (formData.client_id_proof && formData.client_id_proof.length > 0) {
-                const file = formData.client_id_proof[0];
-
-                console.log("New image uploaded:", {
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                });
-
-                if (clientId !== undefined) {
-                    await uploadClientProofId(file, clientId);
-                } else {
-                    console.error('Client ID is undefined; cannot upload image.');
-                }
-            } else {
-                console.log("No new image selected; skipping upload.");
-            }
 
 
 
@@ -1156,7 +1305,7 @@ const ParcelBook: React.FC = () => {
         formData.append("client_id", clientId.toString());
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/booking/upload_client_id_proof', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -1169,7 +1318,7 @@ const ParcelBook: React.FC = () => {
 
     async function addNewCity(stateId: string, cityName: string) {
         const requestBody = { city_name: cityName, state_id: stateId };
-        const response = await fetch('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+        const response = await fetch('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1187,7 +1336,7 @@ const ParcelBook: React.FC = () => {
 
     async function submitFormData(formData: FormData, clientId: number | undefined) {
 
-        const response = await fetch('http://192.168.0.105:3001/parcel/create_parcel_data', {
+        const response = await fetch('http://192.168.0.106:3001/parcel/create_parcel_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -1204,7 +1353,7 @@ const ParcelBook: React.FC = () => {
 
     async function submitNewClientFormData(formData: FormData) {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/parcel/create_parcel_data', formData);
+            const response = await axios.post('http://192.168.0.106:3001/parcel/create_parcel_data', formData);
             console.log('Form data submitted successfully for new client.', response.data);
             return response.data; // Ensure this returns the data with client_id
         } catch (error) {
@@ -1222,19 +1371,37 @@ const ParcelBook: React.FC = () => {
         }
     }
 
+
+
+
+
+
+
     // //-------------------------------------------------------------------------------------------------------------------
 
 
     // const onSubmit: SubmitHandler<FormData> = async (formData: FormData) => {
 
+    //     if (senderOption === 'sender') {
+    //         formData.sender_name = senderDetails.sender_name;
+    //         formData.send_mob = senderDetails.send_mob;
+    //         formData.send_add = senderDetails.send_add;
 
+    //     } else if (senderOption === 'receiver') {
+    //         formData.rec_name = receiverDetails.rec_name;
+    //         formData.rec_mob = receiverDetails.rec_mob;
+    //         formData.rec_add = receiverDetails.rec_add;
+
+    //     }
 
     //     console.log('form submitted', formData);
     // };
+    //--------------------------------------------------------------------------------------------------------------------
 
-
-
-
+    const { fields: driverfield, append: appenddriver, remove: removedriver } = useFieldArray({
+        control,
+        name: 'delivery' // Change to your desired name
+    });
 
 
 
@@ -1614,7 +1781,7 @@ const ParcelBook: React.FC = () => {
                                             {...register('is_client_send_or_rec', { required: true })}
                                             type="radio"
                                             checked={senderOption === 'sender'}
-                                            onChange={handlesenderOptionChange}
+                                            onChange={handleSenderOptionChange}
                                             id="sender"
                                             value="sender"
                                         /> Sender
@@ -1622,14 +1789,14 @@ const ParcelBook: React.FC = () => {
                                             {...register('is_client_send_or_rec')}
                                             type="radio"
                                             checked={senderOption === 'receiver'}
-                                            onChange={handlesenderOptionChange}
+                                            onChange={handleSenderOptionChange}
                                             value="receiver"
                                         /> Receiver
                                         <input
                                             {...register('is_client_send_or_rec')}
                                             type="radio"
                                             checked={senderOption === 'other_data'}
-                                            onChange={handlesenderOptionChange}
+                                            onChange={handleSenderOptionChange}
                                             value="other_data"
                                         /> Other
                                     </div>
@@ -1650,98 +1817,61 @@ const ParcelBook: React.FC = () => {
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="sender_name">Sender Name</label>
                                     <input
-                                        {...register('sender_name', { required: true })}
+                                        {...register('sender_name')}
                                         className="form-control form-control-sm"
                                         type="text"
                                         id="sender_name"
                                         placeholder="Sender Name"
-                                        onInput={() => {
-                                            if (errors.sender_name) {
-                                                clearErrors("sender_name");
-                                            }
-                                        }}
                                         value={senderDetails.sender_name}
                                         onChange={(e) => setSenderDetails({ ...senderDetails, sender_name: e.target.value })}
                                     />
-                                    {errors.sender_name?.type === "required" && (
-                                        <span id="show_mobile_err" className="error">This field is required.</span>
-                                    )}
+                                    {/* {errors.sender_name && <span className="error">This field is required.</span>} */}
                                 </div>
 
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="send_mob">Sender Mobile No.</label>
                                     <input
-                                        type="text"
-                                        {...register("send_mob", { required: true,minLength: 10 })}
+                                        {...register("send_mob", { minLength: 10 })}
                                         className="form-control form-control-sm"
-                                        name="send_mob"
                                         id="send_mob"
-                                        onInput={() => {
-                                            if (errors.send_mob) {
-                                                clearErrors("send_mob");
-                                            }
-                                        }}
                                         maxLength={10}
                                         placeholder="Enter Sender Mobile No"
                                         value={senderDetails.send_mob}
                                         onChange={(e) => setSenderDetails({ ...senderDetails, send_mob: e.target.value })}
                                     />
-                                    {errors.send_mob?.type === "required" && (
-                                        <span id="show_mobile_err" className="error">This field is required.</span>
-                                    )}
-                                      {errors.send_mob?.type === "minLength" && (
-                                        <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>
-                                    )}
+                                    {/* {errors.send_mob?.type === "required" && <span className="error">This field is required.</span>} */}
+                                    {errors.send_mob?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
                                 </div>
+
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="rec_name">Receiver Name</label>
                                     <input
-                                        {...register('rec_name', { required: true })}
+                                        {...register('rec_name')}
                                         className="form-control form-control-sm"
                                         type="text"
-                                        onInput={() => {
-                                            if (errors.rec_name) {
-                                                clearErrors("rec_name");
-                                            }
-                                        }}
                                         id="rec_name"
                                         placeholder="Receiver Name"
                                         value={receiverDetails.rec_name}
                                         onChange={(e) => setReceiverDetails({ ...receiverDetails, rec_name: e.target.value })}
                                     />
-                                    {errors.rec_name?.type === "required" && (
-                                        <span id="show_mobile_err" className="error">This field is required.</span>
-                                    )}
+                                    {/* {errors.rec_name && <span className="error">This field is required.</span>} */}
                                 </div>
 
                                 <div className="col-lg-3">
                                     <label className="form-label" htmlFor="rec_mob">Receiver Mobile No.</label>
                                     <input
-                                        type="text"
-                                        {...register("rec_mob", { required:true ,minLength: 10 })}
+                                        {...register("rec_mob", { minLength: 10 })}
                                         className="form-control form-control-sm"
-                                        name="rec_mob"
                                         id="rec_mob"
-                                        onInput={() => {
-                                            if (errors.rec_mob) {
-                                                clearErrors("rec_mob");
-                                            }
-                                        }}
                                         maxLength={10}
                                         placeholder="Enter Receiver Mobile No"
                                         value={receiverDetails.rec_mob}
                                         onChange={(e) => setReceiverDetails({ ...receiverDetails, rec_mob: e.target.value })}
                                     />
-                                    {errors.rec_mob?.type === "required" && (
-                                        <span id="show_mobile_err" className="error">This field is required.</span>
-                                    )}
-                                      {errors.rec_mob?.type === "required" && (
-                                        <span id="show_mobile_err" className="error">This field is required.</span>
-                                    )}
+                                    {/* {errors.rec_mob?.type === "required" && <span className="error">This field is required.</span>} */}
+                                    {errors.rec_mob?.type === "minLength" && <span className="error">Enter 10 Digits Mobile Number.</span>}
                                 </div>
                             </div>
-
-
 
 
 
@@ -1844,6 +1974,7 @@ const ParcelBook: React.FC = () => {
 
                                 </div>
                             </div>
+
 
 
 
@@ -2019,7 +2150,20 @@ const ParcelBook: React.FC = () => {
                             </div>
 
 
+                            <div className="row mb-3">
+                                <div className="col-lg-6">
+                                    <label className="form-label" htmlFor="particulars">Upload  Sender Id Proof </label>
+                                    <input className="form-control form-control-sm" type="file" {...register("sender_id_proof")} />
 
+                                </div>
+                                <div className="col-lg-6">
+                                    <label className="form-label" htmlFor="particulars"> Upload Receiver Id Proof </label>
+                                    <input className="form-control form-control-sm" type="file" {...register("receiver_id_proof")} />
+
+                                </div>
+
+
+                            </div>
 
 
                             <div className="row mt-4">
@@ -2035,7 +2179,7 @@ const ParcelBook: React.FC = () => {
                                 <div className="row mb-3" key={field.id}>
                                     <div className="col-lg-2">
                                         <label className="form-label" htmlFor={`select_type_${index}`}>Select Type</label>
-                                        <select {...register(`parcel_detail.${index}.parcel_type`)} className="form-control" id={`select_type_${index}`}>
+                                        <select {...register(`parcel_detail.${index}.parcel_type`)} className="form-control form-control-sm" id={`select_type_${index}`}>
                                             <option value="">--Select--</option>
                                             <option value="box">Box</option>
                                             <option value="loose">Loose</option>
@@ -2180,7 +2324,7 @@ const ParcelBook: React.FC = () => {
 
                             <div className="row mb-3">
                                 <div className="col-lg-6">
-                                    <label className="form-label" htmlFor="particulars">Image Upload</label>
+                                    <label className="form-label" htmlFor="particulars">Add Parcel Images</label>
                                     <input className="form-control form-control-sm" type="file" {...register("parcel_imgs")} multiple />
 
                                 </div>
@@ -2211,18 +2355,7 @@ const ParcelBook: React.FC = () => {
                                             <option value="2">Client Location</option>
                                         </select>
                                     </div>
-                                    <div className="col-md-4">
-                                        <label className="form-label">Pickup Charge</label>
-                                        <input
-                                            type="number"
-                                            id="pic_charge"
-                                            className="form-control form-control-sm"
-                                            placeholder="Enter Pickup Charge"
-                                            {...register("pic_charge")}
 
-                                            value={watch('pic_charge') > 0 ? watch('pic_charge') : ''}
-                                        />
-                                    </div>
                                 </div>
                                 <br />
 
@@ -2231,20 +2364,54 @@ const ParcelBook: React.FC = () => {
                                         {picAddressFields.map((field, index) => (
                                             <div key={field.id} id="show_edit_pic_row_">
                                                 <div className="row mt-3">
-                                                    <div className="col-md-4">
+                                                    <div className="col-md-2">
+                                                        <label className="form-label">Client Address</label>
+
                                                         <textarea
                                                             className="form-control form-control-sm"
                                                             placeholder="Client Address"
                                                             {...register(`pic_address.${index}.pickup_client_address`)}
                                                         ></textarea>
                                                     </div>
-                                                    <div className="col-md-4">
+                                                    <div className="col-md-2">
+                                                        <label className="form-label">Office Address</label>
+
                                                         <textarea
                                                             className="form-control form-control-sm"
                                                             placeholder="Office Address"
                                                             {...register(`pic_address.${index}.pickup_office_address`)}
                                                         ></textarea>
                                                     </div>
+                                                    <div className="col-md-2">
+                                                        <label className="form-label">Pickup Charge</label>
+                                                        <input
+                                                            type="number"
+                                                            className="form-control form-control-sm"
+                                                            placeholder="Enter Pickup Charge"
+                                                            {...register(`pic_address.${index}.pickup_charge`)}
+
+                                                        // value={watch('pickup_charge') > '' ? watch('pickup_charge') : ''}
+                                                        />
+                                                    </div>
+                                                    <div className="col-md-2">
+                                                        <label className="form-label">Hamali Charge</label>
+
+                                                        <input
+                                                            className="form-control form-control-sm"
+                                                            placeholder="Hamali Charges"
+                                                            {...register(`pic_address.${index}.pic_hamali_charge`)}
+                                                        ></input>
+                                                    </div>
+                                                    <div className="col-md-2">
+                                                        <label className="form-label">Other Charge</label>
+
+                                                        <input
+                                                            className="form-control form-control-sm"
+                                                            placeholder="Other Charges"
+                                                            {...register(`pic_address.${index}.pic_other_charge`)}
+                                                        ></input>
+                                                    </div>
+
                                                     <div className="col-lg-1" style={{ padding: '10px' }}>
                                                         {index > 0 && (
                                                             <button type="button"
@@ -2254,11 +2421,12 @@ const ParcelBook: React.FC = () => {
                                                             </button>
                                                         )}
                                                     </div>
+
                                                     <div className="col-md" style={{ marginTop: "8px" }}>
                                                         <button
                                                             type="button"
                                                             className="btn btn-primary add_more_pickup_row"
-                                                            onClick={() => appendPicAddress({ pickup_client_address: '', pickup_office_address: '' })}
+                                                            onClick={() => appendPicAddress({ pickup_client_address: '', pickup_office_address: '', pickup_charge: '', pic_hamali_charge: ' ', pic_other_charge: '' })}
                                                         >
                                                             <FontAwesomeIcon icon={faPlusCircle} />
                                                         </button>
@@ -2281,17 +2449,111 @@ const ParcelBook: React.FC = () => {
                                                     placeholder="Office Detail"
                                                 ></textarea>
                                             </div>
+                                            <div className="col-md-3">
+                                                <label className="form-label">Pickup Charge</label>
+                                                <input
+                                                    type="number"
+                                                    id="pic_office_charge"
+                                                    className="form-control form-control-sm"
+                                                    placeholder="Enter Pickup Charge"
+                                                    {...register("pic_office_charge")}
+
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 )}
                                 <br />
 
+
+
+
+
+
+
+
+
+                                <div className="row">
+                                    <div className="col-md-12">
+                                        <h5>Transit Detail</h5>
+
+                                    </div>
+                                    <hr />
+                                </div>
+                                {driverfield.map((field: any, index: any) => (
+                                    <div key={field.id} className="row mt-3">
+                                        <div className="col-md-3">
+                                            <label className="form-label">LR No.</label>
+                                            <input
+                                                {...register(`delivery.${index}.lr_no`)}
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder="LR No."
+                                            />
+                                        </div>
+                                        <div className="col-md-3">
+                                            <label className="form-label">Bus No.</label>
+                                            <input
+                                                {...register(`delivery.${index}.bus_no`)}
+                                                type="text"
+                                                className="form-control form-control-sm"
+                                                placeholder="Bus No."
+                                            />
+                                        </div>
+                                        <div className="col-md-3">
+                                            <label className="form-label">Driver Phone No.</label>
+                                            <input
+                                                {...register(`delivery.${index}.driver_no`, { required: true})}
+                                                type="text"                                                
+                                                minLength={10}
+                                                maxLength={10}
+                                                className="form-control form-control-sm"
+                                                placeholder="Phone No."
+                                            />
+                                           
+                                        </div>
+                                        <div className="col-md-2">
+                                            <label className="form-label">Other Charges.</label>
+                                            <input
+                                                {...register(`delivery.${index}.other_charge`)}
+                                                type="number"
+                                                className="form-control form-control-sm"
+                                                placeholder="charges"
+                                            />
+
+                                        </div>
+                                        <div className="col-lg-1 " style={{ padding: '10px', marginTop: "10px" }}>
+                                            {index > 0 && (
+                                                <button
+                                                    type="button"
+                                                    className="btn btn-danger btn-sm remove_pickup_row"
+                                                    onClick={() => removedriver(index)}
+                                                >
+                                                    <FontAwesomeIcon icon={faMinusCircle} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                                <div className="col-lg-12 data" style={{ marginTop: "12px" }}>
+                                    <button
+                                        type="button"
+                                        style={{ marginRight: '4.2%', float: "right" }}
+                                        className="btn btn-primary btn-sm add_more_pickup_row "
+                                        onClick={() => appenddriver({ lr_no: '', bus_no: '', driver_no: '', other_charge: '' })} // Append with all fields
+                                    >
+                                        <FontAwesomeIcon icon={faPlusCircle} />
+                                    </button>
+                                </div>
+
+                                <br />
                                 <div className="row">
                                     <div className="col-md-12">
                                         <h5>Dispatch Detail</h5>
                                     </div>
                                     <hr />
                                 </div>
+
 
                                 <div className="row">
                                     <div className="col-md-4">
@@ -2306,18 +2568,6 @@ const ParcelBook: React.FC = () => {
                                             <option value="2">Client Location</option>
                                         </select>
                                     </div>
-                                    <div className="col-md-4">
-                                        <label className="form-label">Dispatch Charge</label>
-                                        <input
-                                            type="number"
-                                            id="dis_charge"
-                                            className="form-control form-control-sm"
-                                            placeholder="Enter dispatch Charge"
-                                            {...register("dis_charge")}
-                                            value={watch('dis_charge') > 0 ? watch('dis_charge') : ''}
-
-                                        />
-                                    </div>
                                 </div>
                                 <br />
 
@@ -2326,41 +2576,83 @@ const ParcelBook: React.FC = () => {
                                         {disAddressFields.map((field, index) => (
                                             <div key={field.id} id="show_edit_pic_row_">
                                                 <div className="row mt-3">
-                                                    <div className="col-md-4">
+                                                    <div className="col-md-2">
+                                                        <label className="form-label">Client Address</label>
+
                                                         <textarea
                                                             className="form-control form-control-sm"
                                                             placeholder="Client Address"
                                                             {...register(`dis_address.${index}.dispatch_client_address`)}
                                                         ></textarea>
                                                     </div>
-                                                    <div className="col-md-4">
+                                                    <div className="col-md-2">
+                                                        <label className="form-label">Office Address</label>
+
                                                         <textarea
                                                             className="form-control form-control-sm"
                                                             placeholder="Office Address"
                                                             {...register(`dis_address.${index}.dispatch_office_address`)}
                                                         ></textarea>
                                                     </div>
-                                                    <div className="col-lg-1" style={{ padding: '10px' }}>
+                                                    <div className="col-md-2">
+                                                        <label className="form-label">Dispatch Charge</label>
+                                                        <input
+                                                            type="number"
+
+
+                                                            className="form-control form-control-sm"
+                                                            placeholder="Enter dispatch Charge"
+                                                            {...register(`dis_address.${index}.dispatch_charge`)}
+
+                                                        />
+                                                    </div>
+                                                    <div className="col-md-2">
+                                                        <label className="form-label">Hamali Charges</label>
+                                                        <input
+                                                            type="number"
+                                                            className="form-control form-control-sm"
+                                                            placeholder="Enter Hamali Charge"
+                                                            {...register(`dis_address.${index}.dis_hamali_charge`)}
+
+
+                                                        />
+                                                    </div>
+                                                    <div className="col-md-2">
+                                                        <label className="form-label">Other Charges</label>
+                                                        <input
+                                                            type="number"
+
+                                                            className="form-control form-control-sm"
+                                                            placeholder="Enter Other Charge"
+                                                            {...register(`dis_address.${index}.dis_other_charge`)}
+
+
+                                                        />
+                                                    </div>
+                                                    <div className="col-lg-1 data" style={{ padding: '20px' }}>
                                                         {index > 0 && (
                                                             <button type="button"
-                                                                className="btn btn-danger remove_pickup_row"
+                                                                className="btn btn-danger btn-sm remove_pickup_row"
                                                                 onClick={() => removeDisAddress(index)}>
                                                                 <FontAwesomeIcon icon={faMinusCircle} />
                                                             </button>
                                                         )}
                                                     </div>
-                                                    <div className="col-md" style={{ marginTop: "8px" }}>
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-primary add_more_pickup_row"
-                                                            onClick={() => appendDisAddress({ dispatch_client_address: '', dispatch_office_address: '' })}
-                                                        >
-                                                            <FontAwesomeIcon icon={faPlusCircle} />
-                                                        </button>
-                                                    </div>
+
                                                 </div>
                                             </div>
                                         ))}
+                                        <div className="col-lg-12 data" style={{ marginTop: "8px" }}>
+                                            <button
+                                                type="button"
+                                                style={{ marginRight: '9.20%', float: "right" }}
+                                                className="btn btn-primary btn-sm add_more_pickup_row"
+                                                onClick={() => appendDisAddress({ dispatch_client_address: '', dispatch_office_address: '', dispatch_charge: '', dis_hamali_charge: '', dis_other_charge: '' })}
+                                            >
+                                                <FontAwesomeIcon icon={faPlusCircle} />
+                                            </button>
+                                        </div>
+
                                     </div>
                                 )}
 
@@ -2375,6 +2667,17 @@ const ParcelBook: React.FC = () => {
                                                     placeholder="Office Detail"
                                                 ></textarea>
                                             </div>
+                                            <div className="col-md-4">
+                                                <label className="form-label">Dispatch Charge</label>
+                                                <input
+                                                    type="number"
+
+                                                    className="form-control form-control-sm"
+                                                    placeholder="Enter dispatch Charge"
+                                                    {...register("dis_office_charge")}
+
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -2382,44 +2685,43 @@ const ParcelBook: React.FC = () => {
                                 <br />
 
 
-                                <div className="row">
-                                    <div className="col-md-12">
-                                        <h5>Add Delivery Detail</h5>
-
-                                    </div>
-                                    <hr />
-                                </div>
-                                <div className="row">
-                                    <div className="col-md-3">
-                                        <label className="form-label">LR No.</label>
-                                        <input {...register('lr_no')}
-
-                                            type="text" className="form-control form-control-sm" placeholder="LR No." />
-                                    </div>
-                                    <div className="col-md-3">
-                                        <label className="form-label">Bus No.</label>
-                                        <input {...register('bus_no')} type="text" name="bus_no" className="form-control form-control-sm" placeholder="Bus No." />
-                                    </div>
-                                    <div className="col-md-3">
-                                        <label className="form-label">Driver Phone No.</label>
-                                        <input {...register('driver_no',
-                                            {
-
-                                                minLength: 10,
-                                                pattern: /^[0-9]+$/
-                                            }
-                                        )} type="number" value={driverNo} onChange={handleDriverPhone} className="form-control form-control-sm" placeholder="Phone No." />
-                                        {errors.driver_no?.type === "required" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
-                                        {errors?.driver_no?.type === "minLength" && <span id="show_mobile_err" className="error">Enter 10 Digits Mobile Number.</span>}
-                                    </div>
-                                    <div className="col-md-3">
-                                        <label className="form-label">Transport Charge</label>
-                                        <input {...register('transport_charge')} type="number" id="transport_charge" className="form-control form-control-sm" placeholder="Transport Charge" />
-                                    </div>
-                                </div>
 
 
                             </div>}
+
+
+
+
+
+
+
+                            <div className="row mt-4">
+                                <div className="col-md-12">
+                                    <h5>Transport Detail</h5>
+
+                                </div>
+                                <hr />
+                            </div>
+                            <div className="row mb-3">
+
+                                <div className="col-md-2">
+                                    <label className="form-label">Total Pickup Charge</label>
+                                    <input {...register('total_pickup_charge')} disabled readOnly value={totalPicCharge} type="number" className="form-control form-control-sm" placeholder="Transport Charge" />
+                                </div>
+
+
+                                <div className="col-md-2">
+                                    <label className="form-label">Total dispatch Charge</label>
+                                    <input {...register('total_dispatch_charge')} disabled readOnly value={totalDisCharge} type="number" className="form-control form-control-sm" placeholder="Transport Charge" />
+                                </div>
+
+                                <div className="col-md-2">
+                                    <label className="form-label">Transport Charge</label>
+                                    <input {...register('transport_charge')} type="number" id="transport_charge" className="form-control form-control-sm" placeholder="Transport Charge" />
+                                </div>
+                            </div>
+
+
 
 
                             {/* ---Payment Details--- */}
@@ -2431,35 +2733,10 @@ const ParcelBook: React.FC = () => {
                                 <hr />
                             </div>
                             <div className="row mb-3">
-
-                                {/* <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="total">Payment Method</label>
-
-                                    <select {...register('payment_method')}
-                                        value={selectedPaymentMethod}
-                                        onChange={handlePaymentMethodChange}
-                                        className="form-control" name="payment_method" id="payment_method">
-                                        <option value="">--Select-</option>
-                                        <option value="cash">Cash</option>
-                                        <option value="transfer">Transfer</option>
-                                        <option value="pending">Pending</option>
-                                        <option value="gpay">G-pay</option>
-                                        <option value="phonepay">PhonePay</option>
-                                        <option value="paytm">Paytm</option>
-                                        <option value="credit">Credit</option>
-                                    </select>
-                                    {(selectedPaymentMethod === 'gpay' || selectedPaymentMethod === 'phonepay' || selectedPaymentMethod === 'paytm') && (
-                                        <div className="mt-2">
-                                            <label className="form-label">Transaction ID</label>
-                                            <input
-                                                {...register('transection_id')}
-                                                type="text"
-                                                className="form-control"
-                                                placeholder="Enter transaction ID"
-                                            />
-                                        </div>
-                                    )}
-
+                                {/* 
+                                <div className="col-md-2">
+                                    <label className="form-label">Transport Charge</label>
+                                    <input {...register('transport_charge')} type="number" id="transport_charge" className="form-control form-control-sm" placeholder="Transport Charge" />
                                 </div> */}
                                 <div className="col-lg-2">
                                     <label className="form-label" htmlFor="total">Actual Final Total</label>
@@ -2506,7 +2783,7 @@ const ParcelBook: React.FC = () => {
                                 <div className="col-md-2">
                                     <label className="form-label">Bilty Charges</label>
                                     <input {...register('bilty_charge')}
-                                        className="form-control" type="number" id="bilty_charge" placeholder="Blity Charge" />
+                                        className="form-control form-control-sm" type="number" id="bilty_charge" placeholder="Blity Charge" />
                                 </div>
 
                                 <div className="col-md-3">

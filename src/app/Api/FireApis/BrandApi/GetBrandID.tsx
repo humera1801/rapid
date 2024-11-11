@@ -2,11 +2,15 @@ import axios, { AxiosResponse } from 'axios';
 import { baseURL } from './DeleteBrand';
 
 
+interface BrandDetailsResponse {
+  status: string;
+  data: any;
+}
 
 
 
 export default {
-    async getFireBrandIdData(id: string): Promise<any> {
+    async getFireBrandIdData(id: string): Promise<BrandDetailsResponse> {
         try {
           const response: AxiosResponse = await axios.post(baseURL + '/brand/get_fire_brand_detail', {
             feb_id: id,

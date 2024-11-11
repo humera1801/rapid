@@ -143,7 +143,7 @@ const ViewEmp = () => {
             cb_id: cb_id
         }
         try {
-            const response = await axios.post(`http://192.168.0.105:3001/cabbooking/delete_cab_booking`, formData);
+            const response = await axios.post(`http://192.168.0.106:3001/cabbooking/delete_cab_booking`, formData);
             console.log('Cab booking deleted successfully:', response.data);
             router.push("/CabBooking/CabList")
         } catch (error) {

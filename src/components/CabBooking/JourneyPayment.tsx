@@ -54,10 +54,10 @@ const JourneyPayment: React.FC<JourneyPaymentProps> = ({ paymentinitialData, Pay
 
 
 
+                    // setValue("total_amount", data.final_total);
+
+
                     setValue("total_amount", data.final_total);
-
-
-                    // setValue("total_amount", data.endJourneyDetails.actual_amount);
 
                     if (data.paymentDetails && data.paymentDetails.length > 0) {
                         const lastPaymentDetail = data.paymentDetails[data.paymentDetails.length - 1];
@@ -70,7 +70,7 @@ const JourneyPayment: React.FC<JourneyPaymentProps> = ({ paymentinitialData, Pay
                     }
 
                     setValue("name", data.firstName);
-                    console.log(data.firstName);
+                    console.log(data);
 
                     setValue("client_id", data.client_id)
                     setError('');
@@ -118,7 +118,7 @@ const JourneyPayment: React.FC<JourneyPaymentProps> = ({ paymentinitialData, Pay
 
         console.log("Form Data:", dataToSubmit);
         try {
-            const response = await axios.post('http://192.168.0.105:3001/payment/add_new_payment', dataToSubmit);
+            const response = await axios.post('http://192.168.0.106:3001/payment/add_new_payment', dataToSubmit);
             console.log('Data submitted successfully:', response.data);
             if (fireData?.cb_id) {
                 const cb_id = fireData.cb_id;
@@ -128,7 +128,7 @@ const JourneyPayment: React.FC<JourneyPaymentProps> = ({ paymentinitialData, Pay
                     const value = getTDetail.data[0]
                     const lastPaymentDetail = value.paymentDetails[value.paymentDetails.length - 1];
                     generateCabPaymentReceiptPrint(lastPaymentDetail)
-                    window.location.reload();
+                    // window.location.reload();
                 } catch (error) {
                     console.error('Error fetching ticket data:', error);
                 }
@@ -271,7 +271,7 @@ const JourneyPayment: React.FC<JourneyPaymentProps> = ({ paymentinitialData, Pay
                             })}
                             value={selectedPaymentMethod}
                             onChange={handlePaymentMethodChange}
-                            className="form-control"
+                            className="form-control form-control-sm"
                         >
                             <option value="">--Select--</option>
                             <option value="cash">Cash</option>
@@ -288,7 +288,7 @@ const JourneyPayment: React.FC<JourneyPaymentProps> = ({ paymentinitialData, Pay
                                 <input
                                     {...register('payment_details')}
                                     type="text"
-                                    className="form-control"
+                                    className="form-control form-control-sm"
                                     placeholder="Enter transaction ID"
                                 // Use appropriate handler or register here if using form libraries
                                 />

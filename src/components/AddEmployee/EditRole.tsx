@@ -56,7 +56,7 @@ const EditRole: React.FC<RoleFormProps> = ({ roleId }) => {
             const role_id = new URLSearchParams(window.location.search).get("role_id");
             if (role_id) {
                 try {
-                    const response = await axios.post('http://192.168.0.105:3001/employee/get_role_details', { role_id });
+                    const response = await axios.post('http://192.168.0.106:3001/employee/get_role_details', { role_id });
                     const { role_title, role_task } = response.data.data;
 
                     // Populate form data and checkbox values
@@ -145,7 +145,7 @@ const EditRole: React.FC<RoleFormProps> = ({ roleId }) => {
         };
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/employee/create_role', formData);
+            const response = await axios.post('http://192.168.0.106:3001/employee/create_role', formData);
             console.log('Data submitted successfully:', response.data);
             // Optionally redirect or reset form
         } catch (error) {

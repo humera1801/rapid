@@ -10,7 +10,7 @@ import Tabs from 'react-bootstrap/Tabs';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Dashboard/Header';
 import AuthProvider from '@/components/Dashboard/AuthProvider';
-import HtmlToPdf from "../../components/HtmlToPdf"
+import Footer from '@/components/Dashboard/Footer';
 
 
 const page: React.FC = () => {
@@ -31,13 +31,17 @@ const page: React.FC = () => {
                 {/* <Navbar/> */}
                 <br />
 
-                <div>
+                <div style={{height:"100vh"}} >
                     <h3>Wel-Come to Dashboard</h3>
 
 
                 </div>
 
-                {/* <Footer/> */}
+             <div >
+
+             </div>
+
+                <Footer/>
             </AuthProvider>
         </>
     )

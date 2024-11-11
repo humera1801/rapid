@@ -793,7 +793,7 @@ const EditFormData = () => {
 
         try {
             // Post the form data to the API endpoint
-            const response = await axios.post('http://192.168.0.105:3001/booking/edit_fire_extingusher_booking_detail', dataToSubmit).then((res: any) => {
+            const response = await axios.post('http://192.168.0.106:3001/booking/edit_fire_extingusher_booking_detail', dataToSubmit).then((res: any) => {
                 generateUpdatePDF(res.data.data);
                 // generateUpdatePDF(dataToSubmit)
                 router.push('/Fire/Fire-List'); // Navigate to the desired route

@@ -1,13 +1,15 @@
 import axios, { AxiosResponse } from 'axios';
 import { baseURL } from '../FireApis/BrandApi/DeleteBrand';
 
-// Dev URL
-// const baseURL = 'http://192.168.0.114:3001';
+interface JourneyDetailsResponse {
+  status: string;
+  data: any;
+}
 
 
 
 export default {
-    async getJourneyStrat(id: string): Promise<any> {
+    async getJourneyStrat(id: string): Promise<JourneyDetailsResponse> {
         try {
           const response: AxiosResponse = await axios.post(baseURL + '/cabbooking/get_start_journey_details', {
             cb_id: id,

@@ -558,7 +558,7 @@ const FireData = () => {
 
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
+            const response = await axios.post('http://192.168.0.106:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
                 generateInvoicePDF(res.data.data);
                 router.push("/Fire/Fire-List")
                 console.log("res", res.data.data);
@@ -575,7 +575,7 @@ const FireData = () => {
 
     const submitNewClientFormData = async (formData: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
+            const response = await axios.post('http://192.168.0.106:3001/booking/add_fire_extingusher_booking_data', formData).then((res: any) => {
                 ;
                 // generateInvoicePDF(res.data.data[0]);
                 router.push("/Fire/Fire-List")

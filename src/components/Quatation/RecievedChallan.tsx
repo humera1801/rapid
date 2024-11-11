@@ -900,7 +900,7 @@ const ReceivedChallan = () => {
         try {
             let response;
             if (fireData.q_id) {
-                response = await axios.post('http://192.168.0.105:3001/challan/add_fire_extingusher_receiver_challan_data', finalData);
+                response = await axios.post('http://192.168.0.106:3001/challan/add_fire_extingusher_receiver_challan_data', finalData);
                 console.log('with Q_id Data submitted successfully:', response.data.q_id, response.data);
                
                 if (fireData?.q_quotation_no) {
@@ -909,6 +909,7 @@ const ReceivedChallan = () => {
                         const getTDetail = await GetChallanList.GetReceiverChallanBookingId(q_quotation_no.toString());
                         console.log("Fetched details:", getTDetail.data[0]);
                         generateEditReceiverChallanPDF(getTDetail.data[0]);
+
                     } catch (error) {
                         console.error('Error fetching ticket data:', error);
                     }
@@ -918,7 +919,7 @@ const ReceivedChallan = () => {
 
 
 
-                response = await axios.post('http://192.168.0.105:3001/challan/edit_fire_extingusher_receiver_challan_data', finalData);
+                response = await axios.post('http://192.168.0.106:3001/challan/edit_fire_extingusher_receiver_challan_data', finalData);
                 console.log('new Data submitted successfully:', response.data);
                 if (fireData?.q_quotation_no) {
                     const q_quotation_no = fireData.q_quotation_no;
@@ -926,11 +927,12 @@ const ReceivedChallan = () => {
                         const getTDetail = await GetChallanList.GetReceiverChallanBookingId(q_quotation_no.toString());
                         console.log("Fetched details:", getTDetail.data[0]);
                         generateEditReceiverChallanPDF(getTDetail.data[0]);
+                        router.push("/Receiver/List")
+
                     } catch (error) {
                         console.error('Error fetching ticket data:', error);
                     }
                 }
-                router.push("/Quotation/QuotationList")
             }
 
 
@@ -960,7 +962,7 @@ const ReceivedChallan = () => {
                     <div>
 
 
-                        <Link href="/Quotation/QuotationList" className="btn btn-sm btn-primary">
+                        <Link href="/Quotation/ViewQuotation" className="btn btn-sm btn-primary">
                             Back
                         </Link>
                     </div>

@@ -20,6 +20,8 @@ import handleclientPrint from './certificate/certificate';
 import CabbookingList from '@/app/Api/CabBooking/CabbookingList';
 import { Button } from 'react-bootstrap';
 import FirePaymentModel from './FirePaymentModel';
+import FireVendorPayment from './VendorPayment/FireVendorpay';
+import FireVendorPayModel from './VendorPayment/FireVendorpayModel';
 
 
 export interface FormData {
@@ -551,8 +553,30 @@ const ViewFire = () => {
         }
     };
 
+    //----------------------------------------------------------------------------------------------------------------------
+    const [MakepaymentModel, setMakepaymentModel] = useState(false);
+    const [MakepaymentId, setMakepaymentId] = useState<number | null>(null);
+    const [Makepaymentdata, setMakepaymentdata] = useState<any[]>([]);
+
+    const handleMakePayment = async (q_quotation_no: number) => {
+        try {
+            const response = await getFireBookingId.GetFireBookingId(q_quotation_no.toString());
 
 
+
+            setPaymentId(response.data[0].q_quotation_no);
+            setMakepaymentdata(response.data[0]);
+            setMakepaymentModel(true);
+
+
+
+
+
+        } catch (error) {
+            console.error('Error handling journey start:', error);
+            alert('Error occurred while handling payment journey.');
+        }
+    };
 
 
 
@@ -572,6 +596,7 @@ const ViewFire = () => {
 
                     <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "7px", fontSize: "12px" }} onClick={() => handleFirePayment(fireData.q_quotation_no)}>Payment</Button>
 
+                    <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "10px", fontSize: "12px" }} onClick={() => handleMakePayment(fireData.q_quotation_no)}>Make Payment</Button>
 
                     <Link href="/Fire/Fire-List" style={{ float: "right", marginRight: "8px", fontSize: "12px" }} className="btn btn-sm btn-primary">
                         Back
@@ -584,6 +609,13 @@ const ViewFire = () => {
                     handleClose={() => setpaymentModel(false)}
                     paymentinitialData={Paymentdata}
                     PaymentId={PaymentId} />
+
+                <FireVendorPayModel
+                    show={MakepaymentModel}
+                    handleClose={() => setMakepaymentModel(false)}
+                    paymentinitialData={Makepaymentdata}
+                    PaymentId={MakepaymentId}
+                />
             </div>
             <br />
             <div className="card mb-3 cardbox">

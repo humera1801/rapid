@@ -334,7 +334,7 @@ const ClientEdit = () => {
 
         console.log("Filtered Form Data:", finalData);
         try {
-            const response = await axios.post('http://192.168.0.105:3001/client/edit_client_details', finalData);
+            const response = await axios.post('http://192.168.0.106:3001/client/edit_client_details', finalData);
             console.log('Data submitted successfully:', response.data);
 
 
@@ -370,7 +370,7 @@ const ClientEdit = () => {
         formData.append("client_id", clientId.toString());
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/booking/upload_client_id_proof', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

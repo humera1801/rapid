@@ -9,6 +9,9 @@ import handleParcelPrint from '@/app/parcel_list/parcel_data/printpparcelUtils';
 import { Button, Dropdown, Modal } from 'react-bootstrap';
 import Link from 'next/link';
 import PArcelPaymentModel from './ParcelPaymentModel';
+import VendorParcelPayment from './VendorParcelPay';
+import VendorPaymentModel from '../Ticket/VenodorTicketPayModel';
+import VendorparcelModel from './VendorParcelPayModel';
 
 type FormData = {
     parcel_id: string;
@@ -45,15 +48,8 @@ type FormData = {
     book_to: string,
     added_by: string;
     user_id: 14;
-
-    pic_address: {
-        pickup_client_address: string;
-        pickup_office_address: string;
-    }[];
-    dis_address: {
-        dispatch_client_address: string;
-        dispatch_office_address: string;
-    }[];
+    pic_address: { pickup_client_address: string; pickup_office_address: string; pickup_charge: any; pic_hamali_charge: any, pic_other_charge: any }[];
+    dis_address: { dispatch_client_address: string; dispatch_office_address: string; dispatch_charge: any, dis_hamali_charge: any, dis_other_charge: any }[];
     payment_method: string;
     actual_total: number;
     print_total: number;
@@ -73,9 +69,17 @@ type FormData = {
     parcel_detail: ParcelDetail[];
     bill_detail: ParcelBillDetail[];
     transection_id: any;
+    delivery: Delivery[];
+
 
 
 };
+interface Delivery {
+    id: any;
+    lr_no: any; bus_no: any; driver_no: any;
+    other_charge: any;
+}
+
 
 interface ParcelBillDetail {
     id: number;
@@ -111,6 +115,7 @@ const ViewParcelData = () => {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
     const [imageName, setImageName] = useState<string>('');
+    const [delievery, setdelivery] = useState<Delivery[]>([]);
 
 
     const [parcelData, setParcelData] = useState<any>("");
@@ -121,16 +126,17 @@ const ViewParcelData = () => {
         pic_address: {
             pickup_client_address: string;
             pickup_office_address: string;
+            pickup_charge: any; pic_hamali_charge: any, pic_other_charge: any
         }[];
         dis_address: {
             dispatch_client_address: string;
             dispatch_office_address: string;
+            dispatch_charge: any, dis_hamali_charge: any, dis_other_charge: any
         }[];
     }>({
         pic_address: [],
         dis_address: [],
     });
-
     useEffect(() => {
 
         const fetchData = async () => {
@@ -158,6 +164,9 @@ const ViewParcelData = () => {
                                 parcel_id: detail.parcel_id || '',
                                 pickup_client_address: detail.pic_start_point || '',
                                 pickup_office_address: detail.pic_end_point || '',
+                                pickup_charge: detail.pickup_charge || '',
+                                pic_hamali_charge: detail.pic_hamali_charge || '',
+                                pic_other_charge: detail.pic_other_charge || '',
                             }));
                         const disAddresses = response.data[0].delivery_detail
                             .filter((detail: any) => detail.del_type === 2)
@@ -165,7 +174,11 @@ const ViewParcelData = () => {
                                 parcel_id: detail.parcel_id || '',
                                 dispatch_client_address: detail.dis_start_point || '',
                                 dispatch_office_address: detail.dis_end_point || '',
+                                dispatch_charge: detail.dispatch_charge || '',
+                                dis_hamali_charge: detail.dis_hamali_charge || '',
+                                dis_other_charge: detail.dis_other_charge || ''
                             }));
+
 
                         setAddressFields({
                             pic_address: picAddresses,
@@ -189,6 +202,25 @@ const ViewParcelData = () => {
                                 total_print_rate: Number(item.total_print_rate) || 0
                             }));
                             setparcelDetail(transformedParcelDetail);
+
+
+                            const fetchdeliverydata = response.data[0]?.delivery || []
+                            if (fetchdeliverydata) {
+                                const transformedDeliveryDetail: Delivery[] = fetchdeliverydata.map((item: any, index: number) => ({
+                                    id: index + 1,
+                                    lr_no: item.lr_no || '',
+                                    bus_no: (item.bus_no) || '',
+                                    driver_no: Number(item.driver_no) || '',
+
+                                }));
+                                setdelivery(transformedDeliveryDetail);
+                                console.log("delivery", transformedDeliveryDetail);
+
+                            } else {
+                                setError('No delivery details found.');
+                            }
+
+
                         } else {
                             setError('No parcel details found.');
                         }
@@ -269,7 +301,6 @@ const ViewParcelData = () => {
 
 
 
-    console.log("gffgdfhjf", parcelData)
 
 
     const handleImageClick = (imageUrl: string) => {
@@ -313,6 +344,26 @@ const ViewParcelData = () => {
             setPaymentId(response.data[0].ticketToken);
             setPaymentdata(response.data[0]);
             setpaymentModel(true);
+        } catch (error) {
+            console.error('Error handling journey start:', error);
+            alert('Error occurred while handling payment journey.');
+        }
+    };
+
+
+    const [MakepaymentModel, setMakepaymentModel] = useState(false);
+    const [MakepaymentId, setMakepaymentId] = useState<number | null>(null);
+    const [Makepaymentdata, setMakepaymentdata] = useState<any[]>([]);
+
+    const handleMakePayment = async (ticketToken: number) => {
+        try {
+            const response = await EditParcelDataList.getEditParcelData(ticketToken.toString());
+
+
+
+            setPaymentId(response.data[0].ticketToken);
+            setMakepaymentdata(response.data[0]);
+            setMakepaymentModel(true);
 
 
 
@@ -323,6 +374,16 @@ const ViewParcelData = () => {
             alert('Error occurred while handling payment journey.');
         }
     };
+
+
+
+
+
+
+
+
+
+
 
 
     const handleStatus = async (id: number, parcel_status: any) => {
@@ -365,7 +426,8 @@ const ViewParcelData = () => {
 
                         <button onClick={() => handleParcelPrint(parcelData)}
                             className="btn btn-sm btn-primary" style={{ float: "right", marginRight: "10px", fontSize: "12px" }} >Print</button>
-                        <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "10px", fontSize: "12px" }} onClick={() => handlePayment(parcelData.token)}>Payment</Button>
+                        <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "10px", fontSize: "12px" }} onClick={() => handlePayment(parcelData.token)}>Receive Payment</Button>
+                        <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "10px", fontSize: "12px" }} onClick={() => handleMakePayment(parcelData.token)}>Make Payment</Button>
 
                         {/* <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "10px", fontSize: "12px" }} onClick={() => handlePayment(parcelData.token)}>Booked</Button> */}
 
@@ -383,7 +445,7 @@ const ViewParcelData = () => {
                                 <Button
                                     size="sm"
                                     className="btn btn-sm btn-warning"
-                                    style={{ float: "right", marginRight: "10px", fontSize: "12px" , }}
+                                    style={{ float: "right", marginRight: "10px", fontSize: "12px", }}
                                     onClick={() => handleStatus(parcelData.id, 2)}                                >
                                     In-Transit
                                 </Button>
@@ -395,19 +457,25 @@ const ViewParcelData = () => {
                                 >
                                     Delivered
                                 </Button>
-                            ) :(
-                                   <></>
+                            ) : (
+                                <></>
                             )
                         }
 
 
-                      
+
                     </div>
                     <PArcelPaymentModel
                         show={paymentModel}
                         handleClose={() => setpaymentModel(false)}
                         paymentinitialData={Paymentdata}
                         PaymentId={PaymentId}
+                    />
+                    <VendorparcelModel
+                        show={MakepaymentModel}
+                        handleClose={() => setMakepaymentModel(false)}
+                        paymentinitialData={Makepaymentdata}
+                        PaymentId={MakepaymentId}
                     />
                 </div>
                 <br />
@@ -690,7 +758,7 @@ const ViewParcelData = () => {
                                 </div>
 
                                 <div className="row mb-3">
-                                    <div className="col-md-6">
+                                    <div className="col-md-12">
                                         <label className="set_labelData">Delivery Type :</label>
                                         {parcelData.pic_delivery_type === "2" && (
                                             <span>
@@ -699,12 +767,22 @@ const ViewParcelData = () => {
                                                 <div className="col">
                                                     {addressFields.pic_address!.map((field, index) => (
                                                         <div key={index} className="row mt-2">
-                                                            <div className="col-md-4">
+                                                            <div className="col-md-3">
                                                                 {field.pickup_client_address}
                                                             </div>
-                                                            <div className="col-md-4">
-                                                                {/* Optionally, include additional client-related information here */}
+                                                            <div className="col-md-3">
+                                                                {field.pickup_office_address}
                                                             </div>
+                                                            <div className="col-md-2">
+                                                                {field.pickup_charge}
+                                                            </div>
+                                                            <div className="col-md-2">
+                                                                {field.pic_hamali_charge}
+                                                            </div>
+                                                            <div className="col-md-2">
+                                                                {field.pic_other_charge}
+                                                            </div>
+
                                                         </div>
                                                     ))}
                                                 </div>
@@ -716,17 +794,22 @@ const ViewParcelData = () => {
                                                     Office
                                                 </span>
                                                 <br />
-                                                <label className="set_labelData">Office Detail :</label>
-                                                <span>
-                                                    {parcelData.pic_office_detail}
-                                                </span>
+                                                <div className="row info-container">
+                                                    <div className="col-lg-6 info-item">
+                                                        <label className="set_labelData">Office Location:</label>
+                                                        <span>{parcelData.pic_office_detail}</span>
+                                                    </div>
+                                                    <div className="col-lg-6 info-item">
+                                                        <label className="set_labelData">Office Charge:</label>
+                                                        <span>{parcelData.pic_office_charge}</span>
+                                                    </div>
+                                                </div>
+
+
                                             </>
                                         )}
                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="set_labelData">Pickup Charge</label>
-                                        <span>{parcelData.pic_charge}</span>
-                                    </div>
+
                                 </div>
 
 
@@ -738,7 +821,7 @@ const ViewParcelData = () => {
                                 </div>
 
                                 <div className="row mb-3">
-                                    <div className="col-md-6">
+                                    <div className="col-md-12">
                                         <label className="set_labelData">Delivery Type:</label>
                                         {parcelData.dis_delivery_type === "2" && (
                                             <span>
@@ -747,12 +830,23 @@ const ViewParcelData = () => {
                                                 <div className="col">
                                                     {addressFields.dis_address!.map((field, index) => (
                                                         <div className="row mt-2" key={index}>
-                                                            <div className="col-md-2">
-
+                                                            <div className="col-md-3">
                                                                 {field.dispatch_client_address}
                                                             </div>
-                                                            <div className="col-md-2">
+                                                            <div className="col-md-3">
                                                                 {field.dispatch_office_address}
+                                                            </div>
+                                                            <div className="col-md-2">
+                                                                <label className="set_labelData">pickup Charge:</label>
+                                                                {field.dispatch_charge}
+                                                            </div>
+                                                            <div className="col-md-2">
+                                                                <label className="set_labelData">Hamali Charge:</label>
+                                                                {field.dis_hamali_charge}
+                                                            </div>
+                                                            <div className="col-md-2">
+                                                                <label className="set_labelData">Other Charge:</label>
+                                                                {field.dis_other_charge}
                                                             </div>
                                                         </div>
                                                     ))}
@@ -769,41 +863,35 @@ const ViewParcelData = () => {
                                             </span>
                                         )}
                                     </div>
-                                    <div className="col-md-6">
-                                        <label className="set_labelData">Dispatch Charge</label>
-                                        <span>{parcelData.dis_charge}</span>
-                                    </div>
+
                                 </div>
 
                                 <div className="row">
                                     <div className="col-md-12">
-                                        <h5>Transportation Detail</h5>
+                                        <h5>Transit Detail</h5>
                                     </div>
                                     <hr />
                                 </div>
+                                {delievery.map((field, index) => (
+                                    <div key={field.id} className="row mb-3">
+                                        <div className="col-md-3">
+                                            <label className="set_labelData">LR No.</label>
+                                            <span>{field.lr_no}</span>
+                                        </div>
+                                        <div className="col-md-3">
+                                            <label className="set_labelData">Bus No.</label>
+                                            <span>{field.bus_no}</span>
+                                        </div>
+                                        <div className="col-md-3">
+                                            <label className="set_labelData">Driver Phone No.</label>
+                                            <span>{field.driver_no}</span>
+                                        </div>
 
-                                <div className="row mb-3">
-                                    <div className="col-md-3">
-                                        <label className="set_labelData">LR No.</label>
-                                        <span>{parcelData.lr_no}</span>
                                     </div>
-                                    <div className="col-md-3">
-                                        <label className="set_labelData">Bus No.</label>
-                                        <span>{parcelData.bus_no}</span>
-                                    </div>
-                                    <div className="col-md-3">
-                                        <label className="set_labelData">Driver Phone No.</label>
-                                        <span>{parcelData.driver_no}</span>
-                                    </div>
-                                    <div className="col-md-3">
-                                        <label className="set_labelData">Transport Charge</label>
-                                        <span>{parcelData.transport_charge} </span>
-                                    </div>
-                                </div>
-
+                                ))}
                                 <br />
 
-
+                                <br />
                                 <div className="row mb-3">
                                     <div className="col-lg-6">
                                         <label className="set_labelData">Created By</label>
@@ -825,14 +913,19 @@ const ViewParcelData = () => {
                                     </div>
                                 </div>
                                 <br />
-                                {/* <div className="row">
+                                <div className="row">
                                     <div className="col-md-12">
                                         <h5>Payment Detail</h5>
                                     </div>
                                     <hr />
-                                </div> */}
+                                </div>
 
                                 <div className="row mb-3">
+
+                                    <div className="col-md-2">
+                                        <label className="set_labelData">Transport Charge</label>
+                                        <span>{parcelData.transport_charge} </span>
+                                    </div>
                                     <div className="col-md-3">
                                         <label className="set_labelData">Actual Final Total</label>
                                         <span>{parcelData.actual_total}</span>
@@ -841,11 +934,11 @@ const ViewParcelData = () => {
                                         <label className="set_labelData">Print Final Total</label>
                                         <span>{parcelData.print_total}</span>
                                     </div>
-                                    <div className="col-md-3">
+                                    <div className="col-md-2">
                                         <label className="set_labelData">GST Amount</label>
                                         <span>{parcelData.gst_amount}</span>
                                     </div>
-                                    <div className="col-md-3">
+                                    <div className="col-md-2">
                                         <label className="set_labelData">Bilty Charges</label>
                                         <span>{parcelData.bilty_charge}</span>
                                     </div>
@@ -853,7 +946,7 @@ const ViewParcelData = () => {
                                 <div className="row mb-3">
 
 
-                                    <div className="col-lg-3">
+                                    <div className="col-lg-2">
                                         <label className="set_labelData">Print Payable Amount</label>
                                         <span>{parcelData.print_payable_amount}</span>
                                     </div>
@@ -865,6 +958,10 @@ const ViewParcelData = () => {
                                     <div className="col-lg-3">
                                         <label className="set_labelData">Print Balance Amount</label>
                                         <span>{parcelData.print_bal_amount} </span>
+                                    </div>
+                                    <div className="col-md-2">
+                                        <label className="set_labelData">Print gst Amount</label>
+                                        <span>{parcelData.print_gst_amount}</span>
                                     </div>
                                 </div>
 

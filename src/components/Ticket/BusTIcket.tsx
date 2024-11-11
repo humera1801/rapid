@@ -9,13 +9,13 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import CityList from '@/app/Api/CityList';
 import StateList from '@/app/Api/StateList';
 import ticketNo from '@/app/Api/ticketNo';
-import "../../../public/css/style.css"
 import { useRouter } from 'next/navigation';
 import { debounce } from 'lodash';
 import GetClientList from '@/app/Api/FireApis/FireExtinghsherList/GetClientList';
 import Footer from '../Dashboard/Footer';
 import EditTicketData from '@/app/Api/EditTicketData';
 import handlePrint from '@/app/ticket_list/Ticket_data/printUtils';
+import Header from '../Dashboard/Header';
 
 
 
@@ -43,7 +43,7 @@ type FormData = {
     client_pincode: string;
     email: string;
     client_id: any
-
+    driver_no: any;
     mobileNo: string;
     address: any;
     client_id_proof: any;
@@ -94,7 +94,7 @@ function TicketBook() {
     const { register, handleSubmit, formState: { errors }, watch, setValue, clearErrors } = useForm<FormData>({
         defaultValues: {
 
-            from_state: '', travel_from: '', to_state: '', travel_to: '', is_duplicate: false,
+            from_state: '', travel_from: '', to_state: '', travel_to: '', 
             mobile_no: '', name: '', cmp_name: '', cmp_mobile: '', is_extra: false,
             booking_type: 'seater', slr: 0, slr_rate: 0, slr_total_amount: 0, slr_print_rate: 0,
             slr_total_print_rate: 0, st: 0, st_rate: 0, st_total_amount: 0, st_print_rate: 0,
@@ -338,8 +338,50 @@ function TicketBook() {
                 console.log('Form data submitted successfully for new client.', finalData);
                 clientId = response.client_id;
                 console.log(clientId);
+                if (formData.client_id_proof && formData.client_id_proof.length > 0) {
+                    const file = formData.client_id_proof[0];
 
+                    console.log("New image uploaded:", {
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                    });
+
+                    if (clientId !== undefined) {
+                        await uploadClientProofId(file, clientId);
+                    } else {
+                        console.error('Client ID is undefined; cannot upload image.');
+                    }
+
+                } else {
+                    console.log("No new image selected; skipping upload.");
+                }
+                if (!response.ok) {
+                    throw new Error('Failed to get ticket data');
+                }
+                const ticketData = await response.json();
+                console.log("datadata", ticketData)
+
+                console.log('Form data submitted successfully with selected client id:', clientId);
+                if (ticketData.ticket_token != "") {
+                    const ticketToken = ticketData.ticket_token;
+                    try {
+                        const getTDetail = await EditTicketData.getEditTicktetData(ticketToken);
+
+
+                        console.log("get data", getTDetail.data[0]);
+                        handlePrint(getTDetail.data[0])
+                        router.push("/ticket_list")
+
+                    } catch (error) {
+
+                        console.error('Error fetching parcel data:', error);
+                    }
+
+                };
                 setIsAddingNewClient(false);
+
+
             } else if (selectedClientId) {
                 finalData.client_id = selectedClientId;
                 clientId = selectedClientId;
@@ -411,7 +453,7 @@ function TicketBook() {
         formData.append("client_id", clientId.toString());
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/booking/upload_client_id_proof', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/booking/upload_client_id_proof', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -426,7 +468,7 @@ function TicketBook() {
 
     async function addNewCity(stateId: string, cityName: string) {
         const requestBody = { city_name: cityName, state_id: stateId };
-        const response = await fetch('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+        const response = await fetch('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -440,7 +482,7 @@ function TicketBook() {
     }
 
     async function submitFormData(formData: FormData, clientId: number | undefined) {
-        const response = await fetch('http://192.168.0.105:3001/ticket/create_ticket_data', {
+        const response = await fetch('http://192.168.0.106:3001/ticket/create_ticket_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -454,7 +496,7 @@ function TicketBook() {
 
     async function submitNewClientFormData(formData: FormData) {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/ticket/create_ticket_data', formData);
+            const response = await axios.post('http://192.168.0.106:3001/ticket/create_ticket_data', formData);
             console.log('Form data submitted successfully for new client.', response.data);
             return response.data; // Ensure this returns the data with client_id
         } catch (error) {
@@ -727,7 +769,8 @@ function TicketBook() {
     //--------------------------------------------------------------------------------------------------------------------------
     return (
         <>
-
+            <Header />
+            <br />
             <div className='container' style={{ fontSize: "12px" }} >
 
                 <h4 className='headtitle'>Bus Ticket booking</h4>
@@ -1025,7 +1068,7 @@ function TicketBook() {
                                 </div>
 
                                 <div className="col-lg-3">
-                                    <label className="form-label" htmlFor="particulars">Image Upload</label>
+                                    <label className="form-label" htmlFor="particulars">Upload Id Proof</label>
                                     <input className="form-control form-control-sm" type="file" {...register("client_id_proof")} />
                                     {/* {imageName && <span style={{ marginTop: "10px" }} className="mb-2">{imageName}</span>} Display selected image name */}
                                     {imageName && (
@@ -1360,21 +1403,18 @@ function TicketBook() {
                                 </div>
                                 <div className="col-lg-3">
                                     <label className="form-label">Reporting Time</label>
-                                    <input {...register('rep_time', {
-                                        required: true,
-                                    })} className="form-control form-control-sm" type="time" />
-                                    {errors.rep_time?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+                                    <input {...register('rep_time')} className="form-control form-control-sm" type="time" />
 
                                 </div>
                             </div>
 
                             <div className="row mb-3">
-                                <div className="col-lg-4">
+                                <div className="col-lg-3">
                                     <label className="form-label">Bus Name</label>
                                     <input {...register('bus_name')} placeholder='Enter Bus name' className="form-control form-control-sm" type="text" />
 
                                 </div>
-                                <div className="col-lg-4">
+                                <div className="col-lg-3">
                                     <label className="form-label">Bus No.</label>
                                     <input {...register('bus_no', {
                                         required: true,
@@ -1382,10 +1422,17 @@ function TicketBook() {
                                     {errors.bus_no?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
 
                                 </div>
+                                <div className="col-lg-3">
+                                    <label className="form-label">Driver No.</label>
+                                    <input {...register('driver_no', {
+                                        required: true,
+                                    })} minLength={10} maxLength={10} placeholder='Enter driver no' className="form-control form-control-sm" type="text" />
+                                    {errors.driver_no?.type === "required" && <span id="show_mobile_err" className="error">This field is required.</span>}
+
+                                </div>
 
 
-
-                                <div className="col-lg-4">
+                                <div className="col-lg-3">
                                     <label className="form-label">Boarding Point</label>
                                     <input {...register('boarding', {
                                         required: true
@@ -1435,7 +1482,7 @@ function TicketBook() {
                                 </div>
                                 <div className="col-lg-6">
                                     <label className="form-label" htmlFor="remark">Is Duplicate?</label><br />
-                                    <input  {...register('is_duplicate')} type="checkbox" id="is_duplicate" value="yes" />
+                                    <input  {...register('is_duplicate')} type="checkbox" id="is_duplicate" value="1" />
                                 </div>
                             </div>
 

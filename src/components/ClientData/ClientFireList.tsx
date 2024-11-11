@@ -153,7 +153,7 @@ const ClientFireBookingList: React.FC<ClientDataDisplayProps> = ({ title, data }
             getUserProfile(e_id)
                 .then((userData) => {
                     setUserName(userData.e_name);
-                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                    return axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
                 })
                 .then((roleResponse) => {
                     const rolesData = roleResponse.data.data;
@@ -178,7 +178,7 @@ const ClientFireBookingList: React.FC<ClientDataDisplayProps> = ({ title, data }
         e.preventDefault();
         const formData = { febking_id };
         try {
-            await axios.post(`http://192.168.0.105:3001/cabbooking/delete_cab_booking`, formData);
+            await axios.post(`http://192.168.0.106:3001/cabbooking/delete_cab_booking`, formData);
             window.location.reload();
         } catch (error) {
             console.error('Error deleting booking:', error);

@@ -1,11 +1,12 @@
 import axios, { AxiosResponse } from 'axios';
+import { DetailsResponse } from './FireApis/DataFilter/date';
 
 // Dev URL
-const baseURL = 'http://192.168.0.105:3001';
+const baseURL = 'http://192.168.0.106:3001';
 
 
 export default {
-  async getRecieptNo(): Promise<any> {
+  async getRecieptNo(): Promise<DetailsResponse> {
     try {
       const response: AxiosResponse = await axios.get(baseURL + '/parcel/generate_reciept_no', {
         headers: {

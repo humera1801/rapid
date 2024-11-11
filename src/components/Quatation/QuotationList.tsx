@@ -126,7 +126,7 @@ const QuotationList: React.FC = () => {
             getUserProfile(e_id)
                 .then((userData) => {
                     setUserName(userData.e_name);
-                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                    return axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
                 })
                 .then((roleResponse) => {
                     const rolesData = roleResponse.data.data;
@@ -192,10 +192,10 @@ const QuotationList: React.FC = () => {
         const today = new Date();
         const lastMonth = new Date();
         lastMonth.setMonth(today.getMonth() - 1);
-        lastMonth.setDate(1); 
+        lastMonth.setDate(1);
         const formatDate = (date: Date) => date.toISOString().split('T')[0];
         setStartDate(formatDate(lastMonth));
-        setEndDate(formatDate(today)); 
+        setEndDate(formatDate(today));
         fetchAllData();
     }, []);
 
@@ -276,6 +276,24 @@ const QuotationList: React.FC = () => {
                 name: "Quotation No",
                 selector: (row: User) => row.q_quotation_no,
                 sortable: true,
+                cell: (row: any) => (
+                    <Link
+                        href={`ViewQuotation?id=${row.q_id}`}
+                        style={{
+                            textDecoration: 'none',
+                            color: 'inherit',
+                            backgroundColor: 'transparent',
+                            padding: '5px',
+                        }}
+                    >
+                        {row.q_quotation_no}
+                    </Link>
+                ),
+                style: {
+                    minWidth: '50px',
+                    whiteSpace: 'nowrap',
+                    fontSize: "12px"
+                },
             },
             visibleColumns.includes('Name') && {
                 name: "Name",
@@ -315,8 +333,8 @@ const QuotationList: React.FC = () => {
                 name: "Action",
                 cell: (row: User) => (
                     <div className='action-buttons'>
-                        <button className="btn btn-sm btn-success" style={{fontSize:"10px"}} onClick={() => handleQuotationShareClick(row.q_id)}>Share</button>
-                        <button className="btn btn-sm btn-info"  style={{fontSize:"10px"}} onClick={() => handleQuotationPrint(row.q_id)}>Print</button>
+                        <button className="btn btn-sm btn-success" style={{ fontSize: "10px" }} onClick={() => handleQuotationShareClick(row.q_id)}>Share</button>
+                        <button className="btn btn-sm btn-info" style={{ fontSize: "10px" }} onClick={() => handleQuotationPrint(row.q_id)}>Print</button>
                         {userRoles.includes('fireQuotation_view') && (
 
                             <Link href={`ViewQuotation?id=${row.q_id}`} className="btn btn-sm btn-warning" >
@@ -341,7 +359,7 @@ const QuotationList: React.FC = () => {
         ].filter(Boolean);
 
         setColumns(newColumns);
-    }, [visibleColumns , userRoles]);
+    }, [visibleColumns, userRoles]);
 
 
 

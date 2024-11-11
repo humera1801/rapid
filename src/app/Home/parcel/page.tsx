@@ -1,3 +1,4 @@
+import Footer from '@/components/Dashboard/Footer'
 import Header from '@/components/Dashboard/Header'
 import ParcelBook from '@/components/Parcel/ParcelBooking'
 import TicketBook from '@/components/Ticket/OldTicketBook'
@@ -12,6 +13,7 @@ const page = () => {
             <Header />
             <br />
                 <ParcelBook />
+
         </>
     )
 }

@@ -1,8 +1,9 @@
 import axios, { AxiosResponse } from 'axios';
 import { baseURL } from '../BrandApi/DeleteBrand';
+import { DetailsResponse } from './date';
 
 export default {
-    async getparcelFilterdate(startdate?: string, enddate?: string): Promise<any> {
+    async getparcelFilterdate(startdate?: string, enddate?: string): Promise<DetailsResponse> {
         try {
             const response: AxiosResponse = await axios.post(baseURL + '/parcel/get_date_filter_parcel_list_data', {
                 startdate: startdate || '',  

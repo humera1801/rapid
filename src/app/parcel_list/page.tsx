@@ -18,6 +18,7 @@ import "../parcel_list/parcel.css"
 import parceldate from '../Api/FireApis/DataFilter/parceldate';
 import getUserProfile from '../Api/UserProfile';
 import { Dropdown } from 'react-bootstrap';
+import Footer from '@/components/Dashboard/Footer';
 
 export interface User {
     id: any;
@@ -174,7 +175,7 @@ const ParcelListPage = () => {
             getUserProfile(e_id)
                 .then((userData) => {
                     setUserName(userData.e_name);
-                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                    return axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
                 })
                 .then((roleResponse) => {
                     const rolesData = roleResponse.data.data;
@@ -324,6 +325,19 @@ const ParcelListPage = () => {
                 name: "Receipt No",
                 selector: (row: User) => row.receipt_no,
                 sortable: true,
+                cell: (row: User) => (
+                    <Link
+                        href={`parcel_list/parcel_data?token=${row.token}`}
+                        style={{ textDecoration: 'none', color: 'inherit' }}
+                    >
+                        {row.receipt_no}
+                    </Link>
+                ),
+                style: {
+                    minWidth: '50px',
+                    whiteSpace: 'nowrap',
+                    fontSize:"12px"
+                },
             },
             visibleColumns.includes("Booking Date") && {
                 name: "Booking Date",
@@ -471,7 +485,7 @@ const ParcelListPage = () => {
         e.preventDefault();
         try {
             const formData = { parcel_id: ticketId };
-            const response = await axios.post(`http://192.168.0.105:3001/parcel/remove_parcel_detail_data`, formData);
+            const response = await axios.post(`http://192.168.0.106:3001/parcel/remove_parcel_detail_data`, formData);
             console.log('Ticket deleted successfully:', response.data);
             setRecords(records.filter(record => record.id !== ticketId));
         } catch (error) {
@@ -560,7 +574,7 @@ const ParcelListPage = () => {
     return (
         <>
             <Header />
-            <div className="container-fluid mt-3">
+            <div className="container-fluid mt-3" style={{height:"100vh"}}>
                 <div className="card mb-3" style={{ width: 'auto' }}>
                     <div className="card-header d-flex justify-content-between align-items-center">
                         <h4 className="mb-0">Parcel Booking List</h4>
@@ -645,6 +659,7 @@ const ParcelListPage = () => {
                     </div>
                 </div>
             </div>
+            <Footer/>
         </>
     );
 }

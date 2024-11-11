@@ -8,6 +8,7 @@ import "../../../public/css/ticketview.css"
 import handlePrint from '@/app/ticket_list/Ticket_data/printUtils';
 import { Button } from 'react-bootstrap';
 import TicketPaymentModel from './TicketPaymentModel';
+import VendorPaymentModel from './VenodorTicketPayModel';
 
 type FormData = {
     ticket_id: string,
@@ -78,28 +79,28 @@ const ViewTicketDetail = () => {
         const handleURLChange = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const ticketToken = urlParams.get('token');
-    
-            if (ticketToken) {
-             
-    
-                getTicketDetail(ticketToken);
-    
-             
 
-                
+            if (ticketToken) {
+
+
+                getTicketDetail(ticketToken);
+
+
+
+
             } else {
-              
+
             }
         };
-    
+
         window.addEventListener('popstate', handleURLChange);
         handleURLChange(); // Call on initial render
-    
+
         return () => {
             window.removeEventListener('popstate', handleURLChange);
         };
     }, []);
-    
+
 
 
 
@@ -234,6 +235,31 @@ const ViewTicketDetail = () => {
 
 
 
+    const [MakepaymentModel, setMakepaymentModel] = useState(false);
+    const [MakepaymentId, setMakepaymentId] = useState<number | null>(null);
+    const [Makepaymentdata, setMakepaymentdata] = useState<any[]>([]);
+
+    const handleMakePayment = async (ticketToken: number) => {
+        try {
+            const response = await EditTicketData.getEditTicktetData(ticketToken.toString());
+
+
+
+            setPaymentId(response.data[0].ticketToken);
+            setMakepaymentdata(response.data[0]);
+            setMakepaymentModel(true);
+
+
+
+
+
+        } catch (error) {
+            console.error('Error handling journey start:', error);
+            alert('Error occurred while handling payment journey.');
+        }
+    };
+
+
 
 
 
@@ -255,19 +281,28 @@ const ViewTicketDetail = () => {
 
             <div className="container mt-3">
                 <br />
-                <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <h4>Ticket Booking Detail</h4>
                     <div>
                         <button className="btn btn-sm btn-primary" onClick={() => handlePrint(ticketData)}
                             style={{ float: "right", fontSize: "12px" }}  >Print</button>
-                        <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px", fontSize: "12px" }} onClick={() => handlePayment(ticketData.token)}> Payment</Button>
 
                         <Link href="/ticket_list" className="btn btn-sm btn-primary" style={{ float: "right", marginRight: "8px", fontSize: "12px" }}>Back</Link>
+                        <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px", fontSize: "12px" }} onClick={() => handlePayment(ticketData.token)}>Receive Payment</Button>
+                        <Button variant="success" size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px", fontSize: "12px" }}  onClick={() => handleMakePayment(ticketData.token)}>Make Payment</Button>
+
                         <TicketPaymentModel
                             show={paymentModel}
                             handleClose={() => setpaymentModel(false)}
                             paymentinitialData={Paymentdata}
                             PaymentId={PaymentId}
+                        />
+
+                        <VendorPaymentModel
+                            show={MakepaymentModel}
+                            handleClose={() => setMakepaymentModel(false)}
+                            paymentinitialData={Makepaymentdata}
+                            PaymentId={MakepaymentId}
                         />
                     </div>
 

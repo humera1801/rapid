@@ -121,7 +121,7 @@ export const generateEditReceiverChallanPDF = (formData, bankDetails) => {
                         <td>${formData.ferc_challan_no}</td>
                     </tr>
                     <tr><td>Order No:</td><td>${formData.ferc_order_no}</td></tr>
-                    <tr><td>PonNo Date:</td><td>${formData.po_no_date}</td></tr>
+                    <tr><td>Po.No Date:</td><td>${formData.po_no_date}</td></tr>
                     <tr><td>Vendor Code:</td><td>${formData.vendorCode}</td></tr>
                     <tr><td>Contact Person:</td><td>${formData.firstName}</td></tr>
                     <tr><td>Contact No:</td><td>${formData.mobileNo}</td></tr>

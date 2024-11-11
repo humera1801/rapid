@@ -104,7 +104,7 @@ export interface FormData {
 const CreateQuotation = () => {
     const storedData = localStorage.getItem('userData');
 
-    const { register, control, handleSubmit, formState: { errors }, watch, setValue, getValues } = useForm<FormData>({
+    const { register, control, handleSubmit, formState: { errors }, watch, clearErrors, setValue, getValues } = useForm<FormData>({
         defaultValues: {
             q_created_by: storedData,
             client_id: "",
@@ -201,6 +201,19 @@ const CreateQuotation = () => {
 
             setValue("mobileNo", selectedClient.client_mobileNo);
             setMobileNoValue(selectedClient.client_mobileNo); // Update mobileNoValue state
+
+            clearErrors([
+
+                "address",
+                "email",
+                "gstNo",
+                "client_city",
+                "client_state",
+                "client_pincode",
+                "mobileNo",
+
+            ]);
+
         }
     };
 
@@ -492,7 +505,7 @@ const CreateQuotation = () => {
 
     const submitFormData = async (formData: FormData, clientId: number) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/quotation/add_fire_extingusher_quotation_data', formData).then((res: any) => {
+            const response = await axios.post('http://192.168.0.106:3001/quotation/add_fire_extingusher_quotation_data', formData).then((res: any) => {
                 console.log("form data", res.data);
                 generateQuotationPDF(res.data.data);
                 // router.push("/Quotation/QuotationList")
@@ -506,7 +519,7 @@ const CreateQuotation = () => {
 
     const submitNewClientFormData = async (formData: FormData) => {
         try {
-            const response = await axios.post('http://192.168.0.105:3001/quotation/add_fire_extingusher_quotation_data', formData);
+            const response = await axios.post('http://192.168.0.106:3001/quotation/add_fire_extingusher_quotation_data', formData);
 
             console.log('Form data submitted successfully for new client.', response.data.data[0]);
             console.log('Server response:', response.data.data[0]);
@@ -589,22 +602,7 @@ const CreateQuotation = () => {
                     <Card.Body>
                         <form onSubmit={handleSubmit(onSubmit)}>
                             <div className="row">
-                                {/* <!-- Employee Selector --> */}
-                                {/* <div className="col-lg-3 col-md-6">
-                                    <label className="form-label" htmlFor="employee">Select Employees:</label>
-                                    <Select
-                                        className="form-control-sm"
-                                        id="employee"
-                                        {...register("employee")}
-                                        isMulti
-                                        options={options}
-                                        value={selectedEmployees}
-                                        onChange={handleChange}
-                                        placeholder="--Select--"
-                                    />
-                                </div> */}
-
-                                {/* <!-- Services Checkboxes --> */}
+                               
                                 <div className="col-lg-9 col-md-6">
                                     <div className="d-flex flex-wrap align-items-center mt-3">
                                         {services.map((service) => (
@@ -883,6 +881,11 @@ const CreateQuotation = () => {
                                                 maxLength: 10,
                                                 pattern: /^[0-9]+$/
                                             })}
+                                            onInput={() => {
+                                                if (errors.whatsup_no) {
+                                                    clearErrors("whatsup_no");
+                                                }
+                                            }}
                                             value={WmobileNoValue}
                                             onChange={handleWMobileNoChange}
                                             className={`form-control form-control-sm ${errors.whatsup_no ? 'is-invalid' : ''}`}
@@ -925,6 +928,11 @@ const CreateQuotation = () => {
                                                     id="clientId"
                                                     value={inputValue}
                                                     onChange={handleInputChange}
+                                                    onInput={() => {
+                                                        if (errors.firstName) {
+                                                            clearErrors("firstName");
+                                                        }
+                                                    }}
                                                     placeholder="Enter Client Name"
                                                 />
                                                 {errors?.firstName?.type === "required" && <span className="error">This field is required</span>}

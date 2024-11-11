@@ -355,7 +355,7 @@ function TicketBook() {
 
     async function addNewCity(stateId: string, cityName: string) {
         const requestBody = { city_name: cityName, state_id: stateId };
-        const response = await fetch('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+        const response = await fetch('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -373,7 +373,7 @@ function TicketBook() {
 
 
     async function submitFormData(formData: FormData) {
-        const response = await fetch('http://192.168.0.105:3001/ticket/create_ticket_data', {
+        const response = await fetch('http://192.168.0.106:3001/ticket/create_ticket_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

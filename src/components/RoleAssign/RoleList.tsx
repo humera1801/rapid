@@ -183,7 +183,7 @@ const RoleList: React.FC = () => {
             role_id: role_id
         }
         try {
-            const response = await axios.post(`http://192.168.0.105:3001/employee/delete_role`, formData);
+            const response = await axios.post(`http://192.168.0.106:3001/employee/delete_role`, formData);
             console.log('role deleted successfully:', response.data);
             window.location.reload();
         } catch (error) {

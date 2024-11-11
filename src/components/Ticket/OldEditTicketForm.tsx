@@ -454,7 +454,7 @@ function EditForm() {
       }
 
       if (showCustomCityInput && customCity) {
-        const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+        const response = await axios.post('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
           city_name: customCity,
           state_id: selectedFromStateIdStr,
         });
@@ -463,7 +463,7 @@ function EditForm() {
       }
 
       if (showCustomToCityInput && customToCity) {
-        const response = await axios.post('http://192.168.0.105:3001/ticket/add_new_city_from_state', {
+        const response = await axios.post('http://192.168.0.106:3001/ticket/add_new_city_from_state', {
           city_name: customToCity,
           state_id: selectedToStateIdStr,
         });
@@ -480,7 +480,7 @@ function EditForm() {
 
       formData.tkt_no = tkt_no;
 
-      const response = await axios.post('http://192.168.0.105:3001/ticket/update_ticket_detail_data', formData);
+      const response = await axios.post('http://192.168.0.106:3001/ticket/update_ticket_detail_data', formData);
       console.log('Form submitted successfully:', response.data);
       handleUpdatePrint(formData);
       router.push('/ticket_list');

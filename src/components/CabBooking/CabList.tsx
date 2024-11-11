@@ -17,7 +17,7 @@ import { exportCabListPDF } from './CabbookingPdf/CabListPdf';
 import { exportCabExcel } from './CabbookingPdf/CabExcel';
 
 export interface User {
-    id:any;
+    id: any;
     created_by_name: any;
     cb_journey_end_date: any;
     cb_journey_start_date: any;
@@ -95,7 +95,7 @@ const CabList: React.FC = () => {
             getUserProfile(e_id)
                 .then((userData) => {
                     setUserName(userData.e_name);
-                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                    return axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
                 })
                 .then((roleResponse) => {
                     const rolesData = roleResponse.data.data;
@@ -128,7 +128,7 @@ const CabList: React.FC = () => {
         e.preventDefault();
         const formData = { cb_id: cb_id };
         try {
-            await axios.post(`http://192.168.0.105:3001/cabbooking/delete_cab_booking`, formData);
+            await axios.post(`http://192.168.0.106:3001/cabbooking/delete_cab_booking`, formData);
             window.location.reload();
         } catch (error) {
             console.error('Error deleting Cab:', error);
@@ -141,6 +141,24 @@ const CabList: React.FC = () => {
                 name: "Cab sr.No",
                 selector: (row: User) => row.cb_serial_no,
                 sortable: true,
+                cell: (row: any) => (
+                    <Link
+                        href={`ViewCab?id=${row.cb_id}`}
+                        style={{
+                            textDecoration: 'none',
+                            color:  'inherit',
+                            backgroundColor:  'transparent',
+                            padding: '5px',
+                        }}
+                    >
+                        {row.cb_serial_no}
+                    </Link>
+                ),
+                style: {
+                    minWidth: '50px',
+                    whiteSpace: 'nowrap',
+                    fontSize:"12px"
+                },
             },
             visibleColumns.includes('Name') && {
                 name: "Name",
@@ -267,7 +285,7 @@ const CabList: React.FC = () => {
     };
 
 
-    
+
     return (
         <div style={{ fontSize: "12px" }} className="container-fluid mt-3">
             <div className="card mb-3">

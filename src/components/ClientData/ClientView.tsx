@@ -166,7 +166,7 @@ const ClientView = () => {
 
                         <Button size="sm" className="btn btn-sm btn-success" style={{ float: "right", marginRight: "8px", fontSize: "12px" }} onClick={(e) => handletransaction(paymentData.client_id, e)}>Transaction History</Button>
 
-                        <Link href="/PaymentData" className="btn btn-sm btn-primary" style={{ float: "right", marginRight: "8px", fontSize: "12px" }}>
+                        <Link href="/ClientDetails/ClientList" className="btn btn-sm btn-primary" style={{ float: "right", marginRight: "8px", fontSize: "12px" }}>
                             Back
                         </Link>
 
@@ -243,44 +243,7 @@ const ClientView = () => {
                                 <span> {paymentData.poNo}</span>
                             </div>
 
-                            {/* <div className="col-lg-12">
-                                    <label className="set_labelData">Client IdProof:</label>
-                                    <div className="image-gallery1">
-                                        {parcelImages.length > 0 ? (
-                                            parcelImages.map((imageUrl, index) => (
-                                                <img
-                                                    key={index}
-                                                    src={imageUrl}
-                                                    alt={`Parcel ${index}`}
-                                                    className="parcel-image1"
-                                                    onClick={() => handleImageClick(imageUrl)}
-                                                    style={{ cursor: 'pointer' }}
-                                                />
-                                            ))
-                                        ) : (
-                                            <p>No images available.</p>
-                                        )}
-                                    </div>
-
-
-                                    {selectedImage && (
-                                        <div className="modal-parcel" onClick={handleCloseModal}>
-                                            <span className="close" onClick={handleCloseModal}>&times;</span>
-                                            <img src={selectedImage} alt="Enlarged" className="modal-content-parcel" />
-
-                                        </div>
-                                    )}
-                                </div> */}
-
-                            {/* <div className="col-lg-3">
-                                <label className="form-label" htmlFor="Place_visit">Client IdProof:</label>
-                                {imageName && (
-                                    <div className="col-lg-12 mt-2">
-                                        <img src={imageName} alt="Client ID Proof" style={{ width: '100px', height: '100px' }} />
-                                    </div>
-                                )}
-                            </div> */}
-
+                         
                             <div className="col-lg-3">
                                 <label className="form-label" htmlFor="Place_visit">Client IdProof:</label>
                                 {imageName ? (

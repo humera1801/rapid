@@ -15,7 +15,7 @@ import getUserProfile from '@/app/Api/UserProfile';
 import ClientListApi from '@/app/Api/ClientApi/ClientListApi';
 import { exportTransactionListPDF } from './ClientPrint/TransactionPdf';
 import { exportTransactionExcel } from './ClientPrint/TransactionExcel';
-import { generateCabPaymentReceiptPrint } from '../CabBooking/CabbookingPdf/cabpaymentreceipt';
+import { generateTransactionPrint } from './ClientPrint/TransactionPrint';
 import { generatePaymentReceiptPdf } from './ClientPrint/TransactionPrintPdf';
 
 
@@ -272,7 +272,12 @@ const Transaction: React.FC = () => {
 
 
 
-
+    const formatBookingType = (type: any) => {
+        return type
+            .split('_') 
+            .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1)) 
+            .join(' ');
+    };
 
 
 
@@ -290,6 +295,8 @@ const Transaction: React.FC = () => {
             name: "Booking Of",
             cell: (row: User) => {
                 let link;
+                const formattedBookingType = formatBookingType(row.booking_type); // Format the booking type
+
                 switch (row.booking_type) {
                     case 'cab_booking':
                         link = `/CabBooking/ViewCab?id=${row.id}`;
@@ -304,16 +311,19 @@ const Transaction: React.FC = () => {
                         link = `/ticket_list/Ticket_data?id=${row.id}`;
                         break;
                     default:
-                        return row.booking_type;
+                        return formattedBookingType; // Return formatted type
                 }
 
                 return (
                     <Link href={link} style={{ color: 'black', textDecoration: 'none' }}>
-                        {row.booking_type}
+                        {formattedBookingType} {/* Use the formatted booking type here */}
                     </Link>
                 );
             },
             sortable: true,
+            style: {
+             fontSize:"11px"
+            },
         },
 
         {
@@ -380,7 +390,7 @@ const Transaction: React.FC = () => {
         try {
             const getTDetail = await ClientListApi.getTranSactionPrint(receipt_no);
             
-            generateCabPaymentReceiptPrint(getTDetail[0]);
+            generateTransactionPrint(getTDetail);
         } catch (error) {
             console.error("Error fetching ticket data:", error);
         }
@@ -389,7 +399,7 @@ const Transaction: React.FC = () => {
     const handleShareClick = async (receipt_no: string) => {
         try {
             const getTDetail = await ClientListApi.getTranSactionPrint(receipt_no);
-            generatePaymentReceiptPdf(getTDetail[0]);
+            generatePaymentReceiptPdf(getTDetail);
         } catch (error) {
             console.error("Error fetching ticket data:", error);
         }

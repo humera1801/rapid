@@ -53,7 +53,7 @@ const VehicalList = () => {
         console.log('Brand added successfully:', data);
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/cabbooking/add_vehicle', data);
+            const response = await axios.post('http://192.168.0.106:3001/cabbooking/add_vehicle', data);
 
             console.log('vehicle rate  added successfully:', response.data);
 
@@ -84,7 +84,7 @@ const VehicalList = () => {
         try {
             if (!editBrand) return;
 
-            const response = await axios.post('http://192.168.0.105:3001/cabbooking/edit_vehicle_data', {
+            const response = await axios.post('http://192.168.0.106:3001/cabbooking/edit_vehicle_data', {
                 v_id: editBrand.v_id,
                 v_type: data.v_type,
                 rate_8_hrs: data.rate_8_hrs,

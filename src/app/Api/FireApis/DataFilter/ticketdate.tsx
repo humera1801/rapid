@@ -1,8 +1,9 @@
 import axios, { AxiosResponse } from 'axios';
 import { baseURL } from '../BrandApi/DeleteBrand';
+import { DetailsResponse } from './date';
 
 export default {
-    async getticketFilterdate(startdate?: string, enddate?: string): Promise<any> {
+    async getticketFilterdate(startdate?: string, enddate?: string): Promise<DetailsResponse> {
         try {
             const response: AxiosResponse = await axios.post(baseURL + '/ticket/get_date_filter_booking_list_data', {
                 startdate: startdate || '',  

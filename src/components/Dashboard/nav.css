@@ -12,14 +12,10 @@
 
 
 
-.nav-link {
-  font-weight: 12px;
-  color: #343a40 !important;
-  transition: color 0.2s;
-}
+
 
 .nav-link:hover {
-  color: #f72611 !important;
+  color: #223407 !important;
 }
 
 .nav-dropdown {
@@ -79,3 +75,6 @@
 }
 
 
+.color-change a{
+  color: #343a40 !important;
+}

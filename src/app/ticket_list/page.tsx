@@ -16,6 +16,7 @@ import handlePrint from './Ticket_data/printUtils';
 import { handleticketPDF } from './handleticketPdF';
 import ticketdate from '../Api/FireApis/DataFilter/ticketdate';
 import getUserProfile from '../Api/UserProfile';
+import Footer from '@/components/Dashboard/Footer';
 
 export interface User {
     id: string;
@@ -55,10 +56,11 @@ export interface User {
     paid_amount: number;
     remaining_amount: number;
     mobile: string;
-    st_print_rate:any;
-    slr_print_rate:any;
-    ex_print_rate:any; 
-    dep_time:any;
+    st_print_rate: any;
+    slr_print_rate: any;
+    ex_print_rate: any;
+    dep_time: any;
+    is_duplicate: any;
 }
 
 const customStyle = {
@@ -152,7 +154,7 @@ const Page: React.FC = () => {
             getUserProfile(e_id)
                 .then((userData) => {
                     setUserName(userData.e_name);
-                    return axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+                    return axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
                 })
                 .then((roleResponse) => {
                     const rolesData = roleResponse.data.data;
@@ -318,7 +320,7 @@ const Page: React.FC = () => {
             ticket_id: ticketId
         }
         try {
-            const response = await axios.post(`http://192.168.0.105:3001/ticket/remove_ticket_data`, formData);
+            const response = await axios.post(`http://192.168.0.106:3001/ticket/remove_ticket_data`, formData);
             console.log('Ticket deleted successfully:', response.data);
             window.location.reload();
         } catch (error) {
@@ -371,23 +373,61 @@ const Page: React.FC = () => {
         );
     };
 
+    const getRowStyle = (row: any) => ({
+        backgroundColor: row.is_duplicate === '1' ? 'red' : 'transparent',
+        color: row.is_duplicate === '1' ? 'white' : 'black',
+    });
     const columns: TableColumn<User>[] = [
         {
             name: "Receipt No",
             selector: (row: User) => row.tkt_no,
             sortable: true,
+            cell: (row) => (
+                <div className='row'>
+                    <Link
+                        href={`ticket_list/Ticket_data?token=${row.token}`}
+                        style={{
+                            textDecoration: 'none',
+                            color:  'inherit',
+                            backgroundColor:  'transparent',
+                            padding: '5px',
+                        }}
+                    >
+                        {row.tkt_no}
+                    </Link>
+                    {row.is_duplicate === '1' && (
+                        <span style={{ color: 'blue', fontSize: '8px', marginTop: '5px' }}>
+                            Duplicate
+                        </span>
+                    )}
+                </div>
+            ),
             style: {
                 minWidth: '50px',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                fontSize: "12px"
             },
             omit: !visibleColumns.includes("Receipt No")
         },
         {
             name: "Customer Name",
             selector: (row: User) => row.client_firstName,
-            sortable: true,
 
+            sortable: true,
+           
+
+
+
+
+
+            
             omit: !visibleColumns.includes("Customer Name")
+        },
+        {
+            name: "Mobile-no",
+            selector: (row: User) => row.client_mobileNo,
+            sortable: true,
+            omit: !visibleColumns.includes("Mobile-no"),
         },
         {
             name: "From",
@@ -420,18 +460,6 @@ const Page: React.FC = () => {
             omit: !visibleColumns.includes("Amount")
         },
         {
-            name: "Print Amount",
-            selector: (row: User) => row.print_final_total_amount,
-            sortable: true,
-            omit: !visibleColumns.includes("Print Amount")
-        },
-        {
-            name: "Mobile-no",
-            selector: (row: User) => row.client_mobileNo,
-            sortable: true,
-            omit: !visibleColumns.includes("Mobile-no"),
-        },
-        {
             name: "Added By",
             selector: (row: User) => row.added_by_name,
             sortable: true,
@@ -446,8 +474,8 @@ const Page: React.FC = () => {
             },
             cell: (row: User) => (
                 <div className='action-buttons' >
-                    <button className="btn btn-sm btn-success"  style={{ color: '#ffffff' , fontSize:"10px" }}  onClick={() => handleShare(row)}>Share</button>
-                    <button className="btn btn-sm btn-info"  style={{ color: '#ffffff' , fontSize:"10px" }}  onClick={() => handlePrintClick(row)}>Print</button>
+                    <button className="btn btn-sm btn-success" style={{ color: '#ffffff', fontSize: "10px" }} onClick={() => handleShare(row)}>Share</button>
+                    <button className="btn btn-sm btn-info" style={{ color: '#ffffff', fontSize: "10px" }} onClick={() => handlePrintClick(row)}>Print</button>
                     {userRoles.includes('ticketBooking_view') && (
                         <Link href={`ticket_list/Ticket_data?token=${row.token}`} className="btn btn-sm btn-warning">
                             <FontAwesomeIcon icon={faEye} />
@@ -459,7 +487,7 @@ const Page: React.FC = () => {
                         </Link>
                     )}
                     {userRoles.includes('ticketBooking_delete') && (
-                      <button  style={{ width:"25px" , padding:"5px" , cursor: 'pointer', color: '#ffffff'} } onClick={(e) => handleDeleteTicket(row.id, e)}  className="btn btn-sm btn-danger">
+                        <button style={{ width: "25px", padding: "5px", cursor: 'pointer', color: '#ffffff' }} onClick={(e) => handleDeleteTicket(row.id, e)} className="btn btn-sm btn-danger">
                             <FontAwesomeIcon icon={faTrash} />
                         </button>
                     )}
@@ -473,7 +501,7 @@ const Page: React.FC = () => {
 
 
     const [searchTerm, setSearchTerm] = useState<string>('');
-    const [originalRecords, setOriginalRecords] = useState<User[]>([]); 
+    const [originalRecords, setOriginalRecords] = useState<User[]>([]);
 
 
     const handleFilter = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -497,8 +525,8 @@ const Page: React.FC = () => {
 
     return (
         <>
-            <Header  />
-            <div className="container-fluid mt-3">
+            <Header />
+            <div className="container-fluid mt-3" style={{height:"100vh"}}>
                 <div className="card mb-3" style={{ width: 'auto' }}>
                     <div className="card-header d-flex justify-content-between align-items-center">
                         <h4 className="mb-0">Ticket Booking List</h4>
@@ -582,6 +610,8 @@ const Page: React.FC = () => {
                     </div>
                 </div>
             </div>
+            <Footer/>
+
         </>
     );
 };

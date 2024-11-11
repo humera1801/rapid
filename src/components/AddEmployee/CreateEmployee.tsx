@@ -34,7 +34,7 @@ const CreateEmployee = () => {
     useEffect(() => {
         const fetchRoles = async () => {
             try {
-                const response = await axios.get('http://192.168.0.105:3001/employee/get_role_list');
+                const response = await axios.get('http://192.168.0.106:3001/employee/get_role_list');
                 setRoles(response.data.data);
                 console.log(response.data.data);
 
@@ -61,7 +61,7 @@ const CreateEmployee = () => {
 
         try {
             // Submit the form data to add a new employee
-            const response = await axios.post('http://192.168.0.105:3001/employee/add_employee', finalData);
+            const response = await axios.post('http://192.168.0.106:3001/employee/add_employee', finalData);
             console.log('Data submitted successfully:', response.data);
 
             const E_Id = response.data.e_id;
@@ -110,7 +110,7 @@ const CreateEmployee = () => {
         formData.append("e_id", E_Id.toString());
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/employee/upload_employee_signature', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/employee/upload_employee_signature', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -131,7 +131,7 @@ const CreateEmployee = () => {
         formData.append("e_id", E_Id.toString());
 
         try {
-            const response = await axios.post('http://192.168.0.105:3001/employee/upload_employee_id_proof', formData, {
+            const response = await axios.post('http://192.168.0.106:3001/employee/upload_employee_id_proof', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },

@@ -1,6 +1,10 @@
 import axios, { AxiosResponse } from 'axios';
 import { baseURL } from './DeleteBrand';
 
+interface BrandDetailsResponse {
+  status: string;
+  data: any;
+}
 
 
 interface Brand {
@@ -9,18 +13,17 @@ interface Brand {
 }
 
 export default {
-  async getAddBrand(): Promise<any> {
+  async getAddBrand(): Promise<BrandDetailsResponse> {
     try {
       const response: AxiosResponse = await axios.get(baseURL + '/brand/get_fire_extinguisher_brand_list', {
         headers: {
           'Accept': 'application/json',
-          
+
         },
       });
 
       if (response.data.status === 1) {
-        const brands: Brand[] = response.data.data;
-        return brands;
+        return response.data.data;
       } else {
         throw new Error('Response status is not 1');
       }

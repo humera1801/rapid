@@ -40,6 +40,8 @@ interface User {
     print_bal_amount: number;
     total_demurrage_charges: number;
     demurrage_days: number;
+    total_pickup_charge:any;
+    total_dispatch_charge:any;
     demurrage_charges: number;
     parcel_bill_detail: { e_way_bill_no: string; p_o_no: string; invoice_no: string; invoice_amount: string }[];
     parcel_detail: {
@@ -57,7 +59,7 @@ interface User {
 
 const handleParcelPrint = (row: User) => {
     const totalRate = Number(row.gst_amount) + Number(row.print_total)
-    const finalRate = totalRate + Number(row.total_demurrage_charges) + Number(row.pic_charge) + Number(row.dis_charge) + Number(row.bilty_charge)
+    const finalRate = totalRate + Number(row.total_demurrage_charges) + Number(row.total_pickup_charge) + Number(row.total_dispatch_charge) + Number(row.bilty_charge)
 
 
     console.log("data", row.parcel_detail);
@@ -74,7 +76,7 @@ const handleParcelPrint = (row: User) => {
 
     // Format parcel type counts as "type (count)"
     const parcelTypes = Object.entries(parcelTypeCounts)
-        .map(([type, count]) => `${type} (${count})`)
+        .map(([type, count]) => `${type}`)
         .join(', ');
 
 
@@ -205,11 +207,11 @@ console.log("invoice Amount",invoiceNos);
                         </tr>
                         <tr>
                             <td><b>Pickup Charges</b></td>
-                            <td>${row.pic_charge}</td>
+                            <td>${row.total_pickup_charge}</td>
                         </tr>
                         <tr>
                             <td><b>Dispatch Charges</b></td>
-                            <td>${row.dis_charge}</td>
+                            <td>${row.total_dispatch_charge}</td>
                         </tr>
                         <tr>
                             <td colspan="2" rowspan="2"><b>Ewaybills</b>: ${eWayBillNos}</td>

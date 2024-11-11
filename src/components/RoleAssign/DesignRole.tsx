@@ -44,7 +44,7 @@ const RoleForm: React.FC<RoleFormProps> = () => {
             setFireData(response.data);
             setValue("e_id", response.data.e_id);
             setError('');
-            const roleResponse = await axios.post('http://192.168.0.105:3001/employee/get_role_employee', { e_id });
+            const roleResponse = await axios.post('http://192.168.0.106:3001/employee/get_role_employee', { e_id });
             const rolesData = roleResponse.data.data;
 
             if (rolesData.length > 0) {
@@ -145,7 +145,7 @@ const RoleForm: React.FC<RoleFormProps> = () => {
     console.log('Form submitted:', formData);
 
     try {
-      const response = await axios.post('http://192.168.0.105:3001/employee/assign_role_to_employee', formData);
+      const response = await axios.post('http://192.168.0.106:3001/employee/assign_role_to_employee', formData);
       console.log('Data submitted successfully:', response.data);
       window.location.reload();
     } catch (error) {

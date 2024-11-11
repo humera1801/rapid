@@ -66,9 +66,9 @@ const FirePayment: React.FC<FirePaymentProps> = ({ paymentinitialData, PaymentId
 
 
 
-                    if (data.paymentDetails && data.paymentDetails.length > 0) {
-                        const lastPaymentDetail = data.paymentDetails[data.paymentDetails.length - 1];
-                        setValue("total_paid_amount", data.total_paid);
+                    if (data.payment_details && data.payment_details.length > 0) {
+                        const lastPaymentDetail = data.payment_details[data.payment_details.length - 1];
+                        setValue("total_paid_amount", lastPaymentDetail.paid_amount);
 
 
                     } else {
@@ -164,7 +164,7 @@ const FirePayment: React.FC<FirePaymentProps> = ({ paymentinitialData, PaymentId
 
         console.log("Form Data:", dataToSubmit);
         try {
-            const response = await axios.post('http://192.168.0.105:3001/payment/add_new_payment', dataToSubmit);
+            const response = await axios.post('http://192.168.0.106:3001/payment/add_new_payment', dataToSubmit);
             console.log('Data submitted successfully:', response.data);
             if (fireData?.q_quotation_no) {
                 const q_quotation_no = fireData.q_quotation_no
@@ -268,7 +268,7 @@ const FirePayment: React.FC<FirePaymentProps> = ({ paymentinitialData, PaymentId
                             })}
                             value={selectedPaymentMethod}
                             onChange={handlePaymentMethodChange}
-                            className="form-control"
+                            className="form-control form-control-sm"
                         >
                             <option value="">--Select--</option>
                             <option value="cash">Cash</option>
@@ -285,7 +285,7 @@ const FirePayment: React.FC<FirePaymentProps> = ({ paymentinitialData, PaymentId
                                 <input
                                     {...register('payment_details')}
                                     type="text"
-                                    className="form-control"
+                                    className="form-control form-control-sm"
                                     placeholder="Enter transaction ID"
                                 // Use appropriate handler or register here if using form libraries
                                 />

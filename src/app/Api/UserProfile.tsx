@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const getUserProfile = async (userId: number) => {
   try {
-    const response = await axios.post('http://192.168.0.105:3001/auth/user_profile_detail', {
+    const response = await axios.post('http://192.168.0.106:3001/auth/user_profile_detail', {
       user_id: userId.toString(), 
     });
 

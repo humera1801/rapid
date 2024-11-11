@@ -816,17 +816,7 @@ const CreateInvoice = () => {
     const router = useRouter();
 
 
-    // const onSubmit = async (formData: any) => {
-    //     const transformedServiceData = Object.entries(fireData.service_data).map(([serviceId, productData]) => ({
-    //         [serviceId]: productData
-    //     }));
-
-    //     const finalData = { ...formData, service_data: transformedServiceData };
-
-    //     console.log("Filtered Form Data:", finalData);
-
-
-    // };
+   
 
 
     const onSubmit = async (formData: any) => {
@@ -854,7 +844,7 @@ const CreateInvoice = () => {
             let response;
             if (fireData.fedc_id) {
                 console.log("............", fireData.q_id);
-                response = await axios.post('http://192.168.0.105:3001/booking/add_fire_extingusher_booking_data', finalData);
+                response = await axios.post('http://192.168.0.106:3001/booking/add_fire_extingusher_booking_data', finalData);
                 console.log('with Q_id Data submitted successfully:', response.data.q_id, response.data);
                 if (fireData?.q_quotation_no) {
                     const q_quotation_no = fireData.q_quotation_no;
@@ -863,6 +853,7 @@ const CreateInvoice = () => {
                         const getTDetail = await getFireBookingId.GetFireBookingId(q_quotation_no);
                         console.log("Fetched details:", getTDetail.data[0]);
                         generateUpdatePDF(getTDetail.data[0])
+                        router.push('/Fire/Fire-List')
 
                     } catch (error) {
                         console.error('Error fetching ticket data:', error);
@@ -872,7 +863,7 @@ const CreateInvoice = () => {
 
             }
             else {
-                response = await axios.post('http://192.168.0.105:3001/booking/edit_fire_extingusher_booking_detail', finalData);
+                response = await axios.post('http://192.168.0.106:3001/booking/edit_fire_extingusher_booking_detail', finalData);
                 console.log('new Data submitted successfully:', response.data);
                 if (fireData?.q_quotation_no) {
                     const q_quotation_no = fireData.q_quotation_no;
@@ -881,6 +872,7 @@ const CreateInvoice = () => {
                         const getTDetail = await getFireBookingId.GetFireBookingId(q_quotation_no);
                         console.log("Fetched details:", getTDetail.data[0]);
                         generateUpdatePDF(getTDetail.data[0])
+                        router.push('/Fire/Fire-List')
 
                     } catch (error) {
                         console.error('Error fetching ticket data:', error);
