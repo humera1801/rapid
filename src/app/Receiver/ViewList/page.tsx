@@ -11,7 +11,6 @@ const page = () => {
 
     <ViewReceiverChalan/>
     
-    <Footer/>
 
     
     

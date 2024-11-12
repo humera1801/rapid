@@ -316,7 +316,7 @@ export const generateCabReceiptPrint = (formData) => {
         </div>
 
         <div class="footer">
-            <div>Prepared by:<span class="underline-text" style="width: 150px;"></span></div>
+            <div>Prepared by:<span class="underline-text" style="width: 150px;">${formData.created_by_name}</span></div>
             <div>Customer Signature: <span class="underline-text" style="width: 150px;"></span></div>
         </div>
     </div>

@@ -10,7 +10,7 @@ const page = () => {
     <Header/>
     <CabView/>
     
-    <Footer/>
+    {/* <Footer/> */}
 
     
     </>

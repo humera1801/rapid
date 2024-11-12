@@ -19,6 +19,7 @@ import parceldate from '../Api/FireApis/DataFilter/parceldate';
 import getUserProfile from '../Api/UserProfile';
 import { Dropdown } from 'react-bootstrap';
 import Footer from '@/components/Dashboard/Footer';
+import handlebedgePrint from './parcel_data/printparcelbedge';
 
 export interface User {
     id: any;
@@ -412,6 +413,8 @@ const ParcelListPage = () => {
                     
                         <button className="btn btn-sm btn-success" style={{ fontSize: "10px" }} onClick={() => handleShareClick(row.token)}>Share</button>
                         <button className="btn btn-sm btn-info" style={{ fontSize: "10px" }} onClick={() => handlePrintClick(row.token)}>Print</button>
+                        <button className="btn btn-sm btn-primary" style={{ fontSize: "10px" }} onClick={() => handleBedgeClick(row.token)}>bedge</button>
+
                         {userRoles.includes('parcelBooking_view') && (
                             <Link href={`parcel_list/parcel_data?token=${row.token}`} className="btn btn-sm btn-warning">
                                 <FontAwesomeIcon icon={faEye} />
@@ -422,6 +425,7 @@ const ParcelListPage = () => {
                                 <FontAwesomeIcon icon={faPencilSquare} />
                             </Link>
                         )}
+
                         {userRoles.includes('parcelBooking_delete') && (
 
                             <button style={{ width: "25px", padding: "5px" }} onClick={(e) => handleDeleteTicket(row.id, e)} className="btn btn-sm btn-danger">
@@ -497,6 +501,15 @@ const ParcelListPage = () => {
         try {
             const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);
             handleParcelPrint(getTDetail.data[0]);
+        } catch (error) {
+            console.error('Error fetching parcel data:', error);
+        }
+    };
+
+    const handleBedgeClick = async (ticketToken: string) => {
+        try {
+            const getTDetail = await EditParcelDataList.getEditParcelData(ticketToken);
+            handlebedgePrint(getTDetail.data[0]);
         } catch (error) {
             console.error('Error fetching parcel data:', error);
         }

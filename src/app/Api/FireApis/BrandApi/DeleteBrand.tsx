@@ -9,7 +9,7 @@ interface BrandDetailsResponse {
 }
 
 export default {
-  async deleteBrand(id: string): Promise<BrandDetailsResponse> {
+  async deleteBrand(id: string): Promise<any> {
     try {
       const response: AxiosResponse = await axios.post(baseURL + '/brand/delete_fire_brand', {
         feb_id: id,

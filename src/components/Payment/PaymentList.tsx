@@ -496,7 +496,9 @@ const PaymentList: React.FC = () => {
         try {
             const getTDetail = await ClientListApi.getTranSactionPrint(receipt_no);
 
-            generateCabPaymentReceiptPrint(getTDetail[0]);
+            generateCabPaymentReceiptPrint(getTDetail.data[0]);
+            console.log(getTDetail.data[0]);
+            
         } catch (error) {
             console.error("Error fetching ticket data:", error);
         }
@@ -505,7 +507,7 @@ const PaymentList: React.FC = () => {
     const handleShareClick = async (receipt_no: string) => {
         try {
             const getTDetail = await ClientListApi.getTranSactionPrint(receipt_no);
-            generatePaymentReceiptPdf(getTDetail[0]);
+            generatePaymentReceiptPdf(getTDetail.data[0]);
         } catch (error) {
             console.error("Error fetching ticket data:", error);
         }

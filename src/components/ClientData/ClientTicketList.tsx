@@ -165,12 +165,12 @@ const ClientTicketList: React.FC<BusTicketListProps> = ({ title, data }) => {
                     <div className='action-buttons'>
                        
                         {userRoles.includes('ticketBooking_view') && (
-                            <Link href={`ticket_list/Ticket_data?token=${row.token}`} className="btn btn-sm btn-warning">
+                            <Link href={`/ticket_list/Ticket_data?token=${row.token}`} className="btn btn-sm btn-warning">
                                 <FontAwesomeIcon icon={faEye} />
                             </Link>
                         )}
                         {userRoles.includes('ticketBooking_update') && (
-                            <Link href={`ticket_list/Edit?token=${row.token}`} className="btn btn-sm btn-primary">
+                            <Link href={`/ticket_list/Edit?token=${row.token}`} className="btn btn-sm btn-primary">
                                 <FontAwesomeIcon icon={faPencilSquare} />
                             </Link>
                         )}

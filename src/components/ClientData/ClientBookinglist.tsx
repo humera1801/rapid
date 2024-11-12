@@ -162,10 +162,10 @@ const ClientBookingList: React.FC<ClientDataDisplayProps> = ({ title, data }) =>
                     <div className='action-buttons'>
                         {userRoles.includes('cabBooking') && (
                             <>
-                                <Link href={`ViewCab?id=${row.cb_id}`} className="btn btn-sm btn-warning">
+                                <Link href={`/ViewCab?id=${row.cb_id}`} className="btn btn-sm btn-warning">
                                     <FontAwesomeIcon icon={faEye} />
                                 </Link>
-                                <Link href={`EditCabBooking?id=${row.cb_id}`} className="btn btn-sm btn-primary">
+                                <Link href={`/EditCabBooking?id=${row.cb_id}`} className="btn btn-sm btn-primary">
                                     <FontAwesomeIcon icon={faPencilSquare} />
                                 </Link>
                                 {/* <button style={{ fontSize: "9px" }} onClick={(e) => handleDeleteTicket(row.cb_id, e)} className="btn btn-sm btn-danger">

@@ -129,7 +129,7 @@ const FireIngredient = () => {
                     <Card.Header>
                         <div className="d-flex justify-content-between align-items-center">
                             <h2 className="mb-0">Fire Extinguisher Ingredient List</h2>
-                            <Button variant="primary" size="sm" onClick={() => setModalShow(true)}>Add New Item</Button>
+                            <Button variant="primary" size="sm" onClick={() =>  { reset(); setModalShow(true) }}>Add New Item</Button>
                         </div>
                     </Card.Header>
                     <Card.Body>

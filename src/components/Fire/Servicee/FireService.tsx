@@ -116,7 +116,7 @@ const FireService = () => {
                 <br />
                 <Card>
                     <Card.Header><label style={{ fontSize: "30px", fontWeight: "500" }}>Fire extinguisher Service List</label>
-                        <button style={{ float: "right", marginTop: "6px" }} onClick={() => setModalShow(true)} className="btn btn-primary btn-sm">Add New Service</button></Card.Header>
+                        <button style={{ float: "right", marginTop: "6px" }} onClick={() =>  { reset(); setModalShow(true) }} className="btn btn-primary btn-sm">Add New Service</button></Card.Header>
                     <Card.Body>
                         {/* Add New Service Modal */}
                         <Modal

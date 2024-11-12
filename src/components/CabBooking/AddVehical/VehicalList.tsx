@@ -11,7 +11,7 @@ import CabbookingList from '@/app/Api/CabBooking/CabbookingList';
 interface FormData {
     v_type: string;
     rate_8_hrs: any;
-    rate_12_hrs:any;
+    rate_12_hrs: any;
     created_by: any;
 }
 
@@ -19,7 +19,7 @@ interface Brand {
     v_id: number;
     v_type: any;
     rate_8_hrs: any;
-    rate_12_hrs:any;
+    rate_12_hrs: any;
 }
 
 const VehicalList = () => {
@@ -88,7 +88,7 @@ const VehicalList = () => {
                 v_id: editBrand.v_id,
                 v_type: data.v_type,
                 rate_8_hrs: data.rate_8_hrs,
-                rate_12_hrs:data.rate_12_hrs,
+                rate_12_hrs: data.rate_12_hrs,
                 created_by: storedData,
             });
             console.log(data);
@@ -125,7 +125,10 @@ const VehicalList = () => {
 
             <div className="col-12">
                 <label style={{ fontSize: "25px", fontWeight: "500" }}>Vehicle List</label>
-                <button style={{ float: "right", marginTop: "6px" }} onClick={() => setModalShow(true)} className="btn btn-primary btn-sm">Add New Vehicle</button>
+                <button style={{ float: "right", marginTop: "6px" }} onClick={() => {                 
+                    reset();  
+                    setModalShow(true);  
+                }} className="btn btn-primary btn-sm">Add New Vehicle</button>
             </div>
             <br />
             <Card className='cardbox'>

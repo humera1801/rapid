@@ -13,6 +13,7 @@ import Link from 'next/link';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import VendorCabModel from './VendorPayment/CabVendorpayModel';
+import Footer from '../Dashboard/Footer';
 
 interface FormData {
     cb_id: any;
@@ -389,7 +390,7 @@ const CabView = () => {
 
     //-----------------------------------------------------------------------------------------------------------
     return (
-        <div className="container" style={{ fontSize: "12px" }}>
+        <><div className="container" style={{ fontSize: "12px" }}>
             <br />
             <div className="" style={{ display: "flex", justifyContent: "space-between" }}>
                 <h4>View Cab Booking Details </h4>
@@ -413,17 +414,12 @@ const CabView = () => {
                         show={showModal}
                         handleClose={() => setShowModal(false)}
                         initialData={capacityData}
-                        StartId={StartId}
-
-
-
-                    />
+                        StartId={StartId} />
                     <JourneyEndModal
                         show={showEndModal}
                         handleClose={() => setShowEndModal(false)}
                         endinitialData={journeyend}
-                        EndId={EndId}
-                    />
+                        EndId={EndId} />
 
 
                     <JourneyPaymentModel
@@ -437,12 +433,11 @@ const CabView = () => {
                         show={MakepaymentModel}
                         handleClose={() => setMakepaymentModel(false)}
                         paymentinitialData={Makepaymentdata}
-                        PaymentId={MakepaymentId}
-                    />
+                        PaymentId={MakepaymentId} />
                 </div>
             </div>
             <br />
-            <div className="card cardbox mb-3" style={{ width: "auto" }} >
+            <div className="card cardbox mb-3" style={{ width: "auto" }}>
 
 
 
@@ -781,16 +776,16 @@ const CabView = () => {
                                         <h5>Payment Details:</h5>
                                     </div>
                                     {/* <div className="col-md-6" style={{ textAlign: "right" }}>
-                                        <Button
-                                            variant="primary"
-                                            size="sm"
-                                            className="btn btn-sm btn-primary"
-                                            style={{ float: "right", marginRight: "8px", marginBottom: "8px" }}
-                                            onClick={() => handlePrintPayment(fireData.cb_id)}
-                                        >
-                                            Print
-                                        </Button>
-                                    </div> */}
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            className="btn btn-sm btn-primary"
+                            style={{ float: "right", marginRight: "8px", marginBottom: "8px" }}
+                            onClick={() => handlePrintPayment(fireData.cb_id)}
+                        >
+                            Print
+                        </Button>
+                    </div> */}
                                     <hr />
                                 </div>
 
@@ -845,17 +840,17 @@ const CabView = () => {
                                             </div>
                                         )}
                                         {/* {paymentDetail.pending_amount && (
-                                            <div className="col-lg-3">
-                                                <label className="form-label">Paid Amount:</label>
-                                                <span> {paymentDetail.paid_amount}</span>
-                                            </div>
-                                        )} */}
+                                <div className="col-lg-3">
+                                    <label className="form-label">Paid Amount:</label>
+                                    <span> {paymentDetail.paid_amount}</span>
+                                </div>
+                            )} */}
                                         {/* {paymentDetail.pending_amount && (
-                                            <div className="col-lg-3">
-                                                <label className="form-label">Paid Amount:</label>
-                                                <span> {paymentDetail.paid_amount}</span>
-                                            </div>
-                                        )} */}
+                                <div className="col-lg-3">
+                                    <label className="form-label">Paid Amount:</label>
+                                    <span> {paymentDetail.paid_amount}</span>
+                                </div>
+                            )} */}
                                     </div>
                                 ))}
                             </>
@@ -873,7 +868,14 @@ const CabView = () => {
 
 
 
-        </div >
+        </div>
+        
+        
+        <Footer />
+        
+        
+        </> 
+
     );
 };
 

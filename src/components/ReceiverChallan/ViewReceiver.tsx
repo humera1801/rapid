@@ -15,6 +15,7 @@ import Select from 'react-select';
 import GetListData from '@/app/Api/FireApis/DeliveryChallan/GetListData';
 import Link from 'next/link';
 import GetChallanList from '@/app/Api/FireApis/ReceiverChallan/GetChallanList';
+import Footer from '../Dashboard/Footer';
 
 export interface FormData {
     ferc_id: any;
@@ -691,10 +692,11 @@ const ViewReceiverChalan = () => {
 
 
     return (
+        <>
         <div className="container" style={{ fontSize: "12px" }}>
             <br />
             <div className="card-header" style={{ display: "flex", justifyContent: "space-between" }}>
-                <h3>View Receiver challan Details </h3>
+                <h3> Receiver Challan Details </h3>
                 <div>
 
 
@@ -880,10 +882,7 @@ const ViewReceiverChalan = () => {
                                 <label className="form-label" htmlFor="address">Vehicle No:</label>
                                 <span> {fireData.ferc_vehicle_no}</span>
                             </div>
-                            <div className="col-lg-4">
-                                <label className="form-label" htmlFor="address">Driving License:</label>
-                                <span> {drivingLicenseStatus}</span>
-                            </div>
+                            
 
 
                         </div>
@@ -898,6 +897,9 @@ const ViewReceiverChalan = () => {
 
 
         </div>
+        <Footer/>
+        </>
+
     );
 };
 

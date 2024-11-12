@@ -182,12 +182,12 @@ const ClientParcelList: React.FC<UserListProps> = ({ title, data }) => {
                     <div className='action-buttons'>
 
                         {userRoles.includes('parcelBooking_view') && (
-                            <Link href={`parcel_list/parcel_data?token=${row.token}`} className="btn btn-sm btn-warning">
+                            <Link href={`/parcel_list/parcel_data?token=${row.token}`} className="btn btn-sm btn-warning">
                                 <FontAwesomeIcon icon={faEye} />
                             </Link>
                         )}
                         {userRoles.includes('parcelBooking_update') && (
-                            <Link href={`parcel_list/Edit?token=${row.token}`} className="btn btn-sm btn-primary">
+                            <Link href={`/parcel_list/Edit?token=${row.token}`} className="btn btn-sm btn-primary">
                                 <FontAwesomeIcon icon={faPencilSquare} />
                             </Link>
                         )}

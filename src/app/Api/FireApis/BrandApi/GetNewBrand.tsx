@@ -13,7 +13,7 @@ interface Brand {
 }
 
 export default {
-  async getAddBrand(): Promise<BrandDetailsResponse> {
+  async getAddBrand(): Promise<any> {
     try {
       const response: AxiosResponse = await axios.get(baseURL + '/brand/get_fire_extinguisher_brand_list', {
         headers: {

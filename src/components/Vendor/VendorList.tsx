@@ -227,7 +227,7 @@ const VendorList = () => {
                 <div className="col-12">
                     <label style={{ fontSize: "25px", fontWeight: "500" }}>Vendor List</label>
                     
-                    <button style={{ float: "right", marginTop: "6px" }} onClick={() => setModalShow(true)} className="btn btn-primary btn-sm ms-1">Add New Vendor</button>
+                    <button style={{ float: "right", marginTop: "6px" }} onClick={() => { reset(); setModalShow(true) }} className="btn btn-primary btn-sm ms-1">Add New Vendor</button>
                     <button  style={{ float: "right", marginTop: "6px" }} onClick={() => VendorListPDF(Vendors)}
                         className="btn btn-sm btn-info " >PDF</button>
                 </div>

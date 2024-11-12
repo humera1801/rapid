@@ -82,13 +82,14 @@ const customStyle = {
     }
 };
 
-interface User {
+export interface User {
+    q_quotation_no: any;
     febking_id: any;
     client_email: any;
     febking_created_by: any;
     client_gstNo: any;
     fest_id: any;
-    febking_final_amount: string;
+    q_final_amount: string;
     client_firstName: string;
     client_address: string;
     email: string;
@@ -129,6 +130,7 @@ interface User {
         feb_id: string;
     }[];
 }
+
     // Add other properties as needed
 
 
@@ -221,15 +223,14 @@ const ClientFireBookingList: React.FC<ClientDataDisplayProps> = ({ title, data }
                 name: "Action",
                 cell: (row: User) => (
                     <div className='action-buttons'>
-                    <button className="btn btn-sm btn-success" style={{ color: '#ffffff' , fontSize:"10px" }} >Share</button>
-                    <button className="btn btn-sm btn-info" style={{ color: '#ffffff' , fontSize:"10px"}}>Print</button>
+              
                     {userRoles.includes('fireExtinguisherBooking_view') && (
-                        <Link href={`Fire-List/FireView?id=${row.febking_id}`} className="btn btn-sm btn-warning" >
+                        <Link href={`/Fire-List/FireView?id=${row.febking_id}`} className="btn btn-sm btn-warning" >
                             <FontAwesomeIcon icon={faEye} />
                         </Link>
                     )}
                     {userRoles.includes('fireExtinguisherBooking_update') && (
-                        <Link href={`Fire-List/Edit?id=${row.febking_id}`} className="btn btn-sm btn-primary">
+                        <Link href={`/Fire-List/Edit?id=${row.febking_id}`} className="btn btn-sm btn-primary">
                             <FontAwesomeIcon icon={faPencilSquare} />
                         </Link>
                     )}

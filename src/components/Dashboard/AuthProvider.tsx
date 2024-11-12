@@ -15,7 +15,7 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!userData) {
      
       router.push('/');
-      alert('You need to login to access this page.');
+    
     }
    
   }, []);

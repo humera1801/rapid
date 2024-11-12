@@ -11,28 +11,27 @@ const withRoleProtection = (WrappedComponent: any, requiredRole: any) => {
       const storedData = localStorage.getItem('userData');
       if (storedData) {
         const userData = JSON.parse(storedData);
-        const userRoles = userData.roles || []; // Ensure roles exist
+        const userRoles = userData.roles || []; 
 
         if (userRoles.includes(requiredRole)) {
           setHasAccess(true);
         } else {
-          router.push('/403'); // Redirect to a "Forbidden" page
+          router.push('/403'); 
         }
       } else {
-        router.push('/403'); // Redirect if no user data is found
+        router.push('/403'); 
       }
 
       setLoading(false);
-    }, [router]); // Removed requiredRole from dependencies
+    }, [router]);
 
     if (loading) {
-      return <div>Loading...</div>; // Loading state
+      return <div>Loading...</div>;
     }
 
     return hasAccess ? <WrappedComponent {...props} /> : null;
   };
 
-  // Set display name for easier debugging
   WithRoleProtection.displayName = `WithRoleProtection(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
 
   return WithRoleProtection;

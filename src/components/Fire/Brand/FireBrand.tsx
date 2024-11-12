@@ -20,7 +20,7 @@ const FireBrand = () => {
     const [modalShow, setModalShow] = useState(false);
     const [editModalShow, setEditModalShow] = useState(false);
     const [brands, setBrands] = useState<Brand[]>([]);
-    const [editBrand, setEditBrand] = useState<Brand | null>(null); 
+    const [editBrand, setEditBrand] = useState<Brand | null>(null);
 
     const { register, handleSubmit, reset } = useForm<FormData>();
     const storedData = localStorage.getItem('userData');
@@ -116,7 +116,7 @@ const FireBrand = () => {
                 <Card.Header>
                     <div className="col-12">
                         <label style={{ fontSize: "30px", fontWeight: "500" }}>Fire extinguisher brand List</label>
-                        <button style={{ float: "right", marginTop: "6px" }} onClick={() => setModalShow(true)} className="btn btn-primary btn-sm">Add New Brand</button>
+                        <button style={{ float: "right", marginTop: "6px" }} onClick={() => { reset(); setModalShow(true) }} className="btn btn-primary btn-sm">Add New Brand</button>
                     </div>
                 </Card.Header>
                 <Card.Body>
