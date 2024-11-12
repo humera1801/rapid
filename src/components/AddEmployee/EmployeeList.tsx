@@ -24,6 +24,7 @@ export interface User {
     confirmPassword: string;
     e_mobile_no: string;
     e_address: string;
+    role_title:any;
 }
 
 const customStyle = {
@@ -195,6 +196,16 @@ const EmpList: React.FC = () => {
         {
             name: "Mobile No",
             selector: (row: User) => row.e_mobile_no,
+            sortable: true,
+            style: {
+                minWidth: '50px',
+                whiteSpace: 'nowrap'
+            },
+
+        },
+        {
+            name: "Employee Role",
+            selector: (row: User) => row.role_title,
             sortable: true,
             style: {
                 minWidth: '50px',

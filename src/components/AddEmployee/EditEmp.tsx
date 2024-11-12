@@ -6,6 +6,8 @@ import { useForm } from 'react-hook-form';
 import EmployeeList from '@/app/Api/Employee/EmployeeList';
 import { Card } from 'react-bootstrap';
 import "../../../public/css/style.css"
+import Footer from '../Dashboard/Footer';
+import { useRouter } from 'next/navigation';
 
 interface FormData {
     e_id: any;
@@ -131,6 +133,7 @@ const EditEmp = () => {
         setidimageProof((prevImages: any[]) => prevImages.filter((url) => url !== image));
     };
 
+    const router = useRouter();
     //-----------------------------------------------------------------------------------------------------------   
     const onSubmit = async (finaldata: FormData) => {
 
@@ -178,6 +181,9 @@ const EditEmp = () => {
                 console.log("No ID proofs selected; skipping upload.");
             }
 
+            router.push('/Employee/EmpList')
+
+
         } catch (error) {
             if (axios.isAxiosError(error) && error.response) {
                 const { data } = error.response;
@@ -212,6 +218,7 @@ const EditEmp = () => {
     };
 
 
+
     const uploadMultipleIdProofs = async (files: File[], E_Id: number) => {
         const formData = new FormData();
         for (const file of files) {
@@ -243,7 +250,7 @@ const EditEmp = () => {
     return (
         <>
             {fireData ? (
-                <div className='container' style={{ width: "600px", fontSize: "12px" }}>
+                <div className='container' style={{ width: "600px",  height:"100vh", fontSize: "12px" }}>
                     <br />
                     <h4>Edit Staff</h4>
                     <br />
@@ -402,6 +409,8 @@ const EditEmp = () => {
             ) : (
                 <div>{error}</div>
             )}
+
+            <Footer/> 
         </>
     );
 };

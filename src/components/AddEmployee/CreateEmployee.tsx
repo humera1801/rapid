@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { Card } from 'react-bootstrap';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import Footer from '../Dashboard/Footer';
 
 interface FormData {
     e_id: any;
@@ -167,7 +168,7 @@ const CreateEmployee = () => {
 
     return (
         <>
-            <div className='container' style={{ width: "700px", fontSize: "12px" }}>
+            <div className='container' style={{ width: "700px", height:"100vh"  ,fontSize: "12px" }}>
                 <br />
                 <h4>Add Staff</h4>
                 <br />
@@ -313,6 +314,7 @@ const CreateEmployee = () => {
                     </Card.Body>
                 </Card>
             </div>
+            <Footer/>
         </>
     );
 }

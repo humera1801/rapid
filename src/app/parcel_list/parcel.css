@@ -245,3 +245,10 @@
   width: 100%;
 }
 
+/* Position the dropdown to the left */
+.dropdown-left {
+  position: absolute !important;
+  left: -100%; /* Move the dropdown to the left of the button */
+  top: 100%;   /* Keep the dropdown aligned vertically */
+  z-index: 1050; /* Ensure it appears above other content */
+}

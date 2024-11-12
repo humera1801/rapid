@@ -19,7 +19,7 @@ import parceldate from '../Api/FireApis/DataFilter/parceldate';
 import getUserProfile from '../Api/UserProfile';
 import { Dropdown } from 'react-bootstrap';
 import Footer from '@/components/Dashboard/Footer';
-import handlebedgePrint from './parcel_data/printparcelbedge';
+import{ handlebedgePrint} from './parcel_data/printparcelbedge';
 
 export interface User {
     id: any;
@@ -379,7 +379,7 @@ const ParcelListPage = () => {
                 name: "Status",
                 cell: (row: User) => (
                    
-                        <Dropdown style={{ fontSize: "10px" }}>
+                        <Dropdown  drop='end'    style={{ fontSize: "10px" , marginTop:"15px" }}>
 
                             <Dropdown.Toggle className={`btn btn-sm ${row.parcel_status == '0' ? 'btn-primary' : row.parcel_status == '1' ? 'btn-warning' : row.parcel_status == '2' ? 'btn-success' : 'btn-secondary'}`}
                                 id="dropdown-basic" style={{ fontSize: "10px", display: "flex", alignItems: "center  " }}>
@@ -413,7 +413,7 @@ const ParcelListPage = () => {
                     
                         <button className="btn btn-sm btn-success" style={{ fontSize: "10px" }} onClick={() => handleShareClick(row.token)}>Share</button>
                         <button className="btn btn-sm btn-info" style={{ fontSize: "10px" }} onClick={() => handlePrintClick(row.token)}>Print</button>
-                        <button className="btn btn-sm btn-primary" style={{ fontSize: "10px" }} onClick={() => handleBedgeClick(row.token)}>bedge</button>
+                        <button className="btn btn-sm btn-primary" style={{ fontSize: "10px" }} onClick={() => handleBedgeClick(row.token)}>barcode print</button>
 
                         {userRoles.includes('parcelBooking_view') && (
                             <Link href={`parcel_list/parcel_data?token=${row.token}`} className="btn btn-sm btn-warning">
@@ -440,9 +440,6 @@ const ParcelListPage = () => {
         setColumns(newColumns);
     }, [visibleColumns, userRoles]);
 
-    const handleEditClick = (ticketId: string) => {
-        console.log('Edit ticket', ticketId);
-    };
 
 
 

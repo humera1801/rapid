@@ -4,6 +4,7 @@ import Card from 'react-bootstrap/esm/Card';
 import "../RoleAssign/CreateRole.css";
 import { useForm } from 'react-hook-form';
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
 type BookingTypes =
     | 'Employee'
@@ -133,6 +134,8 @@ const EditRole: React.FC<RoleFormProps> = ({ roleId }) => {
         return str.charAt(0).toUpperCase() + str.slice(1).replace(/([A-Z])/g, ' $1');
     };
 
+    const router = useRouter()
+
     const onSubmit = async (data: FormData) => {
         const selectedCheckboxes = Object.entries(formValues)
             .filter(([_, isChecked]) => isChecked)
@@ -147,6 +150,7 @@ const EditRole: React.FC<RoleFormProps> = ({ roleId }) => {
         try {
             const response = await axios.post('http://192.168.0.106:3001/employee/create_role', formData);
             console.log('Data submitted successfully:', response.data);
+            router.push("/RoleAssign/List")
             // Optionally redirect or reset form
         } catch (error) {
             console.error('Error updating data:', error);
