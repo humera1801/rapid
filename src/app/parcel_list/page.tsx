@@ -379,7 +379,7 @@ const ParcelListPage = () => {
                 name: "Status",
                 cell: (row: User) => (
                    
-                        <Dropdown  drop='end'    style={{ fontSize: "10px" , marginTop:"15px" }}>
+                        <Dropdown  drop='end'    style={{ fontSize: "10px" , marginTop:"5px" }}>
 
                             <Dropdown.Toggle className={`btn btn-sm ${row.parcel_status == '0' ? 'btn-primary' : row.parcel_status == '1' ? 'btn-warning' : row.parcel_status == '2' ? 'btn-success' : 'btn-secondary'}`}
                                 id="dropdown-basic" style={{ fontSize: "10px", display: "flex", alignItems: "center  " }}>

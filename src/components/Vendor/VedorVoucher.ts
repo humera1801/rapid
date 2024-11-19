@@ -2,7 +2,7 @@
 import { toWords } from 'number-to-words';
 
 interface User {
-    particulars:any;
+    particulars: any;
     voucher_no: any;
     vp_id: any;
     booking_type: string;
@@ -42,13 +42,13 @@ const handlevendorPrint = (row: User) => {
 
          <style>
             body {
-                margin: 0;
-                font-family: Arial, sans-serif;
-                font-size: 12px;
-                color: #000;
+              
+               
             }
             .main {
-                width: 200mm;
+                width:180mm;
+                                font-family: Arial, sans-serif;
+
                 padding: 17px;
                 border: 1.5px solid #000;
                 margin: auto;
@@ -106,13 +106,27 @@ const handlevendorPrint = (row: User) => {
                 font-size: 12px;
                 text-align: right;
             }
-            .signature {
-                height: 50px;
-            }
+           .signature {
+  font-weight: bold;
+  padding-right: 10px;
+  /* Customize as per your design */
+}
+
+.box {
+  text-align: center;
+  padding:40px; 
+}
+
+.stamp-box {
+  width: 270px;
+  height: 100px;
+  border: 2px solid black;
+margin: 0 auto;
+}
+
         </style>
 
-        <body onload="window.print()">
-            <div class="main">
+                <div class="main">
                 <div class="header">
                     <img src="https://prolificdemo.com/dev_rapid_group/assets/theme/admin/logo/rapid_logo_black.png" alt="Logo" />
                     <div>
@@ -178,28 +192,38 @@ const handlevendorPrint = (row: User) => {
                             <td  style="width:200px"></td>
                         </tr>
                         <tr>
-                            <td class="label">Paid Cash/Cheque/D.D. Drawn on</td>
+                            <td class="label">Payment Method</td>
                             <td colspan="3">${row.payment_method}</td>
                         </tr>
                         <tr>
-                            <td class="label">Cheque/D.D. No.</td>
+                            <td class="label">Transaction Details</td>
                             <td>${row.payment_details}</td>
                             <td class="label">Date</td>
                             <td>${formattedDate}</td>
                         </tr>
-                        <tr>
-                            <td colspan="4" class="signature">Receiver's Sign: __________________________</td>
-                        </tr>
+                      <tr>
+  <td colspan="2" class="signature">
+    Receiver's Sign:
+  </td>
+
+  <td colspan="2" class="box">
+   
+     
+   
+  </td>
+</tr>
+
                     </table>
                 </div>
             </div>
-        </body>
+        
     `;
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {
         printWindow.document.write(printableContent);
         printWindow.document.close();
+        printWindow.print();
     } else {
         alert('Popup blocker is preventing printing. Please allow popups for this site.');
     }

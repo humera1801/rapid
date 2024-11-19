@@ -1,40 +1,40 @@
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+// import { useEffect, useState } from 'react';
+// import { useRouter } from 'next/navigation';
 
-const withRoleProtection = (WrappedComponent: any, requiredRole: any) => {
-  const WithRoleProtection = (props: any) => {
-    const router = useRouter();
-    const [loading, setLoading] = useState(true);
-    const [hasAccess, setHasAccess] = useState(false);
+// const withRoleProtection = (WrappedComponent: any, requiredRole: any) => {
+//   const WithRoleProtection = (props: any) => {
+//     const router = useRouter();
+//     const [loading, setLoading] = useState(true);
+//     const [hasAccess, setHasAccess] = useState(false);
 
-    useEffect(() => {
-      const storedData = localStorage.getItem('userData');
-      if (storedData) {
-        const userData = JSON.parse(storedData);
-        const userRoles = userData.roles || []; 
+//     useEffect(() => {
+//       const storedData = localStorage.getItem('userData');
+//       if (storedData) {
+//         const userData = JSON.parse(storedData);
+//         const userRoles = userData.roles || []; 
 
-        if (userRoles.includes(requiredRole)) {
-          setHasAccess(true);
-        } else {
-          router.push('/403'); 
-        }
-      } else {
-        router.push('/403'); 
-      }
+//         if (userRoles.includes(requiredRole)) {
+//           setHasAccess(true);
+//         } else {
+//           router.push('/403'); 
+//         }
+//       } else {
+//         router.push('/403'); 
+//       }
 
-      setLoading(false);
-    }, [router]);
+//       setLoading(false);
+//     }, [router]);
 
-    if (loading) {
-      return <div>Loading...</div>;
-    }
+//     if (loading) {
+//       return <div>Loading...</div>;
+//     }
 
-    return hasAccess ? <WrappedComponent {...props} /> : null;
-  };
+//     return hasAccess ? <WrappedComponent {...props} /> : null;
+//   };
 
-  WithRoleProtection.displayName = `WithRoleProtection(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
+//   WithRoleProtection.displayName = `WithRoleProtection(${WrappedComponent.displayName || WrappedComponent.name || 'Component'})`;
 
-  return WithRoleProtection;
-};
+//   return WithRoleProtection;
+// };
 
-export default withRoleProtection;
+// export default withRoleProtection;

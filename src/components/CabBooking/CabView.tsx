@@ -390,7 +390,7 @@ const CabView = () => {
 
     //-----------------------------------------------------------------------------------------------------------
     return (
-        <><div className="container" style={{ fontSize: "12px" }}>
+        <><div className="container" style={{ fontSize: "12px" , height:"100vh"}}>
             <br />
             <div className="" style={{ display: "flex", justifyContent: "space-between" }}>
                 <h4>View Cab Booking Details </h4>

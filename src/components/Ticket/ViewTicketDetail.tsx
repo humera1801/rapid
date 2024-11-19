@@ -79,7 +79,7 @@ const ViewTicketDetail = () => {
         const handleURLChange = () => {
             const urlParams = new URLSearchParams(window.location.search);
             const ticketToken = urlParams.get('token');
-
+           
             if (ticketToken) {
 
 

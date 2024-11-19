@@ -1,0 +1,260 @@
+
+.stat-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    /* box-shadow: rgba(191, 158, 136, 0.48) 6px 2px 16px 0px, rgba(255, 255, 255, 0.8) -6px -2px 16px 0px;    position: relative; */
+  }
+  
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 24px;
+  }
+  
+  /* .bg-green {
+    background-color: #d5f7ea;
+  }
+  
+  .bg-blue {
+    background-color: #daedfa;
+  } */
+  
+  /* .bg-red {
+    background-color: #f0d8d8;
+  } */
+
+
+    /* .bg-white {
+      background-color: #8d5050;
+    } */
+  
+  .stat-change {
+    font-size: 14px;
+  }
+  
+  .text-orange {
+    color: #ff8b47;
+  }
+  
+  .stat-date {
+    font-size: 14px;
+    text-align: right;
+    margin-top: 10px;
+  }
+  .icon-size {
+    width: 40px; 
+    height: 40px; 
+    object-fit: contain; 
+    border-radius: 20%; 
+  }
+    
+  /* .abc{
+    height: auto;
+  } */
+
+  .equal-height {
+    display: flex;
+    
+  }
+
+  
+.abc-stat-card {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    /* display: flex;
+    flex-direction: column;
+    height: 100%;   */
+
+}
+
+
+
+
+
+
+/* ------------------------------------------------------------------------------------------------------------- */
+
+
+
+
+
+
+
+
+
+/* Main Container */
+.date-filter-container {
+  position: relative;
+  font-family: Arial, sans-serif;
+}
+
+/* Filter Button */
+.filter-toggle-btn {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  background-color: #d65205;
+  border-color: #cc6300;
+  color: #fff;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top:2px;
+  font-weight: bold;
+}
+
+/* Add Button */
+.add-toggle-btn {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  background-color: #223407; /* Green background */
+  border-color: #223407; /* Darker green border */
+  color: #fff;
+  font-size: 12px;
+  margin-top:2px;
+
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Container for buttons to appear side by side */
+.button-container {
+  display: flex;
+  gap: 10px; /* Adds space between buttons */
+}
+
+.filter-toggle-btn:hover {
+  background-color: #d65205;
+  color: #fff;
+}
+
+.selected-dates {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #555;
+}
+
+.calendar-popup {
+  position: absolute;
+  top: 0;
+  right: 100%; 
+  margin-right: 8px; 
+  width: 500px;
+  background-color: #ffffff;
+
+  z-index: 993;
+}
+
+
+
+
+
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.calendar-day {
+  padding: 8px;
+  text-align: center;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-radius: 50%;
+}
+
+.calendar-day:hover {
+  background-color: #e0e7ff;
+}
+
+.calendar-day.selected {
+  background-color: #0052cc;
+  color: white;
+}
+
+/* Date Inputs Container */
+.date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+/* Label */
+.date-label {
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Date Fields Wrapper */
+.date-fields {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-grow: 1;
+}
+
+/* Date Input */
+.date-input {
+  padding: 5px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 42%;
+}
+
+/* Button Group */
+.clear-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn {
+  font-size: 16px;
+  /* font-weight: bold; */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.today-button {
+  background-color: #0052cc; 
+}
+
+.clear-button {
+  background-color: #dc3545; 
+  color: #fff;
+}
+
+.today-button:hover {
+  background-color: #0052cc;
+  color: #e0e7ff;
+}
+
+.clear-button:hover {
+  background-color: #c82333;
+}

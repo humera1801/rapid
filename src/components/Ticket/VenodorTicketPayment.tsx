@@ -72,6 +72,8 @@ const VendorTicketPayment: React.FC<VendorTicketPaymentProps> = ({ paymentinitia
                 if (ticketToken) {
                     const response = await EditTicketData.getEditTicktetData(ticketToken);
                     const data = response.data[0];
+                    console.log(response.data);
+
                     setParcelData(data);
                     if (data) {
                         const bookingtype = "ticket";
@@ -111,6 +113,7 @@ const VendorTicketPayment: React.FC<VendorTicketPaymentProps> = ({ paymentinitia
     const fetchVendorData = async (id: string) => {
         try {
             const response = await CabbookingList.getvendorIdData(id);
+
             setVendorname(response.data);
             setValue("bank_name", response.data.bank_name)
             setValue("bank_branch", response.data.bank_branch)

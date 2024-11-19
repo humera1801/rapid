@@ -109,7 +109,7 @@ const PaymentList: React.FC = () => {
     const [records, setRecords] = useState<User[]>([]);
     const [visibleColumns, setVisibleColumns] = useState<string[]>([
         "Receipt No",
-        "Booking Of", "Customer Name",  "Paid Amount", "Payment Details",
+        "Booking Of", "Customer Name", "Paid Amount", "Payment Details",
         "Amount", "Added By", "Action"
     ]);
     const [columnsOptions, setColumnsOptions] = useState<string[]>([
@@ -347,8 +347,8 @@ const PaymentList: React.FC = () => {
 
     const formatBookingType = (type: any) => {
         return type
-            .split('_') 
-            .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1)) 
+            .split('_')
+            .map((word: any) => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
     };
 
@@ -360,7 +360,7 @@ const PaymentList: React.FC = () => {
             sortable: true,
             cell: (row: any) => (
                 <Link
-                href={`/PaymentData/PaymentView?receipt_no=${row.receipt_no}`}                    style={{
+                    href={`/PaymentData/PaymentView?receipt_no=${row.receipt_no}`} style={{
                         textDecoration: 'none',
                         color: 'inherit',
                         backgroundColor: 'transparent',
@@ -409,7 +409,7 @@ const PaymentList: React.FC = () => {
             },
             sortable: true,
             style: {
-             fontSize:"11px"
+                fontSize: "11px"
             },
         },
 
@@ -498,7 +498,7 @@ const PaymentList: React.FC = () => {
 
             generateCabPaymentReceiptPrint(getTDetail.data[0]);
             console.log(getTDetail.data[0]);
-            
+
         } catch (error) {
             console.error("Error fetching ticket data:", error);
         }
@@ -515,7 +515,7 @@ const PaymentList: React.FC = () => {
 
 
     const [searchTerm, setSearchTerm] = useState<string>('');
-    const [originalRecords, setOriginalRecords] = useState<User[]>([]); 
+    const [originalRecords, setOriginalRecords] = useState<User[]>([]);
 
 
     const handleFilter = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -617,6 +617,7 @@ const PaymentList: React.FC = () => {
                             columns={columns}
                             data={records}
                             customStyles={customStyle}
+                            keyField="receipt_no"
                             pagination
                             paginationPerPage={10}
                             paginationRowsPerPageOptions={[10, 20, 50, 100]}

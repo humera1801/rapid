@@ -7,18 +7,19 @@ const baseURL = 'http://192.168.0.106:3001';
 
 
 export default {
-  async getEditTicktetData(tickettoken: string): Promise<DetailsResponse> {
+  async getEditTicktetData(tickettoken: string): Promise<any> {
    
     
     try {
       const response: AxiosResponse = await axios.post(baseURL + '/ticket/get_ticket_booking_detail_data', {
-        ticket_token: tickettoken,
-        
+        ticket_token: tickettoken || '',
+        id:tickettoken || '',
         headers: {
           'Accept': 'application/json',
         },
       });
-
+      console.log(response);
+      
       if (response.data.status === '1') {
         return response.data;
       } else {

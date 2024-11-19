@@ -1,13 +1,9 @@
 import axios, { AxiosResponse } from 'axios';
 import { baseURL } from '../FireApis/BrandApi/DeleteBrand';
 
-interface VendorDetailsResponse {
-  status: string;
-  data: any;
-}
 
 export default {
-    async getCabFilterdate(startdate?: string, enddate?: string): Promise<VendorDetailsResponse> {
+    async getCabFilterdate(startdate?: string, enddate?: string): Promise<any> {
 
         try {
             const response: AxiosResponse = await axios.post(baseURL + '/cabbooking/get_cab_booking_list', {
@@ -31,7 +27,7 @@ export default {
         
     },
 
-    async GetcabBookingId(id: string ): Promise<VendorDetailsResponse> {
+    async GetcabBookingId(id: string ): Promise<any> {
         try {
           const response: AxiosResponse = await axios.post(baseURL + '/cabbooking/get_single_cab_booking_details', {
             cb_id: id,
@@ -55,7 +51,7 @@ export default {
         }
       },
 //------------------------------------------------------------------------------------------------------------------------------
-      async getVehicleList(): Promise<VendorDetailsResponse> {
+      async getVehicleList(): Promise<any> {
         try {
           const response: AxiosResponse = await axios.get(baseURL + '/cabbooking/get_vehicle_list', {
             headers: {
@@ -75,7 +71,7 @@ export default {
         }
       },
 
-      async getVehicleIdData(id: string): Promise<VendorDetailsResponse> {
+      async getVehicleIdData(id: string): Promise<any> {
         try {
           const response: AxiosResponse = await axios.post(baseURL + '/cabbooking/get_vehicle_data', {
             v_id: id,
@@ -120,7 +116,7 @@ export default {
 
 
 //--------------------------------------------------------------------------------------------------------------------------
-      async getvendorList(): Promise<VendorDetailsResponse> {
+      async getvendorList(): Promise<any> {
         try {
           const response: AxiosResponse = await axios.get(baseURL + '/vendor/get_vendor_list', {
             headers: {
@@ -140,7 +136,7 @@ export default {
         }
       },
 
-      async getvendorIdData(id: string): Promise<VendorDetailsResponse> {
+      async getvendorIdData(id: string): Promise<any> {
         try {
           const response: AxiosResponse = await axios.post(baseURL + '/vendor/get_vendor_details', {
             id: id,

@@ -9,7 +9,6 @@ import { faPlusCircle } from '@fortawesome/free-solid-svg-icons';
 import { faMinusCircle } from '@fortawesome/free-solid-svg-icons';
 import StateList from '@/app/Api/StateList';
 import CityList from '@/app/Api/CityList';
-import receiptNo from '@/app/Api/receiptNo';
 import { useEffect, useState } from 'react';
 import EditParcelDataList from '@/app/Api/EditParcelDataList';
 
@@ -19,7 +18,6 @@ import UpdateParcelPrint from '@/app/parcel_list/parcel_data/EditParcelprint';
 import Link from 'next/link';
 import { debounce } from 'lodash';
 import GetClientList from '@/app/Api/FireApis/FireExtinghsherList/GetClientList';
-
 
 type FormData = {
     parcel_id: string;
@@ -196,10 +194,31 @@ const EditParcelData = () => {
     });
 
     useEffect(() => {
+        const handleURLChange = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const ticketToken = urlParams.get('token');
+            if (ticketToken) {
+                localStorage.setItem('ticketToken', ticketToken);
+                console.log('Stored ticketToken:', localStorage.getItem('ticketToken'));
 
+                getTicketDetail(ticketToken);
+
+                urlParams.delete('token');
+                window.history.replaceState({}, document.title, window.location.pathname + '?' + urlParams.toString());
+
+
+            } else {
+                const storedToken = localStorage.getItem('ticketToken');
+                if (storedToken) {
+                    console.log('Retrieved ticketToken from localStorage:', storedToken);
+                    getTicketDetail(storedToken);
+                }
+            }
+        };
         const fetchData = async () => {
             fetchStates(true);
             fetchStates(false);
+
             try {
                 const ticketToken = new URLSearchParams(window.location.search).get("token");
                 if (ticketToken) {
@@ -309,18 +328,7 @@ const EditParcelData = () => {
             }
         };
 
-        const handleURLChange = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const ticketToken = urlParams.get("token");
-            if (ticketToken) {
-                getTicketDetail(ticketToken);
-            } else {
-                setParcelData(null);
-            }
-        };
-
         fetchData();
-
         window.addEventListener('popstate', handleURLChange);
         handleURLChange();
 
@@ -1415,27 +1423,27 @@ const EditParcelData = () => {
 
                     // if (parcelData.status == 1) {
                     //     console.log("formData0", formData);
-        
+
                     //     if (formData.parcel_imgs && formData.parcel_imgs.length > 0) {
                     //         const formDataImages = new FormData();
                     //         formDataImages.append("parcel_token", parcelData.parcel_token);
-        
+
                     //         for (const file of formData.parcel_imgs) {
                     //             formDataImages.append("parcel_imgs", file);
                     //         }
-        
+
                     //         console.log('FormData prepared for images:', formDataImages);
-        
+
                     //         try {
                     //             const uploadResponse = await axios.post("http://192.168.0.106:3001/parcel/upload_parcel_image", formDataImages, {
                     //                 headers: {
                     //                     'Content-Type': 'multipart/form-data'
                     //                 }
                     //             });
-        
+
                     //             const uploadResult = uploadResponse.data;
                     //             console.log('Image upload response:', uploadResult);
-        
+
                     //             if (uploadResult.status === "1") {
                     //                 console.log("Images added successfully");
                     //             } else {
@@ -1448,7 +1456,7 @@ const EditParcelData = () => {
                     //     } else {
                     //         console.log("No images to upload");
                     //     }
-        
+
                     //     // if (parcelData.parcel_token) {
                     //     //     try {
                     //     //         const parcelDetailResponse = await EditParcelDataList.getEditParcelData(parcelData.data.parcel_token);
@@ -1459,7 +1467,7 @@ const EditParcelData = () => {
                     //     //         console.error('Error fetching parcel data:', fetchError);
                     //     //     }
                     //     // }
-        
+
                     // } else {
                     //     console.log("Failed to update parcel details");
                     // }
@@ -2532,7 +2540,7 @@ const EditParcelData = () => {
                                                         className="parcel-image"
                                                         style={{ cursor: 'pointer' }}
                                                     />
-                                                   
+
                                                 </div>
                                             ))
                                         ) : (
@@ -2540,7 +2548,7 @@ const EditParcelData = () => {
                                         )}
                                     </div>
                                 </div>
-{/* 
+                                {/* 
                                 <div className="row mb-3" style={{ marginTop: "15px" }}>
                                     <div className="col-lg-6">
                                         <label className="form-label" htmlFor="particulars">Add New Images:</label>

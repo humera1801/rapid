@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Dashboard/Header';
 import AuthProvider from '@/components/Dashboard/AuthProvider';
 import Footer from '@/components/Dashboard/Footer';
+import Homepage from '@/components/Dashboard/Homepage';
 
 
 const page: React.FC = () => {
@@ -27,21 +28,18 @@ const page: React.FC = () => {
     return (
         <>
             <AuthProvider>
-                <Header />
-                {/* <Navbar/> */}
+               <div >
+               <Header />
                 <br />
-
-                <div style={{height:"100vh"}} >
-                    <h3>Wel-Come to Dashboard</h3>
-
-
+                {/* <h3>Wel-Come to Dashboard</h3> */}
+                <div style={{paddingBottom:"2%"}}>
+                <Homepage records={[]} />
                 </div>
+                <Footer />
 
-             <div >
+               </div>
 
-             </div>
 
-                <Footer/>
             </AuthProvider>
         </>
     )

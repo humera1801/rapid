@@ -32,9 +32,12 @@ export const generateDeliveryChallanPrint = (formData, bankDetails) => {
             : '';
 
 
+        const logo = new Image();
+        logo.src = "https://prolificdemo.com/dev_rapid_group/assets/theme/admin/logo/rapid_logo_black.png";
 
+        logo.onload = () => {
 
-        const html = `
+            const html = `
             <html>
             <head>
                 <style>
@@ -97,7 +100,7 @@ export const generateDeliveryChallanPrint = (formData, bankDetails) => {
             </head>
             <body>
                 <div class="header">
-                    <img src="https://prolificdemo.com/dev_rapid_group/assets/theme/admin/logo/rapid_logo_black.png" alt="Logo" class="logo">
+                    <img src="${logo.src}" alt="Logo" class="logo">
                     <div class="header-info">
                         <div>8866396939 , 910607741</div>
                         <div>rapidgroupbaroda@gmail.com</div>
@@ -164,17 +167,24 @@ export const generateDeliveryChallanPrint = (formData, bankDetails) => {
             </html>
         `;
 
-        // Open the print dialog
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.open();
-            printWindow.document.write(html);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-        } else {
-            alert('Popup blocker is preventing printing. Please allow popups for this site.');
-        }
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '0px';
+            iframe.style.height = '0px';
+            iframe.style.border = 'none';
+
+            document.body.appendChild(iframe);
+
+            const iframeDoc = iframe.contentWindow.document;
+            iframeDoc.open();
+            iframeDoc.write(html);
+            iframeDoc.close();
+
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+
+            iframe.remove();
+        };
     } catch (error) {
         console.error('Error generating print document:', error);
     }

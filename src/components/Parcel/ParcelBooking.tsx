@@ -2858,7 +2858,6 @@ const ParcelBook: React.FC = () => {
             </div >
 
 
-            <Footer />
         </>
     )
 }

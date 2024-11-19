@@ -5,7 +5,7 @@ export const generateCabReceiptPrint = (formData) => {
         const endJourneyDetails = formData.endJourneyDetails || {};
         const startJourneyDetails = formData.startJourneyDetails || {};
 
-       
+
         const closingKms = endJourneyDetails.closing_kms || '';
         const journeyEndTime = endJourneyDetails.journey_end_time || '';
         const journeyEndDate = endJourneyDetails.journey_end_date || '';
@@ -18,7 +18,10 @@ export const generateCabReceiptPrint = (formData) => {
             <div>RS : <span class="underline-text" style="width: 145px;">${product.extra_charges_rate}</span></div>
         </div >
  `).join('');
-
+ const logo = new Image();
+ logo.src = "https://prolificdemo.com/dev_rapid_group/assets/theme/admin/logo/rapid_logo_black.png";
+ 
+ logo.onload = () => {
 
         const html = `
             <html>
@@ -198,7 +201,7 @@ export const generateCabReceiptPrint = (formData) => {
 
     <div class="container">
         <div class="header">
-            <img src="https://prolificdemo.com/dev_rapid_group/assets/theme/admin/logo/rapid_logo_black.png" alt="Logo"
+            <img src="${logo.src}" alt="Logo"
                 class="logo">
             <div  class="contact-info">
                 <div>8866396939 , 910607741</div>
@@ -342,6 +345,10 @@ export const generateCabReceiptPrint = (formData) => {
                 document.body.removeChild(iframe);
             }, 100);
         };
+
+    }
+
+
     } catch (error) {
         console.error('Error generating print document:', error);
     }

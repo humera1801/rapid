@@ -308,7 +308,7 @@ const Transaction: React.FC = () => {
                         link = `/parcel_list/parcel_data?token=${row.id}`;
                         break;
                     case 'ticket_booking':
-                        link = `/ticket_list/Ticket_data?id=${row.id}`;
+                        link = `/ticket_list/Ticket_data?token=${row.id}`;
                         break;
                     default:
                         return formattedBookingType; // Return formatted type

@@ -187,16 +187,23 @@ export const printQuotationPDF = (formData, bankDetails) => {
         `;
 
         // Open the print dialog
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.open();
-            printWindow.document.write(html);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-        } else {
-            alert('Popup blocker is preventing printing. Please allow popups for this site.');
-        }
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0px';
+        iframe.style.height = '0px';
+        iframe.style.border = 'none';
+        
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(html);
+        iframeDoc.close();
+
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+
+        iframe.remove();
     } catch (error) {
         console.error('Error generating print document:', error);
     }

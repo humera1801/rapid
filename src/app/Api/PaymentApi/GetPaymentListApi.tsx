@@ -1,9 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
 import { baseURL } from '../FireApis/BrandApi/DeleteBrand';
-import { DetailsResponse } from '../FireApis/DataFilter/date';
 
 export default {
-    async getpaymentFilterdate(startdate?: string, enddate?: string): Promise<DetailsResponse> {
+    async getpaymentFilterdate(startdate?: string, enddate?: string, page?: number, limit?: number): Promise<any> {
         try {
             const response: AxiosResponse = await axios.post(baseURL + '/payment/get_payment_list', {
                 startdate: startdate || '',  
@@ -14,7 +13,7 @@ export default {
                 },
             });
 
-            if (response.data.status == '1') {
+            if (response.data.status === 1) {
                 return response.data;
             } else {
                 throw new Error('Response status is not 1');
@@ -24,7 +23,7 @@ export default {
             throw error;
         }
     },
-    async getpaymentdataView(booking_type?: string, id?: string): Promise<DetailsResponse> {
+    async getpaymentdataView(booking_type?: string, id?: string): Promise<any> {
         try {
             const response: AxiosResponse = await axios.post(baseURL + '/payment/get_payment_details', {
                 booking_type: booking_type || '',  
@@ -45,7 +44,7 @@ export default {
             throw error;
         }
     },
-    async getreceiptpaymentdataView(receipt_no?: string, ): Promise<DetailsResponse> {
+    async getreceiptpaymentdataView(receipt_no?: string, ): Promise<any> {
         try {
             const response: AxiosResponse = await axios.post(baseURL + '/payment/get_payment_details_by_receipt', {
                 receipt_no: receipt_no || '',  
@@ -68,7 +67,7 @@ export default {
     },
 
 
-    async getVandorPaymentList(startdate?: string, enddate?: string): Promise<DetailsResponse> {
+    async getVandorPaymentList(startdate?: string, enddate?: string): Promise<any> {
         try {
             const response: AxiosResponse = await axios.post(baseURL + '/vendor/vendor_payment_list', {
                 startdate: startdate || '',  

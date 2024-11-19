@@ -8,16 +8,16 @@ interface AuthProviderProps {
 
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
-    const router = useRouter();
+  const router = useRouter();
+  const userData = localStorage.getItem('userData');
 
   useEffect(() => {
-    const userData = localStorage.getItem('userData');
     if (!userData) {
-     
+
       router.push('/');
-    
+
     }
-   
+
   }, []);
 
   return <>{children}</>;

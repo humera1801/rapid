@@ -6,9 +6,12 @@ export const generateCabReceiptShare = async (formData) => {
     try {
         const margin = 15; // Margin in mm
         const pageWidth = 200; // A4 width in mm
-
+       
         const endJourneyDetails = formData.endJourneyDetails || {};
         const startJourneyDetails = formData.startJourneyDetails || {};
+        const closingKms = endJourneyDetails.closing_kms || '';
+        const journeyEndTime = endJourneyDetails.journey_end_time || '';
+        const journeyEndDate = endJourneyDetails.journey_end_date || '';
 
         const productRows = formData.extraCharges.map((product, index) => `
         <div class="kms-info1 section">
@@ -305,7 +308,7 @@ export const generateCabReceiptShare = async (formData) => {
         </div>
 
         <div class="footer">
-            <div>Prepared by:<span class="underline-text" style="width: 150px;"></span></div>
+            <div>Prepared by:<span class="underline-text" style="width: 150px;">${formData.created_by_name}</span></div>
             <div>Customer Signature: <span class="underline-text" style="width: 150px;"></span></div>
         </div>
     </div>
@@ -327,6 +330,7 @@ export const generateCabReceiptShare = async (formData) => {
         });
 
         document.body.removeChild(tempElement);
+        
 
         const pdf = new jsPDF('p', 'mm', 'a4');
         const imgData = canvas.toDataURL('image/png');
@@ -335,20 +339,22 @@ export const generateCabReceiptShare = async (formData) => {
 
 
 
-        // pdf.save('Cab.pdf');
+        pdf.save('Cab.pdf');
 
 
 
-        const pdfBlob = pdf.output('blob');
+        // const pdfBlob = pdf.output('blob');
 
-        const pdfUrl = URL.createObjectURL(pdfBlob);
+        // const pdfUrl = URL.createObjectURL(pdfBlob);
 
-        const message = `Here is your invoice: ${pdfUrl}`;
-        const whatsappUrl = `https://wa.me/${formData.mobileNo}?text=${encodeURIComponent(message)}`;
+        // const message = `Here is your invoice: ${pdfUrl}`;
+        // const whatsappUrl = `https://wa.me/${formData.mobileNo}?text=${encodeURIComponent(message)}`;
 
-        window.open(whatsappUrl, '_blank');
+        // window.open(whatsappUrl, '_blank');
 
-        URL.revokeObjectURL(pdfUrl);
+        // URL.revokeObjectURL(pdfUrl);
+
+        
 
     } catch (error) {
         console.error('Error generating print document:', error);

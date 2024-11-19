@@ -103,7 +103,6 @@ export const handlebedgePrint = (row: User) => {
                                             <h1 style="margin: 0;">RAPID GROUP</h1>
                                             GST No: 24ABFFR4789P1ZB <br>
                                             Mobile: 9276207147, 9274919848 <br>
-                                            G-12, Swastik chamber, Nr Makarpura bus depot, Makarpura, Vadodara, Gujarat 390013
                                         </td>
                                     </tr>
                                 </table>
@@ -115,22 +114,22 @@ export const handlebedgePrint = (row: User) => {
                             </td>
                         </tr>
                         <tr>
-                            <td width="25%">Receipt No:</td>
-                            <td width="25%">${row.receipt_no}</td>
+                            <td width="25%" style="font-size:16px; font-weight:bold">Receipt No:</td>
+                            <td width="20%" style="font-size:16px; font-weight:bold">${row.receipt_no}</td>
                             <td colspan="4" style="text-align: center;">Topay / Paid / On Account</td>
                         </tr>
                         <tr>
                             <td>Sender Name</td>
                             <td>${row.sender_name}</td>
-                            <td width="15%">Mobile-No</td>
+                            <td width="20%">Sender Mobile-No</td>
                             <td width="15%">${row.send_mob}</td>
                             <td width="5%">From:</td>
                             <td>${row.from_city_name}</td>
                         </tr>
-                        <tr>
-                            <td>Receiver Name</td>
-                            <td>${row.rec_name}</td>
-                            <td width="15%">Mobile-No</td>
+                        <tr style="font-size:16px; font-weight:bold">
+                            <td style="font-size:16px; font-weight:bold">Receiver Name</td>
+                            <td style="font-size:16px; font-weight:bold">${row.rec_name}</td>
+                            <td width="20%">Receiver Mobile-No</td>
                             <td width="15%">${row.rec_mob}</td>
                             <td width="5%">To</td>
                             <td>${row.to_city_name}</td>
@@ -138,10 +137,16 @@ export const handlebedgePrint = (row: User) => {
                         <tr style="text-align: center;">
                             <td colspan="6">OFFICE : Vadodara , Ahmedabad , Pune , Nashik , Udaipur</td>
                         </tr>
+                          <tr style="text-align: center;">
+                <td colspan="6">rapidgroupbaroda@gmail.com</td>
+                
+
+            </tr>
                     </tbody>
                 </table>
             </div>
-            <br><br>
+            <br>
+            <br>
         `;
 
         printableContent += content;

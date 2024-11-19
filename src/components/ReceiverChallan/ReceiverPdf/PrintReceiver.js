@@ -147,8 +147,9 @@ const productRows = typeof formData.service_data === 'object' && formData.servic
         <tr><td colspan="6" class="no-border">Driver Mobile No: ${formData.ferc_driver_mobile_no}</td></tr>
         <tr><td colspan="6" class="no-border">Please collect receive About Extingushers for riffiling by our representative</td></tr>
                         <tr>
-                               <td colspan="2" class="align-top" style="text-align: left;">Checked By</td>
-            <td colspan="2" class="align-top" style="text-align: left;">Received By</td>
+ <td colspan="2" class="align-top" style="text-align: left;">Checked By  <br> <img src=${formData.employee_signature_url} alt="Logo" class="logo">
+                               <br>${formData.employee_name}
+</td>            <td colspan="2" class="align-top" style="text-align: left;">Received By</td>
             <td colspan="2" class="align-bottom" style="text-align: right;">RAPID GROUP<br><br><br>Proprietor</td>
                         </tr>
                           <tr>
@@ -162,17 +163,23 @@ const productRows = typeof formData.service_data === 'object' && formData.servic
             </html>
         `;
 
-        // Open the print dialog
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.open();
-            printWindow.document.write(html);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-        } else {
-            alert('Popup blocker is preventing printing. Please allow popups for this site.');
-        }
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0px';
+        iframe.style.height = '0px';
+        iframe.style.border = 'none';
+        
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(html);
+        iframeDoc.close();
+
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+
+        iframe.remove();
     } catch (error) {
         console.error('Error generating print document:', error);
     }

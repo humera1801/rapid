@@ -1,21 +1,39 @@
-import Footer from '@/components/Dashboard/Footer'
-import Header from '@/components/Dashboard/Header'
-import ParcelBook from '@/components/Parcel/ParcelBooking'
-import TicketBook from '@/components/Ticket/OldTicketBook'
-import React from 'react'
+"use client";
 
-const page = () => {
+import AuthProvider from '@/components/Dashboard/AuthProvider';
+import Footer from '@/components/Dashboard/Footer';
+import Header from '@/components/Dashboard/Header';
+import LoadingSpinner from '@/components/Loading/ParcelLoader'; 
+import ParcelBook from '@/components/Parcel/ParcelBooking'; 
+import React, { Suspense, useState, useEffect } from 'react';
+
+const Page = () => {
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false); 
+        }, 1000); 
+        return () => clearTimeout(timer);
+    }, []);
+
     return (
         <>
+            <AuthProvider>
+                {loading ? (
+                    <LoadingSpinner />
+                ) : (
+                    <Suspense fallback={<LoadingSpinner />}>
+                        <Header />
+                        <br />
+                        <ParcelBook />
+                        <Footer />
 
-
-
-            <Header />
-            <br />
-                <ParcelBook />
-
+                    </Suspense>
+                )}
+            </AuthProvider>
         </>
-    )
-}
+    );
+};
 
-export default page
+export default Page;

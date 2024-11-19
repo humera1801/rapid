@@ -225,12 +225,12 @@ const ClientFireBookingList: React.FC<ClientDataDisplayProps> = ({ title, data }
                     <div className='action-buttons'>
               
                     {userRoles.includes('fireExtinguisherBooking_view') && (
-                        <Link href={`/Fire-List/FireView?id=${row.febking_id}`} className="btn btn-sm btn-warning" >
+                        <Link href={`/Fire/Fire-List/FireView?id=${row.q_quotation_no}`} className="btn btn-sm btn-warning" >
                             <FontAwesomeIcon icon={faEye} />
                         </Link>
                     )}
                     {userRoles.includes('fireExtinguisherBooking_update') && (
-                        <Link href={`/Fire-List/Edit?id=${row.febking_id}`} className="btn btn-sm btn-primary">
+                        <Link href={`/Fire/Fire-List/Edit?id=${row.q_quotation_no}`} className="btn btn-sm btn-primary">
                             <FontAwesomeIcon icon={faPencilSquare} />
                         </Link>
                     )}

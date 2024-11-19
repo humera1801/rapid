@@ -1,5 +1,7 @@
+
 .body{
   font-family: Arial, sans-serif;
+  
   
 }
 .cardbox{
@@ -130,7 +132,7 @@
 }
 
 .navbar {
-  padding: 15px;
+  padding: 5px;
 }
 
 .logo1 {
@@ -140,7 +142,7 @@
 .logohead1 {
   height: 50%;
   width: 100%;
-  margin-right: 5px;
+  margin-right: 3px;
 }
 
 .ul1 {

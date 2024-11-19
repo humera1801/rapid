@@ -20,7 +20,7 @@ export const handleFireDataPrint = (formData, bankDetails) => {
 
 
 
-        console.log("bankdata", formData.bank_details.bnk_acc_no);
+        console.log("bankdata", formData.bankDetails.bnk_acc_no);
 
 
 
@@ -166,9 +166,9 @@ export const handleFireDataPrint = (formData, bankDetails) => {
                 <div class="footer">
                     <table>
                         <tr><td colspan="4">Composite Dealer:</td></tr>
-                        <tr><td colspan="4">OUR GST NO: ${formData.bank_details.gst_no || 'N/A'}</td></tr>
-                        <tr><td colspan="4">Our Bank Name: ${formData.bank_details.bnk_name} , Branch: ${formData.bank_details.bnk_branch}</td></tr>
-                        <tr><td colspan="4">Account No: ${formData.bank_details.bnk_acc_no} , IFSC Code: ${formData.bank_details.bnk_ifsc_code}</td></tr>
+                        <tr><td colspan="4">OUR GST NO: ${formData.bankDetails.gst_no || 'N/A'}</td></tr>
+                        <tr><td colspan="4">Our Bank Name: ${formData.bankDetails.bnk_name} , Branch: ${formData.bankDetails.bnk_branch}</td></tr>
+                        <tr><td colspan="4">Account No: ${formData.bankDetails.bnk_acc_no} , IFSC Code: ${formData.bankDetails.bnk_ifsc_code}</td></tr>
                         <tr><td colspan="4">${toWords(formData.q_final_amount)} Only</td></tr>
                         <tr>
                             <td colspan="3"></td>
@@ -184,17 +184,23 @@ export const handleFireDataPrint = (formData, bankDetails) => {
             </html>
         `;
 
-        // Open the print dialog
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.open();
-            printWindow.document.write(html);
-            printWindow.document.close();
-            printWindow.focus();
-            printWindow.print();
-        } else {
-            alert('Popup blocker is preventing printing. Please allow popups for this site.');
-        }
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0px';
+        iframe.style.height = '0px';
+        iframe.style.border = 'none';
+        
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(html);
+        iframeDoc.close();
+
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+
+        iframe.remove();
     } catch (error) {
         console.error('Error generating print document:', error);
     }

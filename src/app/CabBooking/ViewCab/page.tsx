@@ -1,18 +1,33 @@
+"use client"
+
 import CabView from '@/components/CabBooking/CabView'
+import AuthProvider from '@/components/Dashboard/AuthProvider'
 import Footer from '@/components/Dashboard/Footer'
 import Header from '@/components/Dashboard/Header'
-import React from 'react'
+import CabLoadingSpinner from '@/components/Loading/cabLoader'
+import useLoading from '@/components/Loading/UseLoading'
+import React, { Suspense } from 'react'
 
 const page = () => {
+
+  const loading = useLoading(true, 1200);
+
   return (
     <>
-    
-    <Header/>
-    <CabView/>
-    
-    {/* <Footer/> */}
+      <AuthProvider>
+        {loading ? (
+          <CabLoadingSpinner />
+        ) : (
+          <Suspense fallback={<CabLoadingSpinner />}>
 
-    
+            <Header />
+            <CabView/>
+          </Suspense>
+        )}
+      </AuthProvider >
+      {/* <Footer/> */}
+
+
     </>
   )
 }

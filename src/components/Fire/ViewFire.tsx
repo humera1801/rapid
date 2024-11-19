@@ -204,7 +204,8 @@ const ViewFire = () => {
                 if (q_quotation_no) {
                     const response = await getFireBookingId.GetFireBookingId(q_quotation_no);
                     setFireData(response.data[0]);
-
+                    console.log(response.data);
+                    
                     if (response.data && response.data.length > 0) {
                         const client_id = response.data[0].client_id;
                         setSelectedClientId(client_id);

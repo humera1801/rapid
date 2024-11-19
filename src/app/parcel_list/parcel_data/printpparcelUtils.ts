@@ -40,8 +40,8 @@ interface User {
     print_bal_amount: number;
     total_demurrage_charges: number;
     demurrage_days: number;
-    total_pickup_charge:any;
-    total_dispatch_charge:any;
+    total_pickup_charge: any;
+    total_dispatch_charge: any;
     demurrage_charges: number;
     parcel_bill_detail: { e_way_bill_no: string; p_o_no: string; invoice_no: string; invoice_amount: string }[];
     parcel_detail: {
@@ -64,7 +64,7 @@ const handleParcelPrint = (row: User) => {
 
     console.log("data", row.parcel_detail);
 
-//------------------
+    //------------------
     // const parcelTypes = row.parcel_detail.map(parcel => parcel.parcel_type).join(', ');
 
 
@@ -94,28 +94,29 @@ const handleParcelPrint = (row: User) => {
         return total + quantity;
     }, 0);
 
-//-------------------
+    //-------------------
 
-const eWayBillNos = row.parcel_bill_detail.map(bill => bill.e_way_bill_no).join(', ');
+    const eWayBillNos = row.parcel_bill_detail.map(bill => bill.e_way_bill_no).join(', ');
 
-  // Calculate total invoice amount and concatenate invoice numbers
-  const totalInvoiceAmount = row.parcel_bill_detail.reduce((total, bill) => {
-    // Ensure invoice_amount is treated as a number
-    return total + Number(bill.invoice_amount);
-}, 0);
+    const totalInvoiceAmount = row.parcel_bill_detail.reduce((total, bill) => {
+        return total + Number(bill.invoice_amount);
+    }, 0);
 
 
-const invoiceNos = row.parcel_bill_detail.map(bill => bill.invoice_no).join(', ');
+    const invoiceNos = row.parcel_bill_detail.map(bill => bill.invoice_no).join(', ');
 
-const combinedInvoiceInfo = `${totalInvoiceAmount}, ${invoiceNos}`;
-
-
-console.log("invoice Amount",invoiceNos);
-
-//----------------------------------------------------------------------------------------------------------------------
+    const combinedInvoiceInfo = `${totalInvoiceAmount}, ${invoiceNos}`;
 
 
-    const printableContent = `
+    console.log("invoice Amount", invoiceNos);
+
+    //----------------------------------------------------------------------------------------------------------------------
+    const logo = new Image();
+    logo.src = "https://prolificdemo.com/dev_rapid_group/assets/theme/admin/logo/rapid_logo_black.png";
+
+    logo.onload = () => {
+
+        const printableContent = `
 
 
 
@@ -150,7 +151,7 @@ console.log("invoice Amount",invoiceNos);
                                 <table width="100%">
                                     <tr>
                                         <td width="30%">
-                                            <img src="https://prolificdemo.com/dev_rapid_group/assets/theme/admin/logo/rapid_logo_black.png" alt="" height="50px" width="160px">
+                                            <img src="${logo.src}" alt="" height="50px" width="160px">
                                         </td>
                                         <td width="70%" colspan="2" style="text-align: center;">
                                             <h1 style="margin: 0;">RAPID GROUP</h1>
@@ -249,12 +250,23 @@ console.log("invoice Amount",invoiceNos);
         </body>
     `;
 
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-        printWindow.document.write(printableContent);
-        printWindow.document.close();
-    } else {
-        alert('Popup blocker is preventing printing. Please allow popups for this site.');
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0px';
+        iframe.style.height = '0px';
+        iframe.style.border = 'none';
+
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow?.document;
+        iframeDoc?.open();
+        iframeDoc?.write(printableContent);
+        iframeDoc?.close();
+
+        // iframe.contentWindow?.focus();
+        // iframe.contentWindow?.print();
+
+        iframe.remove();
     }
 };
 

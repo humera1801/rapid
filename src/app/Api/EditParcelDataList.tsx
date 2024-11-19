@@ -7,7 +7,7 @@ const baseURL = 'http://192.168.0.106:3001';
 
 
 export default {
-  async getEditParcelData(parceltoken: string): Promise<DetailsResponse> {
+  async getEditParcelData(parceltoken: string): Promise<any> {
    
     
     try {
